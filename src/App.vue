@@ -147,12 +147,12 @@ const settingsOpen = ref(false)
 const settings = ref({
     api: '',
     secret: '',
-    model: 'gpt-5-nano',
+    model: 'gpt-5',
     temperature: 0.7,
     systemPrompt: '',
     depth: 3,
     focusMode: true,
-    thinkingModel: 'first-principles',
+    thinkingModel: 'default',
     language: 'zh-CN' // 新增：默认语言
 })
 
@@ -264,7 +264,7 @@ const aiGenerate = async () => {
         const { data } = await requestCompletions({
             api: settings.value.api,
             secret: settings.value.secret,
-            model: settings.value.model || 'gpt-5-nano',
+            model: settings.value.model || 'gpt-5',
             temperature: settings.value.temperature,
             prompt,
         })
