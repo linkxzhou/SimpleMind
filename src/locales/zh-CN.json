@@ -15,7 +15,7 @@
   "mode": "模式",
   "focus": "专注",
   "free": "自由",
-  "childCountRange": "生成子节点个数（范围值）",
+  "childCountRange": "子节点个数（范围值）",
   "thinkingMethod": "思考方式",
   "systemPrompt": "系统提示词",
   "systemPromptPlaceholder": "输入系统提示词",

@@ -10,14 +10,14 @@ export function buildPrompt(topic, count, systemPrompt, settings = {}) {
     let examplePrompt = ""
     if (model.example && model.example.trim() !== '') {
         examplePrompt = `## 思考方式
-如果当前知识点适用 "${model.label}" 思考方式思考，请采用，如果不适合请考虑其他思考方式
+如果当前知识点符合 "${model.label}" 思考方式，请采用，如果不符合请考虑总结或者归纳的思考方式。
 
 ### "${model.label}" 思考样例\n${model.example || ''}\n`
     }
 
     return `
 ## 角色    
-现在你是一个 “${topic}” 专家，精通当前领域的百科知识，现在基于知识点 “${topic}” 整理最相关的子知识。
+现在你是一个善于将知识点整理为脑图的专家，精通 “${topic}” 的百科知识，现在基于 “${topic}” 整理最相关的子知识。
 ${examplePrompt}
 
 ## 输出样例
@@ -27,30 +27,24 @@ ${examplePrompt}
     "data": {
       "text": "相关知识点1",
       "note": "相关知识点描述",
-      "nextSystemPrompt": "子知识点的提示词"
+      "nextSystemPrompt": "子知识点的提示词",
+      "color": "知识点颜色，使用16进制颜色码"
     },
     "children": []
   },
-  {
-    "data": {
-      "text": "相关知识点2",
-      "note": "相关知识点简单描述",
-      "nextSystemPrompt": "子知识点的提示词"
-    },
-    "children": []
-  }
   // ...其他
 ]
 \`\`\`
  
 ## 要求
-- 输出JSON
-- 输出语言：${language}
-- 知识点：${systemPrompt}
-- 知识点的数量要求：${count} 个左右，如果重要知识点比较多，可以大于 ${count} 个
-- JSON字段\`text\`是知识点，限制在 50 个字以内
-- JSON字段\`note\`是知识点的关键词描述，限制在 100-500 个字以内
-- JSON字段\`nextSystemPrompt\`是下一个子知识点的提示词，限制在 30-150 个字以内
+- 输出JSON格式
+- 输出语言：${language}。
+- 知识点：${systemPrompt}。
+- 知识点的数量要求：${count} 个左右，如果重要知识点比较多，可以大于 ${count} 个。
+- JSON字段\`text\`是知识点，限制在 50 个字以内。
+- JSON字段\`note\`是知识点的关键词描述，限制在 100-500 个字以内。
+- JSON字段\`nextSystemPrompt\`是下一个子知识点的提示词，限制在 30-150 个字以内。
+- JSON字段\`color\`是代表知识点颜色，使用16进制颜色码，样例：\`#FF0000\`，颜色参考规则：暖色调（如红、黄、橙）通常能引起更高的情绪唤起和注意力水平，冷色调（如蓝、绿）通常能营造平静、放松的氛围，有助于减轻视觉疲劳，被认为能增强创造力任务的表现。
 `
 }
 

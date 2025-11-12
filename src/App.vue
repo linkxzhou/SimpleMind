@@ -8,9 +8,9 @@
                 <a-button size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
             </div>
 
+            <a-button :icon="h(ArrowLeftOutlined)" @click="back"></a-button>
+            <a-button :icon="h(ArrowRightOutlined)" @click="forward"></a-button>
             <a-button :icon="h(PlusOutlined)" :style="{ padding: '4px 10px' }" @click="newMap">{{ t('new') }}</a-button>
-            <a-button :icon="h(ArrowLeftOutlined)" :style="{ padding: '4px 10px' }" @click="back">{{ t('back') }}</a-button>
-            <a-button :icon="h(ArrowRightOutlined)" :style="{ padding: '4px 10px' }" @click="forward">{{ t('forward') }}</a-button>
             <a-button type="primary" danger :icon="h(DeleteOutlined)" :style="{ padding: '4px 10px' }" @click="removeSelected">{{ t('delete') }}</a-button>
             <a-button :icon="h(SettingOutlined)" :style="{ padding: '4px 10px' }" @click="toggleSettings">{{ t('settings') }}</a-button>
             <a-button type="primary" :icon="h(BulbOutlined)" :style="{ padding: '4px 10px' }" @click="aiGenerate">{{ t('aiGenerate') }}</a-button>
@@ -210,7 +210,7 @@ const getNodeSystemPrompt = (node) => node?.data?.nextSystemPrompt || (node?.get
 
 const newMap = () => {
     if (!mindMapRef.value) return
-    mindMapRef.value.setData({ data: { text: '根节点' }, children: [] })
+    mindMapRef.value.setData({ data: { text: '主题' }, children: [] })
     mindMapRef.value.view.reset()
 }
 
@@ -342,6 +342,7 @@ onMounted(() => {
         enableFreeDrag: true,
         mousewheelAction: 'zoom',
         mousewheelZoomActionReverse: true,
+        layout: settings.value.layout || 'mindMap',
         data: initialData
     });
     mindMapRef.value = mindMap
