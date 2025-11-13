@@ -107,7 +107,7 @@
             </div>
 
             <div class="field">
-                <span>{{ t('info') }}<br>
+                <span>{{ t('info') }}
                     <br>- {{ t('helpFocus') }}
                     <br>- {{ t('helpFree') }}
                     <br>- {{ t('thinkingMethod') }}：{{ currentThinkingModel?.label || settings.thinkingModel }}。
@@ -144,10 +144,17 @@ import enUS from './locales/en-US.json'
 const mindMapRef = ref(null)
 const activeNodes = ref([])
 const settingsOpen = ref(false)
+
+// 从环境变量读取默认值（Vite 约定使用 VITE_ 前缀）
+const env = (import.meta && import.meta.env) ? import.meta.env : {}
+const ENV_API = (env.VITE_API ?? '').trim()
+const ENV_SECRET = (env.VITE_SECRET ?? '').trim()
+const ENV_MODEL = (env.VITE_MODEL ?? '').trim()
+
 const settings = ref({
-    api: '',
-    secret: '',
-    model: 'gpt-5',
+    api: ENV_API || '',
+    secret: ENV_SECRET || '',
+    model: ENV_MODEL || '',
     temperature: 0.7,
     systemPrompt: '',
     depth: 3,
@@ -230,7 +237,17 @@ const removeSelected = () => {
 }
 
 const aiGenerate = async () => {
-    if (!mindMapRef.value) return
+    // 判断API Base是否配置
+    if (!settings.value.api || settings.value.api.trim().length === 0) {
+        showError('请打开设置，配置API Base')
+        return
+    }
+
+    if (!mindMapRef.value) {
+        showError('请先创建一个思维导图')
+        return
+    }
+
     const baseNode = activeNodes.value?.[0]
     const baseText = getNodeText(baseNode)
     if (!baseText || baseText.trim().length === 0) {

@@ -78,6 +78,31 @@ export function resolveEndpoint(api) {
     return (api || '').trim() + '/chat/completions'
 }
 
+// 当 secret 以 my- 开头时，去除该标记并进行 Base64 解码
+function normalizeSecret(secret) {
+    if (!secret) return ''
+    const s = String(secret).trim()
+    if (s.startsWith('my-')) {
+        const encoded = s.slice(3).replace(/\s+/g, '')
+        // 兼容 URL-safe Base64
+        const urlsafe = encoded.replace(/-/g, '+').replace(/_/g, '/')
+        const padded = urlsafe + '='.repeat((4 - (urlsafe.length % 4)) % 4)
+        try {
+            if (typeof atob === 'function') {
+                return atob(padded)
+            }
+            if (typeof Buffer !== 'undefined') {
+                return Buffer.from(padded, 'base64').toString('utf-8')
+            }
+        } catch (e) {
+            console.warn('秘钥Base64解码失败，回退原值：', e)
+            return s
+        }
+    }
+    
+    return s
+}
+
 export async function requestCompletions({
     api,
     secret,
@@ -89,7 +114,8 @@ export async function requestCompletions({
     console.log('AI请求', endpoint)
 
     const headers = { 'Content-Type': 'application/json' }
-    if (secret) headers.Authorization = `Bearer ${secret}`
+    const authSecret = normalizeSecret(secret)
+    if (authSecret) headers.Authorization = `Bearer ${authSecret}`
 
     const body = {
         model,
