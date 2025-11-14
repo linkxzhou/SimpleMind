@@ -9,7 +9,8 @@ export function buildPrompt(topic, count, systemPrompt, settings = {}) {
 
     let examplePrompt = ""
     if (model.example && model.example.trim() !== '') {
-        examplePrompt = `## 思考方式
+        examplePrompt = `\n
+## 思考方式
 如果当前知识点符合 "${model.label}" 思考方式，请采用，如果不符合请考虑总结或者归纳的思考方式。
 
 ### "${model.label}" 思考样例\n${model.example || ''}\n`
@@ -17,8 +18,7 @@ export function buildPrompt(topic, count, systemPrompt, settings = {}) {
 
     return `
 ## 角色    
-现在你是一个善于将知识点整理为脑图的专家，精通 “${topic}” 的百科知识，现在基于 “${topic}” 整理最相关的子知识。
-${examplePrompt}
+现在你是一个善于将知识点整理为脑图的专家，精通 “${topic}” 的百科知识，现在基于 “${topic}” 整理最相关的子知识。${examplePrompt}
 
 ## 输出样例
 \`\`\`json
@@ -37,7 +37,7 @@ ${examplePrompt}
 \`\`\`
  
 ## 要求
-- 输出JSON格式
+- 输出JSON格式。
 - 输出语言：${language}。
 - 知识点：${systemPrompt}。
 - 知识点的数量要求：${count} 个左右，如果重要知识点比较多，可以大于 ${count} 个。

@@ -1,3 +1,18 @@
+import zhCN from './locales/zh-CN.json'
+import enUS from './locales/en-US.json'
+
+// 多语言消息源
+export const messages = {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+}
+
+// 语言选择项（用于设置面板）
+export const languageOptions = [
+    { label: '简体中文', value: 'zh-CN' },
+    { label: 'English', value: 'en-US' },
+]
+
 export const thinkingModels = [
     {
         label: '无',

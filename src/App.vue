@@ -8,140 +8,149 @@
                 <a-button size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
             </div>
 
-            <a-button :icon="h(ArrowLeftOutlined)" @click="back" :title="t('back')"></a-button>
-            <a-button :icon="h(ArrowRightOutlined)" @click="forward" :title="t('forward')"></a-button>
-            <a-button :icon="h(DownloadOutlined)" @click="exportJson" :title="t('exportJson')"></a-button>
-            <a-button :icon="h(UploadOutlined)" @click="importJson" :title="t('importJson')"></a-button>
+            <a-button :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
+            <a-button :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
             <a-button :icon="h(PlusOutlined)" :style="{ padding: '4px 10px' }" @click="newMap">{{ t('new') }}</a-button>
-            <a-button type="primary" danger :icon="h(DeleteOutlined)" :style="{ padding: '4px 10px' }" @click="removeSelected">{{ t('delete') }}</a-button>
-            <a-button :icon="h(SettingOutlined)" :style="{ padding: '4px 10px' }" @click="toggleSettings">{{ t('settings') }}</a-button>
-            <a-button type="primary" :icon="h(BulbOutlined)" :style="{ padding: '4px 10px' }" @click="aiGenerate">{{ t('aiGenerate') }}</a-button>
+            <a-button type="primary" danger :icon="h(DeleteOutlined)" :style="{ padding: '4px 10px' }"
+                @click="removeSelected">{{ t('delete') }}</a-button>
+            <a-button :icon="h(SettingOutlined)" :style="{ padding: '4px 10px' }" @click="toggleSettings">{{
+                t('settings') }}</a-button>
+            <a-button type="primary" :icon="h(BulbOutlined)" :style="{ padding: '4px 10px' }" @click="aiGenerate">{{
+                t('aiGenerate') }}</a-button>
         </div>
     </div>
     <div id="mindMapContainer"></div>
-    <div v-if="settingsOpen" class="settings-panel">
-        <div class="panel-body">
-            <!-- 新增：语言选择 -->
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('language') }}：</span>
-                <a-select
-                    v-model:value="settings.language"
-                    :options="languageOptions"
-                    style="flex: 1; min-width: 0;"
-                />
-            </label>
+    <a-modal
+        v-model:open="settingsOpen"
+        width="800px",
+        :title="null"
+        :footer="null"
+        @ok="saveSettings"
+        @cancel="settingsOpen = false"
+    >
+        <a-tabs v-model:activeKey="activeKey" centered type="line">
+            <a-tab-pane :key="'settings'" :tab="t('settings')">
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('language') }}：</span>
+                    <a-select v-model:value="settings.language" :options="languageOptions" style="flex: 1; min-width: 0;" />
+                </label>
 
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('api') }}：</span>
-                <a-input v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
-            </label>
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('api') }}：</span>
+                    <a-input v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
+                </label>
 
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('secret') }}：</span>
-                <a-input 
-                    v-model:value="settings.secret" 
-                    placeholder="例如：sk-..."
-                    style="flex: 1; min-width: 0;"    
-                />
-            </label>
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('secret') }}：</span>
+                    <a-input v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" style="flex: 1; min-width: 0;" />
+                </label>
 
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('model') }}：</span>
-                <a-input
-                    v-model:value="settings.model"
-                    :placeholder="t('modelPlaceholder')"
-                    style="flex: 1; min-width: 0;"
-                />
-            </label>
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('model') }}：</span>
+                    <a-input v-model:value="settings.model" :placeholder="t('modelPlaceholder')" style="flex: 1; min-width: 0;" />
+                </label>
 
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('mode') }}：</span>
-                <a-switch
-                    v-model:checked="settings.focusMode"
-                    :checked-children="t('focus')"
-                    :un-checked-children="t('free')"
-                    :style="{ width: '80px' }"
-                />
-            </label>
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('mode') }}：</span>
+                    <a-switch v-model:checked="settings.focusMode" :checked-children="t('focus')" :un-checked-children="t('free')" :style="{ width: '80px' }" />
+                </label>
 
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
-                <a-input-number
-                    v-model:value="settings.depth"
-                    :min="1"
-                    :max="10"
-                    :step="1"
-                    style="flex: 0 0 auto; width: 120px;"
-                />
-            </label>
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
+                    <a-input-number v-model:value="settings.depth" :min="1" :max="10" :step="1" style="flex: 0 0 auto; width: 120px;" />
+                </label>
 
-            <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                <span style="white-space: nowrap;">{{ t('thinkingMethod') }}：</span>
-                <a-select
-                    v-model:value="settings.thinkingModel"
-                    :options="thinkingModels"
-                    style="flex: 0 0 auto; min-width: 200px;"
-                    :placeholder="t('thinkingMethod')"
-                />
-            </label>
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('thinkingMethod') }}：</span>
+                    <a-select v-model:value="settings.thinkingModel" :options="thinkingModels" style="flex: 0 0 auto; min-width: 200px;" :placeholder="t('thinkingMethod')" />
+                </label>
 
-            <label class="field">
-                <span>{{ t('systemPrompt') }}：</span>
-                <a-textarea
-                    v-model:value="settings.systemPrompt"
-                    :placeholder="t('systemPromptPlaceholder')"
-                    :auto-size="{ minRows: 2, maxRows: 5 }"
-                />
-            </label>
+                <label class="field">
+                    <span>{{ t('systemPrompt') }}：</span>
+                    <a-textarea v-model:value="settings.systemPrompt" :placeholder="t('systemPromptPlaceholder')" :auto-size="{ minRows: 2, maxRows: 5 }" />
+                </label>
 
-            <label class="field">
-                <span>{{ t('layout') }}：</span>
-            </label>
-            <div class="chart-list">
-                <a-button
-                    v-for="l in layouts"
-                    :key="l.key"
-                    size="small"
-                    @click="applyLayout(l.key)"
-                >
-                    {{ l.name }}
-                </a-button>
-            </div>
+                <label class="field">
+                    <span>{{ t('layout') }}：</span>
+                </label>
+                <div class="chart-list">
+                    <a-button v-for="l in layouts" :key="l.key" size="small" @click="applyLayout(l.key)">
+                        {{ l.name }}
+                    </a-button>
+                </div>
 
-            <div class="field">
-                <span>{{ t('info') }}
-                    <br>- {{ t('helpFocus') }}
-                    <br>- {{ t('helpFree') }}
-                    <br>- {{ t('thinkingMethod') }}：{{ currentThinkingModel?.label || settings.thinkingModel }}。
-                    <br><span style="white-space: pre-wrap;">{{ currentThinkingModel?.example || '' }}</span>
-                </span>
-            </div>
-        </div>
-        <div class="panel-actions">
-            <a-button type="primary" @click="saveSettings">{{ t('save') }}</a-button>
-            <a-button style="margin-left: 8px" type="primary" danger @click="settingsOpen = false">{{ t('close') }}</a-button>
-        </div>
-    </div>
+                <div class="field">
+                    <span>{{ t('info') }}
+                        <br>- {{ t('helpFocus') }}
+                        <br>- {{ t('helpFree') }}
+                        <br>- {{ t('thinkingMethod') }}：{{ currentThinkingModel?.label || settings.thinkingModel }}。
+                        <br><span style="white-space: pre-wrap;">{{ currentThinkingModel?.example || '' }}</span>
+                    </span>
+                </div>
+            </a-tab-pane>
+
+            <a-tab-pane :key="'export'" :tab="t('export')">
+                <div class="field">
+                    <span>选择导出格式：</span>
+                </div>
+                <div class="chart-list">
+                    <a-button size="small" @click="exportMap('smm')">.smm</a-button>
+                    <a-button size="small" @click="exportMap('json')">.json</a-button>
+                    <a-button size="small" @click="exportMap('svg')">.svg</a-button>
+                    <a-button size="small" @click="exportMap('png')">.png</a-button>
+                    <a-button size="small" @click="exportMap('pdf')">.pdf</a-button>
+                    <a-button size="small" @click="exportMap('md')">.md</a-button>
+                    <a-button size="small" @click="exportMap('xmind')">.xmind</a-button>
+                    <a-button size="small" @click="exportMap('txt')">.txt</a-button>
+                </div>
+            </a-tab-pane>
+
+            <a-tab-pane :key="'import'" :tab="t('import')">
+                <div class="field">
+                    <span>导入支持格式：.smm、.json、.xmind、.xlsx、.md</span>
+                    <a-upload
+                        :accept="'.smm,.json,.xmind,.xlsx,.md'"
+                        :before-upload="handleBeforeUpload"
+                        :show-upload-list="false"
+                    >
+                        <a-button type="primary">选择文件</a-button>
+                    </a-upload>
+                </div>
+            </a-tab-pane>
+        </a-tabs>
+    </a-modal>
 </template>
 
-<style>
-/** @import "./simpleMindMap.esm.css"; **/
-</style>
-
 <script setup>
-// script setup 导入区块
-// 引入 Ant Design Vue 组件
-import { Button as AButton, Input as AInput, InputNumber as AInputNumber, Textarea as ATextarea, Switch as ASwitch, Select as ASelect } from 'ant-design-vue'
+import {
+    Button as AButton,
+    Input as AInput,
+    InputNumber as AInputNumber,
+    Textarea as ATextarea,
+    Switch as ASwitch,
+    Select as ASelect,
+    Modal as AModal,
+    Tabs as ATabs,
+    TabPane as ATabPane,
+    Upload as AUpload,
+} from 'ant-design-vue'
 // 引入图标（新增 MinusOutlined）
-import { MinusOutlined, PlusOutlined, ArrowLeftOutlined, ArrowRightOutlined, DeleteOutlined, SettingOutlined, BulbOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue'
-import { ref, onMounted, watch, h, computed } from 'vue'
+import {
+    MinusOutlined,
+    PlusOutlined,
+    LeftOutlined,
+    RightOutlined,
+    DeleteOutlined,
+    SettingOutlined,
+    BulbOutlined,
+} from '@ant-design/icons-vue'
+import { ref, onMounted, h, computed } from 'vue'
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError } from './modal.js'
+import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap } from './modal.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-import { thinkingModels as thinkingModelOptions, layouts as layoutOptions } from './const.js'
-import zhCN from './locales/zh-CN.json'
-import enUS from './locales/en-US.json'
+// 移除对 zh-CN.json / en-US.json 的直接导入，改为从 const.js 统一导入
+import { thinkingModels, layouts as layoutOptions, languageOptions, messages } from './const.js'
 
 const mindMapRef = ref(null)
 const activeNodes = ref([])
@@ -165,29 +174,8 @@ const settings = ref({
     language: 'zh-CN' // 新增：默认语言
 })
 
-const messages = {
-    'zh-CN': zhCN,
-    'en-US': enUS
-}
-
-// 语言选项（动态标签）
-const languageOptions = computed(() => {
-    return [
-        {
-            label: '简体中文',
-            value: 'zh-CN'
-        },
-        {
-            label: 'English',
-            value: 'en-US'
-        }
-    ]
-})
-
+// 保留 t 函数，直接使用 const.js 导出的 messages
 const t = (key) => messages[settings.value.language]?.[key] ?? key
-
-// 思考模型选项列表
-const thinkingModels = thinkingModelOptions
 
 const currentThinkingModel = computed(() => {
     const v = settings.value.thinkingModel
@@ -348,70 +336,6 @@ const applyZoom = (next) => {
 const zoomIn = () => applyZoom(zoom.value + 0.1)
 const zoomOut = () => applyZoom(zoom.value - 0.1)
 
-// 导出 JSON
-const exportJson = () => {
-    try {
-        const mm = mindMapRef.value
-        const current = (mm && typeof mm.getData === 'function') ? mm.getData() : loadMindMapData(null)
-        const data = current || { data: { text: '主题' }, children: [] }
-        const json = JSON.stringify(data, null, 2)
-        const blob = new Blob([json], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const ts = new Date()
-        const pad = (n) => String(n).padStart(2, '0')
-        const name = `mindmap-${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}.json`
-        const a = document.createElement('a')
-        a.href = url
-        a.download = name
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-    } catch (e) {
-        showError(`导出失败：${e?.message || e}`)
-    }
-}
-
-// 导入 JSON
-const importJson = () => {
-    try {
-        const input = document.createElement('input')
-        input.type = 'file'
-        input.accept = '.json,application/json,text/json'
-        input.onchange = () => {
-            const file = input.files?.[0]
-            if (!file) return
-            const reader = new FileReader()
-            reader.onload = () => {
-                try {
-                    const text = String(reader.result || '')
-                    const data = JSON.parse(text)
-                    if (!data || typeof data !== 'object' || !data.data || typeof data.data !== 'object') {
-                        throw new Error('文件内容不是有效的导图JSON结构')
-                    }
-                    const mm = mindMapRef.value
-                    if (!mm || typeof mm.setData !== 'function') {
-                        throw new Error('MindMap未初始化或不支持导入')
-                    }
-                    mm.setData(data)
-                    if (mm.view && typeof mm.view.reset === 'function') mm.view.reset()
-                    // 持久化
-                    try { saveMindMapData(data) } catch {}
-                } catch (err) {
-                    showError(`导入失败：${err?.message || err}`)
-                }
-            }
-            reader.onerror = () => {
-                showError('读取文件失败')
-            }
-            reader.readAsText(file)
-        }
-        input.click()
-    } catch (e) {
-        showError(`导入失败：${e?.message || e}`)
-    }
-}
-
 onMounted(() => {
     loadSettings()
     // 使用已保存的导图数据作为初始数据；若无则回落到示例数据
@@ -452,4 +376,15 @@ onMounted(() => {
         }
     })
 })
+
+const activeKey = ref('settings')
+
+const exportMap = (type) => {
+    return exportMindMap(mindMapRef.value, type)
+}
+
+const handleBeforeUpload = async (file) => {
+    await importFileToMindMap(file, mindMapRef.value)
+    return false
+}
 </script>

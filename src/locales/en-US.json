@@ -5,8 +5,6 @@
   "delete": "Delete",
   "settings": "Settings",
   "aiGenerate": "AI Generate",
-  "exportJson": "Export JSON",
-  "importJson": "Import JSON",
   "api": "API Base",
   "apiPlaceholder": "e.g., OpenAI API endpoint",
   "secret": "Secret",
@@ -27,5 +25,7 @@
   "info": "Info:",
   "helpFocus": "Focus Mode: Continue generation based on the selected node’s prompt.",
   "helpFree": "Free Mode: Use the global system prompt and edit anytime.",
-  "exampleLabel": "Example:"
+  "exampleLabel": "Example:",
+  "export": "Export",
+  "import": "Import"
 }

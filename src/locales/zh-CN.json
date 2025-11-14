@@ -5,8 +5,6 @@
   "delete": "删除",
   "settings": "设置",
   "aiGenerate": "AI生成",
-  "exportJson": "导出JSON",
-  "importJson": "导入JSON",
   "api": "API Base",
   "apiPlaceholder": "例如：OpenAI API地址",
   "secret": "秘钥",
@@ -27,5 +25,7 @@
   "info": "说明：",
   "helpFocus": "专注模式：每次基于当前节点的专属提示词进行后续生成。",
   "helpFree": "自由模式：始终使用全局系统提示词，可以按照自己的想法随时修改。",
-  "exampleLabel": "示例："
+  "exampleLabel": "示例：",
+  "export": "导出",
+  "import": "导入"
 }
