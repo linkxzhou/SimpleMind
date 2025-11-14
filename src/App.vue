@@ -8,8 +8,10 @@
                 <a-button size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
             </div>
 
-            <a-button :icon="h(ArrowLeftOutlined)" @click="back"></a-button>
-            <a-button :icon="h(ArrowRightOutlined)" @click="forward"></a-button>
+            <a-button :icon="h(ArrowLeftOutlined)" @click="back" :title="t('back')"></a-button>
+            <a-button :icon="h(ArrowRightOutlined)" @click="forward" :title="t('forward')"></a-button>
+            <a-button :icon="h(DownloadOutlined)" @click="exportJson" :title="t('exportJson')"></a-button>
+            <a-button :icon="h(UploadOutlined)" @click="importJson" :title="t('importJson')"></a-button>
             <a-button :icon="h(PlusOutlined)" :style="{ padding: '4px 10px' }" @click="newMap">{{ t('new') }}</a-button>
             <a-button type="primary" danger :icon="h(DeleteOutlined)" :style="{ padding: '4px 10px' }" @click="removeSelected">{{ t('delete') }}</a-button>
             <a-button :icon="h(SettingOutlined)" :style="{ padding: '4px 10px' }" @click="toggleSettings">{{ t('settings') }}</a-button>
@@ -131,7 +133,7 @@
 // 引入 Ant Design Vue 组件
 import { Button as AButton, Input as AInput, InputNumber as AInputNumber, Textarea as ATextarea, Switch as ASwitch, Select as ASelect } from 'ant-design-vue'
 // 引入图标（新增 MinusOutlined）
-import { MinusOutlined, PlusOutlined, ArrowLeftOutlined, ArrowRightOutlined, DeleteOutlined, SettingOutlined, BulbOutlined } from '@ant-design/icons-vue'
+import { MinusOutlined, PlusOutlined, ArrowLeftOutlined, ArrowRightOutlined, DeleteOutlined, SettingOutlined, BulbOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import { ref, onMounted, watch, h, computed } from 'vue'
 import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError } from './modal.js'
@@ -345,6 +347,70 @@ const applyZoom = (next) => {
 
 const zoomIn = () => applyZoom(zoom.value + 0.1)
 const zoomOut = () => applyZoom(zoom.value - 0.1)
+
+// 导出 JSON
+const exportJson = () => {
+    try {
+        const mm = mindMapRef.value
+        const current = (mm && typeof mm.getData === 'function') ? mm.getData() : loadMindMapData(null)
+        const data = current || { data: { text: '主题' }, children: [] }
+        const json = JSON.stringify(data, null, 2)
+        const blob = new Blob([json], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const ts = new Date()
+        const pad = (n) => String(n).padStart(2, '0')
+        const name = `mindmap-${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}.json`
+        const a = document.createElement('a')
+        a.href = url
+        a.download = name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+    } catch (e) {
+        showError(`导出失败：${e?.message || e}`)
+    }
+}
+
+// 导入 JSON
+const importJson = () => {
+    try {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = '.json,application/json,text/json'
+        input.onchange = () => {
+            const file = input.files?.[0]
+            if (!file) return
+            const reader = new FileReader()
+            reader.onload = () => {
+                try {
+                    const text = String(reader.result || '')
+                    const data = JSON.parse(text)
+                    if (!data || typeof data !== 'object' || !data.data || typeof data.data !== 'object') {
+                        throw new Error('文件内容不是有效的导图JSON结构')
+                    }
+                    const mm = mindMapRef.value
+                    if (!mm || typeof mm.setData !== 'function') {
+                        throw new Error('MindMap未初始化或不支持导入')
+                    }
+                    mm.setData(data)
+                    if (mm.view && typeof mm.view.reset === 'function') mm.view.reset()
+                    // 持久化
+                    try { saveMindMapData(data) } catch {}
+                } catch (err) {
+                    showError(`导入失败：${err?.message || err}`)
+                }
+            }
+            reader.onerror = () => {
+                showError('读取文件失败')
+            }
+            reader.readAsText(file)
+        }
+        input.click()
+    } catch (e) {
+        showError(`导入失败：${e?.message || e}`)
+    }
+}
 
 onMounted(() => {
     loadSettings()
