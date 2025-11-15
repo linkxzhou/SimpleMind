@@ -2,6 +2,8 @@ import { Modal } from 'ant-design-vue'
 import { h } from 'vue'
 import { LoadingOutlined } from '@ant-design/icons-vue'
 import MindMap from 'simple-mind-map'
+import TouchEvent from 'simple-mind-map/src/plugins/TouchEvent.js'
+import Drag from 'simple-mind-map/src/plugins/Drag.js'
 import Export from 'simple-mind-map/src/plugins/Export.js'
 import ExportPDF from 'simple-mind-map/src/plugins/ExportPDF.js'
 import ExportXMind from 'simple-mind-map/src/plugins/ExportXMind.js'
@@ -13,6 +15,8 @@ try {
     MindMap.usePlugin(Export)
     MindMap.usePlugin(ExportPDF)
     MindMap.usePlugin(ExportXMind)
+    MindMap.usePlugin(TouchEvent)
+    MindMap.usePlugin(Drag)
 } catch (e) {
     // 忽略插件重复注册等异常
 }

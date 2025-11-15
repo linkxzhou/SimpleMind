@@ -47,7 +47,7 @@ yarn build
 - 导出 JSON：点击工具栏“下载”图标，自动保存为 `mindmap-YYYYMMDD-HHmmss.json`
 - 导入 JSON：点击工具栏“上传”图标，选择有效的导图 JSON 文件后立即加载并重置视图
 
-## 依赖
+## 参考
 （1）https://wanglin2.github.io/mind-map-docs/api/constructor/constructor-methods.html#on-event-fn  
 （2）https://ant.design/  
 （3）https://medium.com/vincent-chen/%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97-%E6%80%9D%E8%80%83%E7%9A%84%E6%A1%86%E6%9E%B6-%E4%BA%8C-%E4%B9%9D%E5%A4%A7%E6%80%9D%E7%B6%AD%E6%A8%A1%E5%9E%8B-e6e6d5ad568

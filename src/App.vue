@@ -1,32 +1,51 @@
 <template>
     <div class="toolbar">
         <div class="toolbar-inner">
-            <!-- 缩放控件 -->
             <div class="zoom-control">
-                <a-button size="small" shape="circle" :icon="h(MinusOutlined)" @click="zoomOut" />
-                <span class="zoom-percent">{{ Math.round(zoom * 100) }}%</span>
-                <a-button size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
+                <a-button class="mobile-hide" size="small" shape="circle" :icon="h(MinusOutlined)" @click="zoomOut" />
+                <span class="zoom-percent mobile-hide">{{ Math.round(zoom * 100) }}%</span>
+                <a-button class="mobile-hide" size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
             </div>
 
             <a-button :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
             <a-button :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
-            <a-button :icon="h(PlusOutlined)" :style="{ padding: '4px 10px' }" @click="newMap">{{ t('new') }}</a-button>
-            <a-button type="primary" danger :icon="h(DeleteOutlined)" :style="{ padding: '4px 10px' }"
-                @click="removeSelected">{{ t('delete') }}</a-button>
-            <a-button :icon="h(SettingOutlined)" :style="{ padding: '4px 10px' }" @click="toggleSettings">{{
-                t('settings') }}</a-button>
-            <a-button type="primary" :icon="h(BulbOutlined)" :style="{ padding: '4px 10px' }" @click="aiGenerate">{{
-                t('aiGenerate') }}</a-button>
+            <a-button :icon="h(FileAddOutlined)" @click="newMap" :title="t('newMap')"></a-button>
+            <a-button :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
+            <a-button :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
+            <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')"></a-button>
+            <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
+            <a-button type="primary" :icon="h(BulbOutlined)" :style="{ padding: '4px 10px' }" @click="aiGenerate" :title="t('aiGenerate')">
+                <span class="mobile-hide-text">{{ t('aiGenerate') }}</span>
+            </a-button>
         </div>
     </div>
+    
     <div id="mindMapContainer"></div>
+    <div
+        v-if="show"
+        class="context-menu"
+        :style="{ left: `${left}px`, top: `${top}px` }"
+    >
+        <div class="menu-item" @click="addChildNode">{{ t('addChildNode') }}</div>
+        <div class="menu-item" @click="removeCurrentNode">{{ t('removeCurrentNode') }}</div>
+        <div class="menu-item" @click="removeNode">{{ t('removeNodeWithChildren') }}</div>
+        <div class="menu-item" @click="copyNode">{{ t('copyNode') }}</div>
+        <div class="menu-item" @click="cutNode">{{ t('cutNode') }}</div>
+        <div
+            class="menu-item"
+            :class="{ disabled: !clipboardData }"
+            @click="clipboardData ? pasteNode() : null"
+        >
+            {{ t('pasteNode') }}
+        </div>
+    </div>
+
     <a-modal
         v-model:open="settingsOpen"
         width="800px",
         :title="null"
         :footer="null"
-        @ok="saveSettings"
-        @cancel="settingsOpen = false"
+        @cancel="saveSettings"
     >
         <a-tabs v-model:activeKey="activeKey" centered type="line">
             <a-tab-pane :key="'settings'" :tab="t('settings')">
@@ -55,6 +74,17 @@
                     <a-switch v-model:checked="settings.focusMode" :checked-children="t('focus')" :un-checked-children="t('free')" :style="{ width: '80px' }" />
                 </label>
 
+                <label class="field">
+                    <span>{{ t('layout') }}：</span>
+                        <div class="chart-list">
+                            <a-button v-for="l in layouts" :key="l.key" size="small" :type="settings?.layout === l.key ? 'primary' : 'default'"
+                                @click="applyLayout(l.key)"
+                            >
+                                {{ l.name }}
+                            </a-button>
+                        </div>
+                </label>
+
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
                     <a-input-number v-model:value="settings.depth" :min="1" :max="10" :step="1" style="flex: 0 0 auto; width: 120px;" />
@@ -62,36 +92,33 @@
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('thinkingMethod') }}：</span>
-                    <a-select v-model:value="settings.thinkingModel" :options="thinkingModels" style="flex: 0 0 auto; min-width: 200px;" :placeholder="t('thinkingMethod')" />
+                    <a-select v-model:value="settings.thinkingModel" :options="thinkingModels" style="flex: 0 0 auto; min-width: 120px;" :placeholder="t('thinkingMethod')" />
                 </label>
-
-                <label class="field">
-                    <span>{{ t('systemPrompt') }}：</span>
-                    <a-textarea v-model:value="settings.systemPrompt" :placeholder="t('systemPromptPlaceholder')" :auto-size="{ minRows: 2, maxRows: 5 }" />
-                </label>
-
-                <label class="field">
-                    <span>{{ t('layout') }}：</span>
-                </label>
-                <div class="chart-list">
-                    <a-button v-for="l in layouts" :key="l.key" size="small" @click="applyLayout(l.key)">
-                        {{ l.name }}
-                    </a-button>
-                </div>
-
+                
                 <div class="field">
-                    <span>{{ t('info') }}
-                        <br>- {{ t('helpFocus') }}
-                        <br>- {{ t('helpFree') }}
-                        <br>- {{ t('thinkingMethod') }}：{{ currentThinkingModel?.label || settings.thinkingModel }}。
+                    <span>{{ t('modesTitle') }}：
+                        <br>  · {{ t('helpFocus') }}
+                        <br>  · {{ t('helpFree') }}
+                        <br>  · {{ t('thinkingMethod') }}：{{ currentThinkingModel?.label || settings.thinkingModel }}
                         <br><span style="white-space: pre-wrap;">{{ currentThinkingModel?.example || '' }}</span>
                     </span>
                 </div>
             </a-tab-pane>
 
+            <a-tab-pane :key="'prompt'" :tab="t('systemPrompt')">
+                <label class="field">
+                    <span>{{ t('systemPrompt') }}：{{ t('systemPromptUsage') }}</span>
+                    <a-textarea
+                        v-model:value="settings.systemPrompt"
+                        :placeholder="t('systemPromptPlaceholder')"
+                        :auto-size="{ minRows: 5, maxRows: 12 }"
+                    />
+                </label>
+            </a-tab-pane>
+
             <a-tab-pane :key="'export'" :tab="t('export')">
                 <div class="field">
-                    <span>选择导出格式：</span>
+                    <span>{{ t('selectExportFormat') }}</span>
                 </div>
                 <div class="chart-list">
                     <a-button size="small" @click="exportMap('smm')">.smm</a-button>
@@ -107,14 +134,23 @@
 
             <a-tab-pane :key="'import'" :tab="t('import')">
                 <div class="field">
-                    <span>导入支持格式：.smm、.json、.xmind、.xlsx、.md</span>
+                    <span>{{ t('importSupportedFormats') }}</span>
                     <a-upload
                         :accept="'.smm,.json,.xmind,.xlsx,.md'"
                         :before-upload="handleBeforeUpload"
                         :show-upload-list="false"
                     >
-                        <a-button type="primary">选择文件</a-button>
+                        <a-button type="primary">{{ t('chooseFile') }}</a-button>
                     </a-upload>
+                </div>
+            </a-tab-pane>
+
+            <a-tab-pane :key="'info'" :tab="t('info')">
+                <div class="field">
+                    <span>
+                        - {{ t('shortcuts') }}：{{ t('shortcutsHint') }}<br>
+                        - 关注开源项目：<a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
+                    </span>
                 </div>
             </a-tab-pane>
         </a-tabs>
@@ -134,24 +170,25 @@ import {
     TabPane as ATabPane,
     Upload as AUpload,
 } from 'ant-design-vue'
-// 引入图标（新增 MinusOutlined）
 import {
     MinusOutlined,
     PlusOutlined,
     LeftOutlined,
     RightOutlined,
-    DeleteOutlined,
     SettingOutlined,
     BulbOutlined,
+    FileAddOutlined,
+    DeleteOutlined,
+    CloudDownloadOutlined,
 } from '@ant-design/icons-vue'
-import { ref, onMounted, h, computed } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, h, computed } from 'vue'
 import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap } from './modal.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-// 移除对 zh-CN.json / en-US.json 的直接导入，改为从 const.js 统一导入
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages } from './const.js'
 
+// 状态与设置
 const mindMapRef = ref(null)
 const activeNodes = ref([])
 const settingsOpen = ref(false)
@@ -168,10 +205,11 @@ const settings = ref({
     model: ENV_MODEL || '',
     temperature: 0.7,
     systemPrompt: '',
-    depth: 3,
+    depth: 10,
     focusMode: true,
     thinkingModel: 'default',
-    language: 'zh-CN' // 新增：默认语言
+    language: 'zh-CN',
+    layout: 'mindMap',
 })
 
 // 保留 t 函数，直接使用 const.js 导出的 messages
@@ -202,9 +240,132 @@ const saveSettings = () => {
     settingsOpen.value = false
 }
 
+// 节点数据辅助
 const getNodeText = (node) => node?.data?.text || (node?.getData?.()?.text) || ''
 const getNodeSystemPrompt = (node) => node?.data?.nextSystemPrompt || (node?.getData?.()?.nextSystemPrompt) || ''
 
+// 视图与布局
+const zoom = ref(1)
+
+const applyZoom = (next) => {
+    const mm = mindMapRef.value
+    const clamped = Math.min(2, Math.max(0.2, Number(next) || 1))
+    zoom.value = clamped
+    if (!mm) return
+    const v = mm.view
+
+    // 优先调用库方法（若存在）
+    if (v && typeof v.setScale === 'function') {
+        v.setScale(clamped)
+        return
+    }
+
+    if (v && typeof v.scale === 'function') {
+        // 有些库用 scale(value) 设定缩放
+        v.scale(clamped)
+        return
+    }
+
+    const el = document.getElementById('mindMapContainer')
+    if (el) {
+        el.style.transform = `scale(${clamped})`
+        el.style.transformOrigin = 'top left'
+    }
+}
+
+const zoomIn = () => applyZoom(zoom.value + 0.1)
+const zoomOut = () => applyZoom(zoom.value - 0.1)
+
+const layouts = layoutOptions
+
+const applyLayout = (key) => {
+    if (!mindMapRef.value) return
+    mindMapRef.value.setLayout(key)
+    mindMapRef.value.view.reset()
+    settings.value.layout = key
+}
+
+// 右键菜单状态与工具
+const type = ref('')                 // 当前右键类型：'node' 等
+const currentNode = shallowRef(null) // 当前右键的节点
+const left = ref(0)                  // 菜单X坐标（clientX）
+const top = ref(0)                   // 菜单Y坐标（clientY）
+const show = ref(false)              // 是否显示菜单
+const clipboardData = ref(null)      // 复制/剪切的缓存数据
+
+const hideContextMenu = () => { show.value = false }
+
+// 深拷贝节点数据并清理 uid，避免插入时冲突
+const cloneNodeData = (node) => {
+    const raw = node?.getData ? node.getData() : { data: node?.data || {}, children: node?.children || [] }
+    const copy = JSON.parse(JSON.stringify(raw))
+    const stripUid = (n) => {
+        if (n?.data) delete n.data.uid
+        if (Array.isArray(n?.children)) n.children.forEach(stripUid)
+    }
+    stripUid(copy)
+    return copy
+}
+
+// 节点操作（右键菜单）
+const addChildNode = () => {
+    if (!mindMapRef.value) {
+        showError('请先创建一个思维导图')
+        return
+    }
+    const target = currentNode.value || activeNodes.value?.[0]
+    if (!target) {
+        showError('未选择节点')
+        return
+    }
+
+    mindMapRef.value.execCommand('INSERT_CHILD_NODE', false, [target])
+    hideContextMenu()
+}
+
+const removeCurrentNode = () => {
+    if (!mindMapRef.value) {
+        showError('请先创建一个思维导图')
+        return
+    }
+
+    const target = currentNode.value || activeNodes.value?.[0]
+    if (!target) {
+        showError('未选择节点')
+        return
+    }
+    mindMapRef.value.execCommand('REMOVE_CURRENT_NODE', false, [target])
+    hideContextMenu()
+}
+
+const removeNode = () => {
+    if (!mindMapRef.value || !currentNode.value) return
+    mindMapRef.value.execCommand('REMOVE_NODE', false, [currentNode.value])
+    hideContextMenu()
+}
+
+const copyNode = () => {
+    if (!currentNode.value) return
+    clipboardData.value = cloneNodeData(currentNode.value)
+    hideContextMenu()
+}
+
+const cutNode = () => {
+    if (!mindMapRef.value || !currentNode.value) return
+    clipboardData.value = cloneNodeData(currentNode.value)
+    // 删除当前节点（含子或仅当前，按需求选择）
+    mindMapRef.value.execCommand('REMOVE_NODE', false, [currentNode.value])
+    hideContextMenu()
+}
+
+const pasteNode = () => {
+    if (!mindMapRef.value || !currentNode.value || !clipboardData.value) return
+    const { data, children = [] } = clipboardData.value
+    mindMapRef.value.execCommand('INSERT_CHILD_NODE', false, [currentNode.value], data, children)
+    hideContextMenu()
+}
+
+// 基础导图操作
 const newMap = () => {
     if (!mindMapRef.value) return
     mindMapRef.value.setData({ data: { text: '主题' }, children: [] })
@@ -221,11 +382,7 @@ const forward = () => {
     mindMapRef.value.execCommand('FORWARD')
 }
 
-const removeSelected = () => {
-    if (!mindMapRef.value) return
-    mindMapRef.value.execCommand('REMOVE_NODE')
-}
-
+// AI 生成
 const aiGenerate = async () => {
     // 判断API Base是否配置
     if (!settings.value.api || settings.value.api.trim().length === 0) {
@@ -246,21 +403,15 @@ const aiGenerate = async () => {
     }
 
     // 新增：按模式选择系统提示词
-    let nodeSystemPrompt
-    if (settings.value.focusMode) {
-        nodeSystemPrompt = getNodeSystemPrompt(baseNode)
-        if (!nodeSystemPrompt || nodeSystemPrompt.trim().length === 0) {
-            nodeSystemPrompt = settings.value.systemPrompt
-        }
-    } else {
-        nodeSystemPrompt = settings.value.systemPrompt
-    }
+    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
+    const systemPrompt = settings.value.systemPrompt
 
     const count = Math.max(1, Math.min(10, Number(settings.value.depth) || 3))
     const prompt = libBuildPrompt(
         baseText,
         count,
         nodeSystemPrompt,
+        systemPrompt,
         settings.value
     )
 
@@ -293,52 +444,30 @@ const aiGenerate = async () => {
     }
 }
 
+// 设置与导入导出面板
+const activeKey = ref('settings')
+
 const toggleSettings = () => {
     settingsOpen.value = !settingsOpen.value
 }
 
-const layouts = layoutOptions
-
-const applyLayout = (key) => {
-    if (!mindMapRef.value) return
-    mindMapRef.value.setLayout(key)
-    mindMapRef.value.view.reset()
+const openExportPanel = () => {
+    settingsOpen.value = true
+    activeKey.value = 'export'
 }
 
-const zoom = ref(1)
-
-const applyZoom = (next) => {
-    const mm = mindMapRef.value
-    const clamped = Math.min(2, Math.max(0.2, Number(next) || 1))
-    zoom.value = clamped
-    if (!mm) return
-    const v = mm.view
-
-    // 优先调用库方法（若存在）
-    if (v && typeof v.setScale === 'function') {
-        v.setScale(clamped)
-        return
-    }
-
-    if (v && typeof v.scale === 'function') {
-        // 有些库用 scale(value) 设定缩放
-        v.scale(clamped)
-        return
-    }
-
-    const el = document.getElementById('mindMapContainer')
-    if (el) {
-        el.style.transform = `scale(${clamped})`
-        el.style.transformOrigin = 'top left'
-    }
+const exportMap = (type) => {
+    return exportMindMap(mindMapRef.value, type)
 }
 
-const zoomIn = () => applyZoom(zoom.value + 0.1)
-const zoomOut = () => applyZoom(zoom.value - 0.1)
+const handleBeforeUpload = async (file) => {
+    await importFileToMindMap(file, mindMapRef.value)
+    return false
+}
 
+// 初始化与事件绑定
 onMounted(() => {
     loadSettings()
-    // 使用已保存的导图数据作为初始数据；若无则回落到示例数据
     const initialData = loadMindMapData({
         data: { text: '主题' },
         children: []
@@ -367,6 +496,17 @@ onMounted(() => {
         activeNodes.value = activeNodeList || (node ? [node] : [])
     })
 
+    // 节点右键菜单
+    mindMap.on('node_contextmenu', (e, node) => {
+        e.preventDefault?.()
+        e.stopPropagation?.()
+        type.value = 'node'
+        left.value = e.clientX + 10
+        top.value = e.clientY + 10
+        show.value = true
+        currentNode.value = node
+    })
+
     // 数据变更时持久化到 sessionStorage
     mindMap.on('data_change', (data) => {
         try {
@@ -375,16 +515,12 @@ onMounted(() => {
             console.warn('写入 sessionStorage 失败：', e)
         }
     })
+
+    // 点击其他位置关闭右键菜单
+    document.addEventListener('click', hideContextMenu)
 })
 
-const activeKey = ref('settings')
-
-const exportMap = (type) => {
-    return exportMindMap(mindMapRef.value, type)
-}
-
-const handleBeforeUpload = async (file) => {
-    await importFileToMindMap(file, mindMapRef.value)
-    return false
-}
+onUnmounted(() => {
+    document.removeEventListener('click', hideContextMenu)
+})
 </script>
