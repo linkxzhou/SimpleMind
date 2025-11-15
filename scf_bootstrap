@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 工作目录与端口（SCF 要求监听 9000）
+WORKDIR="$(cd "$(dirname "$0")" && pwd)"
+export PORT=9000
+export DIST_DIR="$WORKDIR/dist"
+
+echo "[SCF] Bootstrapping at $WORKDIR, PORT=$PORT"
+
+# 用 Node 启动一个轻量静态服务器（支持 SPA 路由回退）
+node - <<'NODE'
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const url = require('url');
+
+const dist = process.env.DIST_DIR || path.resolve(process.cwd(), 'dist');
+const PORT = Number(process.env.PORT || 9000);
+
+const types = {
+  '.html':'text/html; charset=utf-8',
+  '.css':'text/css; charset=utf-8',
+  '.js':'application/javascript; charset=utf-8',
+  '.json':'application/json; charset=utf-8',
+  '.png':'image/png',
+  '.jpg':'image/jpeg',
+  '.jpeg':'image/jpeg',
+  '.gif':'image/gif',
+  '.svg':'image/svg+xml',
+  '.ico':'image/x-icon',
+  '.txt':'text/plain; charset=utf-8'
+};
+
+const safe = (p) => {
+  const base = path.resolve(dist);
+  const abs = path.resolve(base, p.replace(/^\/+/, ''));
+  return abs.startsWith(base) ? abs : null;
+};
+
+const server = http.createServer((req, res) => {
+  try {
+    const parsed = url.parse(req.url);
+    let pathname = decodeURIComponent(parsed.pathname || '/');
+    if (pathname === '/') pathname = '/index.html';
+
+    let filePath = safe(pathname);
+    if (!filePath || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(dist, 'index.html'); // SPA fallback
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = types[ext] || 'application/octet-stream';
+    const stream = fs.createReadStream(filePath);
+
+    res.writeHead(200, { 'Content-Type': mime });
+    stream.on('error', (err) => {
+      console.error('[SCF] Read error:', err);
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Internal Server Error');
+    });
+    stream.pipe(res);
+  } catch (err) {
+    console.error('[SCF] Request error:', err);
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Internal Server Error');
+  }
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[SCF] Listening on ${PORT}, dist=${dist}`);
+});
+NODE
