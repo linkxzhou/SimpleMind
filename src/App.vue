@@ -42,7 +42,7 @@
 
     <a-modal
         v-model:open="settingsOpen"
-        width="800px",
+        width="800px"
         :title="null"
         :footer="null"
         @cancel="saveSettings"
@@ -51,7 +51,11 @@
             <a-tab-pane :key="'settings'" :tab="t('settings')">
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('language') }}：</span>
-                    <a-select v-model:value="settings.language" :options="languageOptions" style="flex: 1; min-width: 0;" />
+                    <a-select 
+                        v-model:value="settings.language" 
+                        :options="languageOptions" 
+                        :virtual="false"
+                        style="flex: 1; min-width: 0;" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
@@ -92,7 +96,11 @@
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('thinkingMethod') }}：</span>
-                    <a-select v-model:value="settings.thinkingModel" :options="thinkingModels" style="flex: 0 0 auto; min-width: 120px;" />
+                    <a-select 
+                        v-model:value="settings.thinkingModel" 
+                        :options="thinkingModelsOptions" 
+                        :virtual="false"
+                        style="flex: 0 0 auto; min-width: 120px;" />
                 </label>
                 
                 <div class="field">
@@ -219,6 +227,11 @@ const currentThinkingModel = computed(() => {
     const v = settings.value.thinkingModel
     return thinkingModels.find(m => m.value === v) || { label: v, value: v, example: '' }
 })
+
+const thinkingModelsOptions = thinkingModels.map(({ label, value }) => ({
+    label,
+    value,
+}))
 
 // 使用浏览器 sessionStorage 读取/保存设置
 const loadSettings = () => {
