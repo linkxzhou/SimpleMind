@@ -54,23 +54,22 @@
                     <a-select 
                         v-model:value="settings.language" 
                         :options="languageOptions" 
-                        :virtual="false"
                         style="flex: 1; min-width: 0;" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('api') }}：</span>
-                    <a-input v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
+                    <a-input name="api" v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('secret') }}：</span>
-                    <a-input v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" style="flex: 1; min-width: 0;" />
+                    <a-input name="secret" v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" style="flex: 1; min-width: 0;" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('model') }}：</span>
-                    <a-input v-model:value="settings.model" :placeholder="t('modelPlaceholder')" style="flex: 1; min-width: 0;" />
+                    <a-input name="model" v-model:value="settings.model" :placeholder="t('modelPlaceholder')" style="flex: 1; min-width: 0;" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
@@ -91,7 +90,7 @@
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
-                    <a-input-number v-model:value="settings.depth" :min="1" :max="10" :step="1" style="flex: 0 0 auto; width: 120px;" />
+                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="10" :step="1" style="flex: 0 0 auto; width: 120px;" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
@@ -99,7 +98,6 @@
                     <a-select 
                         v-model:value="settings.thinkingModel" 
                         :options="thinkingModelsOptions" 
-                        :virtual="false"
                         style="flex: 0 0 auto; min-width: 120px;" />
                 </label>
                 
