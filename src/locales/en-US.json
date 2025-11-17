@@ -12,7 +12,7 @@
   "model": "Model",
   "modelPlaceholder": "e.g., gpt-5",
   "language": "Language",
-  "mode": "Mode",
+  "mode": "AI Generate Mode",
   "focus": "Focus",
   "free": "Free",
   "childCountRange": "Max Nodes per Generation",

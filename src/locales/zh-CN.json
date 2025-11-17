@@ -12,7 +12,7 @@
   "model": "模型",
   "modelPlaceholder": "例如：gpt-5",
   "language": "语言",
-  "mode": "模式",
+  "mode": "AI生成模式",
   "focus": "专注",
   "free": "自由",
   "childCountRange": "一次生成最大节点数",

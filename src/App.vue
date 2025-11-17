@@ -92,7 +92,7 @@
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('thinkingMethod') }}：</span>
-                    <a-select v-model:value="settings.thinkingModel" :options="thinkingModels" style="flex: 0 0 auto; min-width: 120px;" :placeholder="t('thinkingMethod')" />
+                    <a-select v-model:value="settings.thinkingModel" :options="thinkingModels" style="flex: 0 0 auto; min-width: 120px;" />
                 </label>
                 
                 <div class="field">
@@ -111,7 +111,7 @@
                     <a-textarea
                         v-model:value="settings.systemPrompt"
                         :placeholder="t('systemPromptPlaceholder')"
-                        :auto-size="{ minRows: 5, maxRows: 12 }"
+                        :auto-size="{ minRows: 8, maxRows: 20 }"
                     />
                 </label>
             </a-tab-pane>
