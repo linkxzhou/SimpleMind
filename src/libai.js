@@ -40,7 +40,7 @@ ${examplePrompt}
 \`\`\`
  
 ## 要求
-- 输出JSON格式
+- 输出JSON格式，只需要一层JSON数据
 - 输出语言：${language}
 - 知识点思考方向：${nextSystemPrompt}
 - 根据知识的重要程度综合考虑知识点个数，最多生成 ${count} 个
