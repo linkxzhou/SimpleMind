@@ -54,7 +54,7 @@
                     <a-select 
                         v-model:value="settings.language" 
                         :options="languageOptions" 
-                        style="flex: 1; min-width: 0;" />
+                        style="flex: 0 0 auto; min-width: 120px;" />
                 </label>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
