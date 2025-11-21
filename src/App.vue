@@ -57,7 +57,7 @@
                         v-for="ex in item.example"
                         :key="ex.name"
                     >
-                        <a-button size="small" type="primary" @click="newMap(ex.json)" style="margin-left: 8px;">
+                        <a-button size="small" type="primary" @click="newMap(ex.content)" style="margin-left: 8px;">
                             {{ t('open') }}: {{ ex.name }}
                         </a-button>
                     </p>
@@ -130,7 +130,7 @@
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
-                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="10" :step="1" style="flex: 0 0 auto; width: 120px;" />
+                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" style="flex: 0 0 auto; width: 120px;" />
                 </label>
             </a-tab-pane>
 
@@ -215,7 +215,7 @@ import {
 } from '@ant-design/icons-vue'
 import { ref, shallowRef, onMounted, onUnmounted, h } from 'vue'
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap } from './modal.js'
+import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages } from './const.js'
@@ -226,11 +226,6 @@ const activeNodes = ref([])
 const settingsOpen = ref(false)
 const drawerOpen = ref(false)
 
-// 从环境变量读取默认值（Vite 约定使用 VITE_ 前缀）
-const env = (import.meta && import.meta.env) ? import.meta.env : {}
-const ENV_API = (env.VITE_API ?? '').trim()
-const ENV_SECRET = (env.VITE_SECRET ?? '').trim()
-const ENV_MODEL = (env.VITE_MODEL ?? '').trim()
 const showDrawer = () => { drawerOpen.value = true }
 const onClose = () => { 
     drawerOpen.value = false 
@@ -241,9 +236,9 @@ const settings = ref({
     api: ENV_API || '',
     secret: ENV_SECRET || '',
     model: ENV_MODEL || '',
-    temperature: 0.7,
+    temperature: 0.6,
     systemPrompt: '',
-    depth: 10,
+    depth: 5,
     thinkingModel: 'default',
     language: 'zh-CN',
     layout: 'mindMap',
@@ -339,100 +334,64 @@ const cloneNodeData = (node) => {
     return copy
 }
 
-// 节点操作（右键菜单）
-const addChildNode = () => {
+const validateTargetNode = () => {
     if (!mindMapRef.value) {
         showError('请先创建一个思维导图')
-        return
+        return false
     }
+
     const target = currentNode.value || activeNodes.value?.[0]
     if (!target) {
         showError('未选择节点')
-        return
+        return false
     }
 
+    return true
+}
+
+// 节点操作（右键菜单）
+const addChildNode = () => {
+    if (!validateTargetNode()) return
+    const target = currentNode.value || activeNodes.value?.[0]
     mindMapRef.value.execCommand('INSERT_CHILD_NODE', false, [target])
     hideContextMenu()
 }
 
 const removeCurrentNode = () => {
-    if (!mindMapRef.value) {
-        showError('请先创建一个思维导图')
-        return
-    }
-
+    if (!validateTargetNode()) return
     const target = currentNode.value || activeNodes.value?.[0]
-    if (!target) {
-        showError('未选择节点')
-        return
-    }
     mindMapRef.value.execCommand('REMOVE_CURRENT_NODE', false, [target])
     hideContextMenu()
 }
 
 const removeNode = () => {
-    if (!mindMapRef.value || !currentNode.value) return
-    mindMapRef.value.execCommand('REMOVE_NODE', false, [currentNode.value])
+    if (!validateTargetNode()) return
+    const target = currentNode.value || activeNodes.value?.[0]
+    mindMapRef.value.execCommand('REMOVE_NODE', false, [target])
     hideContextMenu()
 }
 
 const copyNode = () => {
-    if (!currentNode.value) return
-    clipboardData.value = cloneNodeData(currentNode.value)
+    if (!validateTargetNode()) return
+    const target = currentNode.value || activeNodes.value?.[0]
+    clipboardData.value = cloneNodeData(target)
     hideContextMenu()
 }
 
 const cutNode = () => {
-    if (!mindMapRef.value || !currentNode.value) return
-    clipboardData.value = cloneNodeData(currentNode.value)
-    // 删除当前节点（含子或仅当前，按需求选择）
-    mindMapRef.value.execCommand('REMOVE_NODE', false, [currentNode.value])
+    if (!validateTargetNode()) return
+    const target = currentNode.value || activeNodes.value?.[0]
+    clipboardData.value = cloneNodeData(target)
+    mindMapRef.value.execCommand('REMOVE_NODE', false, [target])
     hideContextMenu()
 }
 
 const pasteNode = () => {
-    if (!mindMapRef.value || !currentNode.value || !clipboardData.value) return
+    if (!validateTargetNode() || !clipboardData.value) return
     const { data, children = [] } = clipboardData.value
-    mindMapRef.value.execCommand('INSERT_CHILD_NODE', false, [currentNode.value], data, children)
+    const target = currentNode.value || activeNodes.value?.[0]
+    mindMapRef.value.execCommand('INSERT_CHILD_NODE', false, [target], data, children)
     hideContextMenu()
-}
-
-// 基础导图操作
-const newMap = async (tpl) => {
-    if (!mindMapRef.value) {
-        showError('请先创建一个思维导图')
-        return
-    }
-    try {
-        let data = null
-
-        // 未提供模板：使用空白导图
-        if (!tpl) {
-            data = { data: { text: '主题' }, children: [] }
-        } else if (typeof tpl === 'string') {
-            const s = tpl.trim()
-            if (s.startsWith('{') || s.startsWith('[')) {
-                data = JSON.parse(s)
-            } else {
-                const res = await fetch(s)
-                if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
-                const text = await res.text()
-                data = JSON.parse(text)
-            }
-        } else if (typeof tpl === 'object') {
-            data = tpl
-        }
-
-        // 基本校验与兜底
-        if (!data || !data.data) {
-            data = { data: { text: '主题' }, children: [] }
-        }
-
-        mindMapRef.value.setData(data)
-        mindMapRef.value.view.reset()
-    } catch (e) {
-        showError('导入模板失败', String(e?.message || e))
-    }
 }
 
 const back = () => {
@@ -443,6 +402,39 @@ const back = () => {
 const forward = () => {
     if (!mindMapRef.value) return
     mindMapRef.value.execCommand('FORWARD')
+}
+
+// 基础导图操作
+const newMap = async (tpl) => {
+    if (!mindMapRef.value) {
+        showError('请先创建一个思维导图')
+        return
+    }
+
+    try {
+        let data = { data: { text: '主题' }, children: [] }
+        if (typeof tpl === 'string') {
+            const s = tpl.trim()
+            if (s.startsWith('{') || s.startsWith('[')) {
+                data = JSON.parse(s)
+            } else {
+                // 新增：字符串视为 URL/路径，使用 fetch 加载 JSON
+                const res = await fetch(s)
+                if (!res.ok) {
+                    throw new Error(`模板加载失败，HTTP ${res.status}`)
+                }
+                const text = await res.text()
+                data = JSON.parse(text)
+            }
+        } else if (tpl && typeof tpl === 'object') {
+            data = (tpl && tpl.data) || { data: { text: '主题' }, children: [] }
+        }
+
+        mindMapRef.value.setData(data)
+        mindMapRef.value.view.reset()
+    } catch (e) {
+        showError('导入模板失败', String(e?.message || e))
+    }
 }
 
 // AI 生成
@@ -485,8 +477,7 @@ const aiGenerate = async () => {
         settings.value
     )
 
-    showLoading('AI生成中...', `🧠 Prompt: 
-${prompt}`)
+    showLoading('AI生成中...', `🧠 Prompt: \n${prompt}`)
     try {
         const { data } = await requestCompletions({
             api: settings.value.api,

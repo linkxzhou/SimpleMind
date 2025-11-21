@@ -21,6 +21,12 @@ try {
     // 忽略插件重复注册等异常
 }
 
+// 从环境变量读取默认值（Vite 约定使用 VITE_ 前缀）
+const env = (import.meta && import.meta.env) ? import.meta.env : {}
+export const ENV_API = (env.VITE_API ?? '').trim()
+export const ENV_SECRET = (env.VITE_SECRET ?? '').trim()
+export const ENV_MODEL = (env.VITE_MODEL ?? '').trim()
+
 // showLoading 修改片段
 export function showLoading(title = '加载中', content = '请稍候...') {
     Modal.info({
