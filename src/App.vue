@@ -9,18 +9,55 @@
 
             <a-button :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
             <a-button :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
-            <a-button :icon="h(FileAddOutlined)" @click="newMap" :title="t('newMap')"></a-button>
+            <a-button :icon="h(FileAddOutlined)" @click="newMap" :title="t('new')"></a-button>
             <a-button :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
             <a-button :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
             <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')"></a-button>
             <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
-            <a-button type="primary" :icon="h(BulbOutlined)" :style="{ padding: '4px 10px' }" @click="aiGenerate" :title="t('aiGenerate')">
+            <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="'Sidebar'"></a-button>
+            <a-button :icon="h(BulbOutlined)" type="primary" :style="{ padding: '4px 10px' }" @click="aiGenerate" :title="t('aiGenerate')">
                 <span class="mobile-hide-text">{{ t('aiGenerate') }}</span>
             </a-button>
         </div>
     </div>
     
     <div id="mindMapContainer"></div>
+
+    <a-drawer
+        :width="400"
+        :title="t('thinkingMethod')"
+        placement="right"
+        v-model:open="drawerOpen"
+        @close="onClose"
+    >
+        <div
+            v-for="item in thinkingModels"
+            :key="item.value"
+            style="margin-bottom: 14px;"
+        >
+            <a-card :bordered="false">
+                <a-radio
+                    :value="item.value"
+                    :checked="item.value === settings.thinkingModel"
+                    @click="settings.thinkingModel = item.value"
+                >
+                    <span style="font-weight: 600">{{ item.label }}</span>
+                </a-radio>
+                <div v-if="item.example && item.example.length" style="margin-top: 8px;">
+                    <span>{{ t('principleLabel') }}: {{ item.description }}</span>
+                    <p
+                        v-for="ex in item.example"
+                        :key="ex.name"
+                    >
+                        <a-button size="small" type="primary" @click="newMap(ex.json)" style="margin-left: 8px;">
+                            {{ t('open') }}: {{ ex.name }}
+                        </a-button>
+                    </p>
+                </div>
+            </a-card>
+        </div>
+    </a-drawer>
+
     <div
         v-if="show"
         class="context-menu"
@@ -72,11 +109,6 @@
                     <a-input name="model" v-model:value="settings.model" :placeholder="t('modelPlaceholder')" style="flex: 1; min-width: 0;" />
                 </label>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('mode') }}：</span>
-                    <a-switch v-model:checked="settings.focusMode" :checked-children="t('focus')" :un-checked-children="t('free')" :style="{ width: '80px' }" />
-                </label>
-
                 <label class="field">
                     <span>{{ t('layout') }}：</span>
                         <div class="chart-list">
@@ -92,23 +124,6 @@
                     <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
                     <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="10" :step="1" style="flex: 0 0 auto; width: 120px;" />
                 </label>
-
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('thinkingMethod') }}：</span>
-                    <a-select 
-                        v-model:value="settings.thinkingModel" 
-                        :options="thinkingModelsOptions" 
-                        style="flex: 0 0 auto; min-width: 120px;" />
-                </label>
-                
-                <div class="field">
-                    <span>{{ t('modesTitle') }}：
-                        <br>  · {{ t('helpFocus') }}
-                        <br>  · {{ t('helpFree') }}
-                        <br>  · {{ t('thinkingMethod') }}：{{ currentThinkingModel?.label || settings.thinkingModel }}
-                        <br><span style="white-space: pre-wrap;">{{ currentThinkingModel?.example || '' }}</span>
-                    </span>
-                </div>
             </a-tab-pane>
 
             <a-tab-pane :key="'prompt'" :tab="t('systemPrompt')">
@@ -169,12 +184,14 @@ import {
     Input as AInput,
     InputNumber as AInputNumber,
     Textarea as ATextarea,
-    Switch as ASwitch,
     Select as ASelect,
     Modal as AModal,
     Tabs as ATabs,
     TabPane as ATabPane,
     Upload as AUpload,
+    Drawer as ADrawer, 
+    Radio as ARadio,
+    Card as ACard,
 } from 'ant-design-vue'
 import {
     MinusOutlined,
@@ -186,8 +203,9 @@ import {
     FileAddOutlined,
     DeleteOutlined,
     CloudDownloadOutlined,
+    UnorderedListOutlined
 } from '@ant-design/icons-vue'
-import { ref, shallowRef, onMounted, onUnmounted, h, computed } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, h } from 'vue'
 import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap } from './modal.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
@@ -198,12 +216,18 @@ import { thinkingModels, layouts as layoutOptions, languageOptions, messages } f
 const mindMapRef = ref(null)
 const activeNodes = ref([])
 const settingsOpen = ref(false)
+const drawerOpen = ref(false)
 
 // 从环境变量读取默认值（Vite 约定使用 VITE_ 前缀）
 const env = (import.meta && import.meta.env) ? import.meta.env : {}
 const ENV_API = (env.VITE_API ?? '').trim()
 const ENV_SECRET = (env.VITE_SECRET ?? '').trim()
 const ENV_MODEL = (env.VITE_MODEL ?? '').trim()
+const showDrawer = () => { drawerOpen.value = true }
+const onClose = () => { 
+    drawerOpen.value = false 
+    saveSettings()
+}
 
 const settings = ref({
     api: ENV_API || '',
@@ -211,8 +235,7 @@ const settings = ref({
     model: ENV_MODEL || '',
     temperature: 0.7,
     systemPrompt: '',
-    depth: 10,
-    focusMode: true,
+    depth: 3,
     thinkingModel: 'default',
     language: 'zh-CN',
     layout: 'mindMap',
@@ -220,16 +243,6 @@ const settings = ref({
 
 // 保留 t 函数，直接使用 const.js 导出的 messages
 const t = (key) => messages[settings.value.language]?.[key] ?? key
-
-const currentThinkingModel = computed(() => {
-    const v = settings.value.thinkingModel
-    return thinkingModels.find(m => m.value === v) || { label: v, value: v, example: '' }
-})
-
-const thinkingModelsOptions = thinkingModels.map(({ label, value }) => ({
-    label,
-    value,
-}))
 
 // 使用浏览器 sessionStorage 读取/保存设置
 const loadSettings = () => {
@@ -377,10 +390,41 @@ const pasteNode = () => {
 }
 
 // 基础导图操作
-const newMap = () => {
-    if (!mindMapRef.value) return
-    mindMapRef.value.setData({ data: { text: '主题' }, children: [] })
-    mindMapRef.value.view.reset()
+const newMap = async (tpl) => {
+    if (!mindMapRef.value) {
+        showError('请先创建一个思维导图')
+        return
+    }
+    try {
+        let data = null
+
+        // 未提供模板：使用空白导图
+        if (!tpl) {
+            data = { data: { text: '主题' }, children: [] }
+        } else if (typeof tpl === 'string') {
+            const s = tpl.trim()
+            if (s.startsWith('{') || s.startsWith('[')) {
+                data = JSON.parse(s)
+            } else {
+                const res = await fetch(s)
+                if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
+                const text = await res.text()
+                data = JSON.parse(text)
+            }
+        } else if (typeof tpl === 'object') {
+            data = tpl
+        }
+
+        // 基本校验与兜底
+        if (!data || !data.data) {
+            data = { data: { text: '主题' }, children: [] }
+        }
+
+        mindMapRef.value.setData(data)
+        mindMapRef.value.view.reset()
+    } catch (e) {
+        showError('导入模板失败', String(e?.message || e))
+    }
 }
 
 const back = () => {
@@ -426,9 +470,8 @@ const aiGenerate = async () => {
         settings.value
     )
 
-    showLoading('AI生成中...', `🧭 当前模式：${settings.value.focusMode ? '专注模式' : '普通模式'}
-📚 知识点方向：${nodeSystemPrompt}
-🧠 Prompt: ${prompt}`)
+    showLoading('AI生成中...', `🧠 Prompt: 
+${prompt}`)
     try {
         const { data } = await requestCompletions({
             api: settings.value.api,

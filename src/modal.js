@@ -35,7 +35,6 @@ export function showLoading(title = '加载中', content = '请稍候...') {
 }
 
 export function hideLoading() {
-    // 关闭所有已打开的模态框（包含加载提示）
     Modal.destroyAll()
 }
 
@@ -78,6 +77,7 @@ export function exportMindMap(mindMap, type) {
         showError('请先创建一个思维导图')
         return
     }
+    
     const ts = new Date()
     const pad = (n) => String(n).padStart(2, '0')
     const filename = `mindmap-${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}`
@@ -99,41 +99,56 @@ export async function importFileToMindMap(file, mindMap) {
         showError('请先创建一个思维导图')
         return false
     }
+    
     const name = (file?.name || '').toLowerCase()
-    if (name.endsWith('.smm') || name.endsWith('.json')) {
-        try {
-            const text = await file.text()
-            const data = JSON.parse(text)
-            if (data.root) {
-                mindMap.setFullData(data)
-            } else {
-                mindMap.setData(data)
+    const ext = name.includes('.') ? name.substring(name.lastIndexOf('.') + 1) : ''
+
+    switch (ext) {
+        case 'smm':
+        case 'json': {
+            try {
+                const text = await file.text()
+                const data = JSON.parse(text)
+                if (data.root) {
+                    mindMap.setFullData(data)
+                } else {
+                    mindMap.setData(data)
+                }
+                mindMap.view?.reset?.()
+            } catch (e) {
+                showError('导入 JSON/SMM 失败', String(e?.message || e))
             }
-            mindMap.view?.reset?.()
-        } catch (e) {
-            showError('导入 JSON/SMM 失败', String(e?.message || e))
+            break
         }
-    } else if (name.endsWith('.xmind')) {
-        try {
-            const data = await xmind.parseXmindFile(file)
-            mindMap.setData(data)
-            mindMap.view?.reset?.()
-        } catch (e) {
-            showError('导入 XMind 失败', String(e?.message || e))
+        case 'xmind': {
+            try {
+                const data = await xmind.parseXmindFile(file)
+                mindMap.setData(data)
+                mindMap.view?.reset?.()
+            } catch (e) {
+                showError('导入 XMind 失败', String(e?.message || e))
+            }
+            break
         }
-    } else if (name.endsWith('.md')) {
-        try {
-            const text = await file.text()
-            const data = await markdown.transformMarkdownTo(text)
-            mindMap.setData(data)
-            mindMap.view?.reset?.()
-        } catch (e) {
-            showError('导入 Markdown 失败', String(e?.message || e))
+        case 'md': {
+            try {
+                const text = await file.text()
+                const data = await markdown.transformMarkdownTo(text)
+                mindMap.setData(data)
+                mindMap.view?.reset?.()
+            } catch (e) {
+                showError('导入 Markdown 失败', String(e?.message || e))
+            }
+            break
         }
-    } else if (name.endsWith('.xlsx')) {
-        showError('暂未集成 .xlsx 解析，请安装并接入 xlsx 库')
-    } else {
-        showError('不支持的文件类型', '请选择 .smm/.json/.xmind/.xlsx/.md')
+        case 'xlsx': {
+            showError('暂未集成 .xlsx 解析，请安装并接入 xlsx 库')
+            break
+        }
+        default: {
+            showError('不支持的文件类型', '请选择 .smm/.json/.xmind/.xlsx/.md')
+        }
     }
+    
     return false
 }

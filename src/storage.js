@@ -28,6 +28,7 @@ export function saveSettings(settings) {
         temperature: toNumberOr(settings?.temperature, 0.7),
         depth: toNumberOr(settings?.depth, 3),
     }
+    
     try {
         sessionStorage.setItem(SETTINGS_KEY, JSON.stringify(payload))
     } catch (e) {

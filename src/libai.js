@@ -2,54 +2,62 @@ import { thinkingModels } from './const.js'
 
 export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settings = {}) {
     const thinkingModel = settings.thinkingModel || 'default'
-    const focusMode = settings.focusMode || true
     const model = thinkingModels.find(m => m.value === thinkingModel) || thinkingModels[0]
     const language = settings.language || '中文'
-    if (!nextSystemPrompt || nextSystemPrompt.trim().length === 0 || !focusMode) {
+
+    if (!nextSystemPrompt || nextSystemPrompt.trim().length === 0) {
         nextSystemPrompt = "最相关的知识点"
     }
     if (systemPrompt && systemPrompt.trim().length > 0) {
-        systemPrompt = "## 系统提示词\n" + systemPrompt + "\n"
+        systemPrompt = "##系统知识\n```markdown\n" + systemPrompt + "\n```\n\n"
     }
 
-    let examplePrompt = ""
-    if (model.example && model.example.trim() !== '') {
-        examplePrompt = `## 思考方式
-如果当前知识符合 "${model.label}" 思考方式，请采用，如果不符合请考虑总结或者归纳的思考方式。
-
-### "${model.label}" 思考样例\n${model.example || ''}\n`
+    let thinkingPrompt = ""
+    if (model.prompt && model.prompt.trim() !== '') {
+        thinkingPrompt = `- 思考方式：${model.label || ''}，${model.description || ''}
+- 其他要求：
+\`\`\`
+    ${model.prompt}
+\`\`\`
+`
     }
 
     return `${systemPrompt}## 角色    
-现在你是一个善于将知识点整理为脑图的专家，精通 “${topic}” 的所有的知识点，现在基于 “${topic}” 整理最相关的子知识。
-${examplePrompt}
+现在你是一个善于整理思维导图的专家，精通 “${topic}” 的相关知识，现在基于 “${topic}” 整理思维导图的JSON结构。
+
 ## 输出样例
 \`\`\`json
 [
-  {
-    "data": {
-      "text": "相关知识点1",
-      "note": "相关知识点描述",
-      "nextSystemPrompt": "子知识点的提示词",
-      "color": "知识点颜色，使用16进制颜色码"
+    {
+        "data": {
+            "text": "相关知识点1",
+            "note": "相关知识点描述",
+            "nextSystemPrompt": "子知识点的提示词",
+            "color": "知识点颜色，使用16进制颜色码"
+        },
+        "children": [
+            {   
+                "data": {}, // 下一级知识点
+                "children": [] // 下下一级的知识点
+            },
+            // ... 其他子知识点
+        ]
     },
-    "children": []
-  },
-  // ...其他
+    // ... 其他知识点
 ]
 \`\`\`
  
 ## 要求
-- 输出JSON格式，只需要一层JSON数据
+- 输出JSON格式
 - 输出语言：${language}
 - 知识点思考方向：${nextSystemPrompt}
-- 根据知识的重要程度综合考虑知识点个数，最多生成 ${count} 个
-- JSON字段\`text\`是知识点，限制在 20-50 个字
-- JSON字段\`note\`是知识点的关键描述，限制在 100-1000 个字，最好是分点描述
-- JSON字段\`nextSystemPrompt\`是下一个子知识点的AI提示词和当前知识点总结性数据，限制在 50-300 个字，样例：基于xxx知识点，总结出xxx子知识点
-- JSON字段\`color\`是代表知识点颜色，使用16进制颜色码，样例：\`#FF0000\`，颜色参考规则：
-    - 暖色调（如红、黄、橙）通常能引起更高的情绪唤起和注意力水平
-    - 冷色调（如蓝、绿）通常能营造平静、放松的氛围，有助于减轻视觉疲劳，能增强创造力任务
+- 每一层最少生成 ${count} 个知识点
+- JSON字段\`children\`是子知识点数组，每个子知识点也是一个JSON对象，包含\`data\`和\`children\`字段
+- JSON字段\`text\`是 ”简要描述“，限制 20-50 个字
+- JSON字段\`note\`是 ”详细描述“，限制在 100-1000 个字
+- JSON字段\`nextSystemPrompt\`是 ”当前层总结关键词和下一级子知识点的AI提示词“，限制在 50-100 个字，样例：基于xxx知识点，总结出xxx子知识点
+- JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，样例：\`#FF0000\`
+${thinkingPrompt}
 `
 }
 
