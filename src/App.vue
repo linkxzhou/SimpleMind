@@ -432,6 +432,8 @@ const newMap = async (tpl) => {
 
         mindMapRef.value.setData(data)
         mindMapRef.value.view.reset()
+
+        onClose() // 关闭模态窗口
     } catch (e) {
         showError('导入模板失败', String(e?.message || e))
     }
