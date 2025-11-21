@@ -4,6 +4,7 @@ import noteTaking1 from './templates/note-taking1.json' // 《麦肯锡高效工
 import noteTaking2 from './templates/note-taking2.json' // 《终身成长》
 import noteTaking3 from './templates/note-taking3.json' // 《关键跨越》
 import default1 from './templates/default1.json' // 深度学习总结
+import default2 from './templates/default2.json' // 如何使用p5.js实现游戏
 import firstPrinciples1 from './templates/first-principles1.json' // 第一性原理
 
 // 多语言消息源
@@ -31,6 +32,12 @@ export const thinkingModels = [
                 description: "",
                 layout: 'mindMap',
                 json: JSON.stringify(default1),
+            },
+            {
+                name: "如何使用p5.js实现游戏",
+                description: "",
+                layout: 'mindMap',
+                json: JSON.stringify(default2),
             }
         ]
     },

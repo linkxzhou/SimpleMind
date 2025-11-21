@@ -6,6 +6,7 @@
   "delete": "删除",
   "settings": "设置",
   "aiGenerate": "AI生成",
+  "generating": "生成中",
   "api": "API Base",
   "apiPlaceholder": "例如：OpenAI API地址",
   "secret": "秘钥",

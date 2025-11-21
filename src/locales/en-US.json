@@ -6,6 +6,7 @@
   "delete": "Delete",
   "settings": "Settings",
   "aiGenerate": "AI Generate",
+  "generating": "Generating",
   "api": "API Base",
   "apiPlaceholder": "e.g., OpenAI API endpoint",
   "secret": "Secret",

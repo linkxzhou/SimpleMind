@@ -15,8 +15,16 @@
             <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')"></a-button>
             <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
             <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="'Sidebar'"></a-button>
-            <a-button :icon="h(BulbOutlined)" type="primary" :style="{ padding: '4px 10px' }" @click="aiGenerate" :title="t('aiGenerate')">
-                <span class="mobile-hide-text">{{ t('aiGenerate') }}</span>
+            <a-button
+                :icon="h(BulbOutlined)"
+                type="primary"
+                :style="{ padding: '4px 10px' }"
+                @click="aiGenerate"
+                :title="t('aiGenerate')"
+                :disabled="isGenerating"
+                :loading="isGenerating"
+            >
+                <span class="mobile-hide-text">{{ isGenerating ? t('generating') : t('aiGenerate') }}</span>
             </a-button>
         </div>
     </div>
@@ -235,7 +243,7 @@ const settings = ref({
     model: ENV_MODEL || '',
     temperature: 0.7,
     systemPrompt: '',
-    depth: 3,
+    depth: 10,
     thinkingModel: 'default',
     language: 'zh-CN',
     layout: 'mindMap',
@@ -438,15 +446,21 @@ const forward = () => {
 }
 
 // AI 生成
+const isGenerating = ref(false)
 const aiGenerate = async () => {
+    if (isGenerating.value) return
+    isGenerating.value = true
+
     // 判断API Base是否配置
     if (!settings.value.api || settings.value.api.trim().length === 0) {
         showError('请打开设置，配置API Base')
+        isGenerating.value = false
         return
     }
 
     if (!mindMapRef.value) {
         showError('请先创建一个思维导图')
+        isGenerating.value = false
         return
     }
 
@@ -454,6 +468,7 @@ const aiGenerate = async () => {
     const baseText = getNodeText(baseNode)
     if (!baseText || baseText.trim().length === 0) {
         showError('请先选择一个节点或者输入一个主题')
+        isGenerating.value = false
         return
     }
 
@@ -461,7 +476,7 @@ const aiGenerate = async () => {
     const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
     const systemPrompt = settings.value.systemPrompt
 
-    const count = Math.max(1, Math.min(10, Number(settings.value.depth) || 3))
+    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
     const prompt = libBuildPrompt(
         baseText,
         count,
@@ -482,12 +497,11 @@ ${prompt}`)
         })
 
         const ideas = libExtractIdeas(data, count)
-        console.log('解析到子节点：', JSON.stringify(ideas))
+        console.log('解析到子节点：', JSON.stringify(ideas), `共${ideas.length}个`)
+        hideLoading()
         if (ideas.length) {
             mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
-            hideLoading()
         } else {
-            hideLoading()
             showError('AI返回内容为空或未解析到子节点')
         }
     } catch (err) {
@@ -495,6 +509,8 @@ ${prompt}`)
         const msg = err?.message || String(err)
         showError(`AI生成失败：${msg}`)
         console.error('AI生成失败：', err)
+    } finally {
+        isGenerating.value = false
     }
 }
 

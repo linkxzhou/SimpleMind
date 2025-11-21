@@ -54,7 +54,7 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
 - 每一层最少生成 ${count} 个知识点
 - JSON字段\`children\`是子知识点数组，每个子知识点也是一个JSON对象，包含\`data\`和\`children\`字段
 - JSON字段\`text\`是 ”简要描述“，限制 20-50 个字
-- JSON字段\`note\`是 ”详细描述“，限制在 100-1000 个字
+- JSON字段\`note\`是 ”详细描述“，限制在 100-400 个字
 - JSON字段\`nextSystemPrompt\`是 ”当前层总结关键词和下一级子知识点的AI提示词“，限制在 50-100 个字，样例：基于xxx知识点，总结出xxx子知识点
 - JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，样例：\`#FF0000\`
 ${thinkingPrompt}
@@ -119,7 +119,7 @@ function normalizeSecret(secret) {
 export async function requestCompletions({
     api,
     secret,
-    model = 'gpt-5-nano',
+    model = 'gpt-5',
     temperature = 0.7,
     prompt,
 }) {
