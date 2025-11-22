@@ -142,6 +142,17 @@
                         :placeholder="t('systemPromptPlaceholder')"
                         :auto-size="{ minRows: 8, maxRows: 20 }"
                     />
+                    <!-- 新增：解析文件并填充到系统提示词 -->
+                    <div style="margin-top: 8px;">
+                        <a-upload
+                            :show-upload-list="false"
+                            :before-upload="handleParsePromptUpload"
+                            accept=".md,.txt,.csv,.pdf"
+                            :max-count="1"
+                        >
+                            <a-button size="small" type="primary">上传文件，支持解析.md,.txt,.csv,.pdf</a-button>
+                        </a-upload>
+                    </div>
                 </label>
             </a-tab-pane>
 
@@ -219,6 +230,7 @@ import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages } from './const.js'
+import { parseFileAsPrompt } from './parser.js'
 
 // 状态与设置
 const mindMapRef = ref(null)
@@ -526,6 +538,16 @@ const exportMap = (type) => {
 const handleBeforeUpload = async (file) => {
     await importFileToMindMap(file, mindMapRef.value)
     return false
+}
+
+const handleParsePromptUpload = async (file) => {
+    try {
+        const content = await parseFileAsPrompt(file)
+        settings.value.systemPrompt = content
+    } catch (e) {
+        showError('解析失败', String(e?.message || e))
+    }
+    return false // 阻止默认上传行为
 }
 
 // 初始化与事件绑定

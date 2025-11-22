@@ -77,6 +77,89 @@ export const thinkingModels = [
         ]
     },
     {
+        label: '课程学习',
+        value: 'course-learning',
+        description: '根据系统知识内容，提取关键知识点，生成课程摘要、每个章节、总结，每个知识点给出有代表性的题目等，生成3层思维导图结构',
+        prompt: `
+- 深入理解课程内容，抓住核心知识点。
+- 善于总结归纳，像教育专家一样，用简洁的语言表达知识点。
+- 精通每个知识点，能给出代表性，有挑战的题目。`,
+        example: [
+            {
+                name: "《小学数学一年级上册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning1.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学一年级下册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning2.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学二年级上册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning3.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学二年级下册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning4.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学三年级上册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning5.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学三年级下册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning6.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学四年级上册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning7.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学四年级下册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning8.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学五年级上册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning9.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学五年级下册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning10.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学六年级上册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning11.json', import.meta.url).href,
+            },
+            {
+                name: "《小学数学六年级下册》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/course-learning12.json', import.meta.url).href,
+            },
+        ]
+    },
+    {
         label: '第一性原理',
         value: 'first-principles',
         description: '从头开始计算，只采用最基本的事实，然后根据事实推论，创造出新价值',
