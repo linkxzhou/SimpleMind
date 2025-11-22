@@ -495,12 +495,12 @@ const aiGenerate = async () => {
         if (ideas.length) {
             mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
         } else {
-            showError('AI返回内容为空或未解析到子节点')
+            showError('AI返回内容为空或未解析到子节点，请重新生成')
         }
     } catch (err) {
         hideLoading()
         const msg = err?.message || String(err)
-        showError(`AI生成失败：${msg}`)
+        showError(`AI生成失败：${msg}，请重新生成`)
         console.error('AI生成失败：', err)
     } finally {
         isGenerating.value = false

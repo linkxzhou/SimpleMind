@@ -9,21 +9,23 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
         nextSystemPrompt = "最相关的知识点"
     }
     if (systemPrompt && systemPrompt.trim().length > 0) {
-        systemPrompt = "##系统知识\n```markdown\n" + systemPrompt + "\n```\n\n"
+        systemPrompt = "## 系统知识\n```markdown\n" + systemPrompt + "\n```\n\n"
     }
 
     let thinkingPrompt = ""
     if (model.prompt && model.prompt.trim() !== '') {
-        thinkingPrompt = `- 思考方式：${model.label || ''}，${model.description || ''}
-- 其他要求：
-\`\`\`
-    ${model.prompt}
-\`\`\`
+        thinkingPrompt = `## 思考方式
+${model.label || ''}，${model.description || ''}
+
+## 原则
+${model.prompt}
 `
     }
 
     return `${systemPrompt}## 角色    
 现在你是一个善于整理思维导图的专家，精通 “${topic}” 的相关知识，现在基于 “${topic}” 整理思维导图的JSON结构。
+
+${thinkingPrompt}
 
 ## 输出样例
 \`\`\`json
@@ -48,16 +50,15 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
 \`\`\`
  
 ## 要求
-- 输出JSON格式
+- 输出JSON格式，默认生成2层思维导图结构，包括JSON第一层数组和\`children\`数组
 - 输出语言：${language}
-- 知识点思考方向：${nextSystemPrompt}
-- 每一层最少生成 ${count} 个知识点
+- 思考方向：${nextSystemPrompt}
+- 思维导图的每一层最少 ${count} 个节点
 - JSON字段\`children\`是子知识点数组，每个子知识点也是一个JSON对象，包含\`data\`和\`children\`字段
 - JSON字段\`text\`是 ”简要描述“，限制 20-50 个字
 - JSON字段\`note\`是 ”详细描述“，限制在 100-400 个字
 - JSON字段\`nextSystemPrompt\`是 ”当前层总结关键词和下一级子知识点的AI提示词“，限制在 50-100 个字，样例：基于xxx知识点，总结出xxx子知识点
-- JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，样例：\`#FF0000\`
-${thinkingPrompt}
+- JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，避免浅色，RGB每个值小于200，样例：\`#8B0A50\`
 `
 }
 
