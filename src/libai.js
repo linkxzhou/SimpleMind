@@ -1,4 +1,5 @@
 import { thinkingModels } from './const.js'
+import { jsonrepair } from 'jsonrepair'
 
 export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settings = {}) {
     const thinkingModel = settings.thinkingModel || 'default'
@@ -98,8 +99,15 @@ export function extractIdeas(raw) {
     try {
         parsed = JSON.parse(cleaned)
     } catch (err) {
-        console.error('JSON解析错误:', err)
-        throw new Error('返回内容不是有效 JSON')
+       console.error('JSON解析错误:', err)
+        try {
+            const repaired = jsonrepair(cleaned)
+            parsed = JSON.parse(repaired)
+            console.warn('已自动修复无效 JSON 并解析成功')
+        } catch (repairErr) {
+            console.error('JSON修复失败:', repairErr)
+            throw new Error('返回内容不是有效 JSON，且无法自动修复')
+        }
     }
 
     // 判断是否为Object
@@ -157,9 +165,6 @@ export async function requestCompletions({
     const body = {
         model,
         messages: [{ role: 'user', content: prompt }],
-        response_format: { // 增加额外字段，确保输出JSON
-            'type': 'json_object'
-        },
         temperature,
         max_tokens: 65000,
     }

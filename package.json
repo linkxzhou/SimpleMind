@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",
+    "jsonrepair": "^3.13.1",
     "pdfjs-dist": "^3",
     "simple-mind-map": "^0.14.0-fix.1",
     "vue": "^3.5.22"
