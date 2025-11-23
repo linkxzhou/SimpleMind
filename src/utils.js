@@ -158,3 +158,54 @@ export async function importFileToMindMap(file, mindMap) {
     
     return false
 }
+
+export function switchTextNoteMode(mindMap, mode = 'detail', options = {}) {
+    const input = mindMap.getData()
+    const lineBreak = options.lineBreak ?? '\n详细描述：'
+    const out = JSON.parse(JSON.stringify(input))
+
+    const combineText = (d) => {
+        const text = d?.text ?? ''
+        const note = d?.note ?? ''
+        if (mode === 'detail') {
+            if (!note) return String(text)
+            const base = String(text)
+            const suffix = lineBreak + String(note)
+            // 避免重复拼接
+            if (base.endsWith(suffix)) return base
+            return `${base}${suffix}`
+        } else {
+            // 简单模式：尽可能移除末尾的 note 拼接
+            const base = String(text)
+            const suffix = lineBreak + String(note)
+            if (note && base.endsWith(suffix)) {
+                return base.slice(0, -suffix.length)
+            }
+            return base
+        }
+    }
+
+    const walk = (node) => {
+        if (!node || typeof node !== 'object') return
+        if (node.data) {
+            node.data.text = combineText(node.data)
+        }
+        if (Array.isArray(node.children)) {
+            node.children.forEach(walk)
+        }
+    }
+
+    if (Array.isArray(out)) {
+        out.forEach(walk)
+    } else if (out && typeof out === 'object') {
+        if (out.root) {
+            walk(out.root)
+        } else {
+            walk(out)
+        }
+    }
+
+    // 更新思维导图数据
+    mindMap.setData(out)
+    mindMap.view?.reset?.()
+}

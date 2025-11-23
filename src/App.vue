@@ -12,9 +12,15 @@
             <a-button :icon="h(FileAddOutlined)" @click="newMap" :title="t('new')"></a-button>
             <a-button :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
             <a-button :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
-            <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')"></a-button>
+            <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')+t('import')"></a-button>
             <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
-            <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="'Sidebar'"></a-button>
+            <a-button
+                :icon="h(SisternodeOutlined)"
+                @click="toggleMindMapMode"
+                :title="t('toggleMode')"
+                :type="isDetailMode ? 'primary' : 'default'"
+            ></a-button>
+            <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
             <a-button
                 :icon="h(BulbOutlined)"
                 type="primary"
@@ -222,11 +228,12 @@ import {
     FileAddOutlined,
     DeleteOutlined,
     CloudDownloadOutlined,
-    UnorderedListOutlined
+    UnorderedListOutlined,
+    SisternodeOutlined
 } from '@ant-design/icons-vue'
 import { ref, shallowRef, onMounted, onUnmounted, h } from 'vue'
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL } from './utils.js'
+import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages } from './const.js'
@@ -449,6 +456,9 @@ const newMap = async (tpl) => {
     } catch (e) {
         showError('导入模板失败', String(e?.message || e))
     }
+
+    // 默认简单模式
+    isDetailMode.value = false
 }
 
 // AI 生成
@@ -524,6 +534,20 @@ const activeKey = ref('settings')
 
 const toggleSettings = () => {
     settingsOpen.value = !settingsOpen.value
+}
+
+const isDetailMode = ref(false)
+
+const toggleMindMapMode = () => {
+    const mm = mindMapRef.value
+    if (!mm) {
+        showError('请先创建一个思维导图')
+        return
+    }
+
+    const nextMode = isDetailMode.value ? 'simple' : 'detail'
+    switchTextNoteMode(mindMapRef.value, nextMode)
+    isDetailMode.value = !isDetailMode.value
 }
 
 const openExportPanel = () => {

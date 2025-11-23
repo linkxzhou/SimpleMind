@@ -14,8 +14,6 @@
   "model": "模型",
   "modelPlaceholder": "例如：gpt-5",
   "language": "语言",
-  "focus": "专注",
-  "free": "自由",
   "childCountRange": "生成最少节点数",
   "thinkingMethod": "设置思考模版",
   "systemPrompt": "知识库",
@@ -39,5 +37,6 @@
   "cutNode": "剪切节点",
   "pasteNode": "粘贴节点",
   "collapseAllChildren": "收起所有下级节点",
-  "expandAllChildren": "展开所有下级节点"
+  "expandAllChildren": "展开所有下级节点",
+  "toggleMode": "详细/简单模式切换"
 }

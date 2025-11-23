@@ -14,8 +14,6 @@
   "model": "Model",
   "modelPlaceholder": "e.g., gpt-5",
   "language": "Language",
-  "focus": "Focus",
-  "free": "Free",
   "childCountRange": "Min Nodes per Generation",
   "thinkingMethod": "Set Thinking Template",
   "systemPrompt": "Knowledge Base",
@@ -39,5 +37,6 @@
   "cutNode": "Cut Node",
   "pasteNode": "Paste Node",
   "collapseAllChildren": "Collapse All Children",
-  "expandAllChildren": "Expand All Children"
+  "expandAllChildren": "Expand All Children",
+  "toggleMode": "Toggle Detailed/Simple Mode"
 }
