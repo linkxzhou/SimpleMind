@@ -16,17 +16,15 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
     let thinkingPrompt = ""
     if (model.prompt && model.prompt.trim() !== '') {
         let label = ''
-        if (model.label && model.label.trim() !== '') {
-            label = model.label
-        } else if (model.value === 'default' || model.value === '无') {
-            label = '默认'
+        if (model.value.trim() === '' || model.value === 'default' || model.value === '无') {
+            label = '任意'
         } else {
-            label = model.value
+            label = model.label
         }
 
         thinkingPrompt = `## Thinking (思考方式) 
 <context>
-使用 ${label} 思考方式，${model.description || ''}。
+使用 ${label} 思考方式，${model.description || ''}
 原则：${model.prompt}
 </context>
 `
@@ -51,7 +49,7 @@ ${thinkingPrompt}
         "children": [
             {   
                 "data": {}, // 下一级知识点
-                "children": [] // 下下一级的知识点
+                "children": [] // 下一级的子知识点
             },
             // ... 其他子知识点
         ]
