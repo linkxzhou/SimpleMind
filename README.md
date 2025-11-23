@@ -1,5 +1,5 @@
 ## 项目简介
-本项目用于尝试一个 AI 自动细化生成脑图的功能，通过输入主题或选中节点，AI 自动扩展并细化节点结构，生成层级化的脑图。
+本项目一款免费思维导图工具，AI自动按照总结，归纳，第一性原理等思维方式思考，生成思维导图。
 
 ## 截图
 
@@ -9,22 +9,6 @@
 
 ### 2. 手机端
 ![项目截图3](./ScreenShot3.png)
-
-## 功能清单
-- 工具栏：新建、返回、前进、删除节点、AI生成、设置、导出JSON、导入JSON
-- 新建：创建空白脑图或根节点
-- 返回/前进：撤销与重做编辑历史
-- 删除节点：删除选中节点（可包含其子节点）
-- AI 生成：基于当前节点自动生成子节点、细化层级
-- 设置：AI 相关参数与通用配置（如模型、温度、深度等）
-- 设置持久化：使用 `sessionStorage` 保存并恢复 `mindlessSettings`
-- 导图持久化：使用 `sessionStorage` 保存并恢复脑图数据 `mindMapData`
-- 小屏适配：工具栏按钮在小屏幕纵向布局（图标上、文字下）
-- 导出 JSON：一键导出当前脑图数据为 `JSON` 文件（工具栏下载图标）
-- 导入 JSON：从 `JSON` 文件恢复脑图数据（工具栏上传图标）
-- 导出图片：导出为 `PNG/SVG` 图片，适合插入文档与演示
-- 其他支持导出xmind，md，smm，pdf，txt格式
-- 其他支持导入xmind，md，smm，xlsx格式
 
 ## 项目设置
 
@@ -116,21 +100,14 @@ yarn build
 - 并发保护：生成期间按钮禁用并显示“生成中”，异常情况弹窗提示并自动复位。
 - 模型参数：`model`（默认 `gpt-5`）、`temperature`、`depth`（生成子节点数量上限）等。
 
-### 性能建议（可选）
-- 模板懒加载：将示例模板改为 URL 并使用 `fetch` 加载，避免把大 JSON 内嵌到主包。
-- 代码分割：可用 `import.meta.glob` 或动态导入（`import('./templates/xxx.json')`）按需拉取。
-- 压缩构建：配合 `vite-plugin-compression` 输出 `.br/.gz`，减少传输体积（需服务器支持）。
-
-## 使用说明（Quick Start）
-1. 安装依赖：`yarn`
-2. 开发环境：`yarn dev`，浏览器打开提示地址。
-3. 生产构建：`yarn build`
-4. 配置 API：打开设置面板填写 `API Base`、`秘钥`、`模型`。
-5. 创建导图：点击“新建”或在“思维模式”抽屉选择示例模板。
-6. 模式切换：点击“模式切换”按钮在简单/详细之间切换文本展示。
-7. 系统提示词：在“系统提示词”页签上传 `.md/.txt/.csv/.pdf` 填充提示词。
-8. AI 生成：选中节点后点击“AI 生成”，自动扩展子节点。
-9. 导入/导出：点击“导出/导入”面板按钮操作对应格式。
+## 经验
+（1）大模型输出的JSON可能包含无效字符，需要使用 `jsonrepair` 修复。
+- 引入 `jsonrepair` 库：`yarn add jsonrepair`
+- 使用示例：
+  ```js
+  import jsonrepair from 'jsonrepair'
+  const repaired = jsonrepair(rawJsonString)
+  ```
 
 ## 参考
 （1）https://wanglin2.github.io/mind-map-docs/api/constructor/constructor-methods.html#on-event-fn  
