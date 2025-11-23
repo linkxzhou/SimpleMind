@@ -9,25 +9,35 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
         nextSystemPrompt = "最相关的知识点"
     }
     if (systemPrompt && systemPrompt.trim().length > 0) {
-        systemPrompt = "## 系统知识\n```markdown\n" + systemPrompt + "\n```\n\n"
+        systemPrompt = "## Context & Data (背景与数据)\n<context>\n" + systemPrompt + "\n</context>\n\n"
     }
 
     let thinkingPrompt = ""
     if (model.prompt && model.prompt.trim() !== '') {
-        thinkingPrompt = `## 思考方式
-${model.label || ''}，${model.description || ''}
+        let label = ''
+        if (model.label && model.label.trim() !== '') {
+            label = model.label
+        } else if (model.value === 'default' || model.value === '无') {
+            label = '默认'
+        } else {
+            label = model.value
+        }
 
-## 原则
-${model.prompt}
+        thinkingPrompt = `## Thinking (思考方式) 
+<context>
+使用 ${label} 思考方式，${model.description || ''}。
+原则：${model.prompt}
+</context>
 `
     }
 
-    return `${systemPrompt}## 角色    
-现在你是一个善于整理思维导图的专家，精通 “${topic}” 的相关知识，现在基于 “${topic}” 整理思维导图的JSON结构。
+    return `${systemPrompt}## Role (角色设定)   
+现在你是一个善于整理思维导图的专家，精通 “${topic}” 的相关知识。
 
 ${thinkingPrompt}
 
-## 输出样例
+## Output Examples (输出样例)
+<examples>
 \`\`\`json
 [
     {
@@ -48,9 +58,12 @@ ${thinkingPrompt}
     // ... 其他知识点
 ]
 \`\`\`
+</examples>
  
-## 要求
-- 输出JSON格式，默认生成2层思维导图结构，包括JSON第一层数组和\`children\`数组
+## Rules (具体规则)
+请严格遵守以下规则：
+<rules>
+- 输出JSON数组格式，默认生成2层思维导图结构，包括JSON第一层数组和\`children\`数组
 - 输出语言：${language}
 - 思考方向：${nextSystemPrompt}
 - 思维导图的每一层最少 ${count} 个节点
@@ -59,6 +72,10 @@ ${thinkingPrompt}
 - JSON字段\`note\`是 ”详细描述“，限制在 100-400 个字
 - JSON字段\`nextSystemPrompt\`是 ”当前层总结关键词和下一级子知识点的AI提示词“，限制在 50-100 个字，样例：基于xxx知识点，总结出xxx子知识点
 - JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，避免浅色，RGB每个值小于200，样例：\`#8B0A50\`
+</rules>
+
+## Task (任务)
+现在基于 “${topic}” ，按照 ”输出样例“ 中的JSON数组结构输出思维导图。    
 `
 }
 
@@ -76,13 +93,19 @@ export function extractIdeas(raw) {
         .trim()
 
     // 3) 校验并解析 JSON，不是 JSON 就抛错
-    let parsed
+    let parsed = null;
     console.log('AI返回:', cleaned)
     try {
         parsed = JSON.parse(cleaned)
     } catch (err) {
         console.error('JSON解析错误:', err)
         throw new Error('返回内容不是有效 JSON')
+    }
+
+    // 判断是否为Object
+    if (parsed && typeof parsed === 'object' && (parsed.children || parsed.data)) {
+        console.warn("返回数据是Object，返回children数组或data数组")
+        return parsed.children || parsed.data
     }
 
     return parsed;
@@ -134,7 +157,11 @@ export async function requestCompletions({
     const body = {
         model,
         messages: [{ role: 'user', content: prompt }],
-        temperature
+        response_format: { // 增加额外字段，确保输出JSON
+            'type': 'json_object'
+        },
+        temperature,
+        max_tokens: 65000,
     }
 
     try {

@@ -18,32 +18,38 @@ export const thinkingModels = [
     {
         label: '无',
         value: 'default',
-        description: '任意',
+        description: '',
         prompt: `- 深入拆解最关键的知识点`,
         example: [
             {
-                name: "深度学习总结",
+                name: "高效学习方法",
                 description: "",
                 layout: 'mindMap',
                 content: new URL('./templates/default1.json', import.meta.url).href,
             },
             {
-                name: "如何使用p5.js实现游戏",
+                name: "深度学习总结",
                 description: "",
                 layout: 'mindMap',
                 content: new URL('./templates/default2.json', import.meta.url).href,
             },
             {
-                name: "机器学习经典算法",
+                name: "如何使用p5.js实现游戏",
                 description: "",
                 layout: 'mindMap',
                 content: new URL('./templates/default3.json', import.meta.url).href,
             },
             {
-                name: "实现游戏引擎需要哪些知识储备？",
+                name: "机器学习经典算法",
                 description: "",
                 layout: 'mindMap',
                 content: new URL('./templates/default4.json', import.meta.url).href,
+            },
+            {
+                name: "实现游戏引擎需要哪些知识储备？",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/default5.json', import.meta.url).href,
             }
         ]
     },

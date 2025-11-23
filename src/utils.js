@@ -66,10 +66,6 @@ export function showSuccess(title = '成功', content = '') {
 function toModalContent(content) {
     if (content == null) return ''
     if (typeof content !== 'string') return content
-    // 如果包含 HTML 标签（如 <br>），按 HTML 渲染
-    if (/<[a-z][\s\S]*>/i.test(content)) {
-        return h('div', { innerHTML: content })
-    }
     // 如果包含 \n，使用 pre 保留换行和空白
     if (content.includes('\n')) {
         return h('pre', { style: 'white-space: pre-wrap; word-break: break-word; margin: 0;' }, content)
