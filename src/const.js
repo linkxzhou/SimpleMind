@@ -74,6 +74,12 @@ export const thinkingModels = [
                 layout: 'mindMap',
                 content: new URL('./templates/note-taking3.json', import.meta.url).href,
             },
+            {
+                name: "《冰鉴》",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/note-taking4.json', import.meta.url).href,
+            }
         ]
     },
     {
