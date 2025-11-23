@@ -65,12 +65,12 @@ ${thinkingPrompt}
 请严格遵守以下规则：
 <rules>
 - 输出JSON数组格式，默认生成2层思维导图结构，包括JSON第一层数组和\`children\`数组
+- JSON数组最少为${count}个元素，最多为${count * 2}个元素
 - 输出语言：${language}
 - 思考方向：${nextSystemPrompt}
-- 思维导图的每一层最少 ${count} 个节点
-- JSON字段\`children\`是子知识点数组，每个子知识点也是一个JSON对象，包含\`data\`和\`children\`字段
-- JSON字段\`text\`是 ”简要描述“，限制 20-50 个字
-- JSON字段\`note\`是 ”详细描述“，限制在 100-400 个字
+- JSON字段\`children\`是子知识点数组，数组长度为${count}，每个元素为一个子知识点，子知识点是一个JSON对象，包含\`data\`和\`children\`字段
+- JSON字段\`text\`是 ”简要描述“，限制 20-50 个字，数据不能为空
+- JSON字段\`note\`是 ”详细描述“，限制 100-400 个字，数据不能为空
 - JSON字段\`nextSystemPrompt\`是 ”当前层总结关键词和下一级子知识点的AI提示词“，限制在 50-100 个字，样例：基于xxx知识点，总结出xxx子知识点
 - JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，避免浅色，RGB每个值小于200，样例：\`#8B0A50\`
 </rules>
@@ -166,7 +166,8 @@ export async function requestCompletions({
         model,
         messages: [{ role: 'user', content: prompt }],
         temperature,
-        max_tokens: 65000,
+        max_tokens: 32000,
+        enable_thinking: false,
     }
 
     try {

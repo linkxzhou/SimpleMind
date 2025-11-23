@@ -501,7 +501,7 @@ const aiGenerate = async () => {
         settings.value
     )
 
-    showLoading('AI生成中...', `🧠 Prompt: \n${prompt}`)
+    showLoading('AI生成中...（预计生成时间为3分钟，时间：' + new Date().toLocaleString() + '）', `🧠 Prompt: \n${prompt}`)
     try {
         const { data } = await requestCompletions({
             api: settings.value.api,
