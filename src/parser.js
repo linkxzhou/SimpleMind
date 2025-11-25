@@ -49,7 +49,7 @@ export async function extractTextFromPDF(file) {
         pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js')
         // 使用 CDN worker，避免本地 worker 配置问题
         pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+            'https://cdn.jsdelivr.net/npm/pdfjs-dist/build/pdf.worker.min.js'
     } catch (e) {
         const err = new Error('PDF 解析库未安装或不可用，请安装 pdfjs-dist 后重试')
         err.cause = e
