@@ -15,7 +15,7 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
 
     let thinkingPrompt = ""
     if (model.prompt && model.prompt.trim() !== '') {
-        let label = ''
+        let label = model.label || '任意'
         thinkingPrompt = `## Thinking (思考方式) 
 <context>
 使用 ${label} 思考方式，${model.description || ''}
