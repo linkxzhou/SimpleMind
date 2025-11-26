@@ -16,16 +16,10 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
     let thinkingPrompt = ""
     if (model.prompt && model.prompt.trim() !== '') {
         let label = ''
-        if (model.value.trim() === '' || model.value === 'default' || model.value === '无') {
-            label = '任意'
-        } else {
-            label = model.label
-        }
-
         thinkingPrompt = `## Thinking (思考方式) 
 <context>
 使用 ${label} 思考方式，${model.description || ''}
-原则：${model.prompt}
+参考原则：${model.prompt}
 </context>
 `
     }

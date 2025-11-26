@@ -16,11 +16,14 @@ export const languageOptions = [
 // 推理模型选择项（用于设置面板）
 export const thinkingModels = [
     {
-        label: '无',
+        label: '任意',
         value: 'default',
         description: '',
         prompt: `
-- 深入拆解最关键的知识点`,
+- 先问：我到底要解决什么？（中心）
+- 再问：从哪几个大维度看这个问题最合理？（第一层）
+- 然后：对每个分支用 5W1H/5 个为什么不断细化（深度）
+- 最后：检查有没有漏维度、有没有太虚、有没有变成细枝末节（校正）`,
         example: [
             {
                 name: "高效学习方法",
