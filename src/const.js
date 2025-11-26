@@ -18,7 +18,7 @@ export const thinkingModels = [
     {
         label: '任意',
         value: 'default',
-        description: '',
+        description: '通用总结方法',
         prompt: `
 - 先问：我到底要解决什么？（中心）
 - 再问：从哪几个大维度看这个问题最合理？（第一层）
