@@ -13,6 +13,39 @@ export const languageOptions = [
     { label: 'English', value: 'en-US' },
 ]
 
+export const layouts = [
+    { 
+        key: 'mindMap', 
+        name: '思维导图',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><path d="M12 9V5" stroke="currentColor" stroke-width="2"/><path d="M12 15V19" stroke="currentColor" stroke-width="2"/><path d="M9 12H5" stroke="currentColor" stroke-width="2"/><path d="M15 12H19" stroke="currentColor" stroke-width="2"/></svg>'
+    },
+    { 
+        key: 'logicalStructure', 
+        name: '逻辑结构图',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="4" height="4" rx="1" stroke="currentColor" stroke-width="2"/><path d="M8 12H12" stroke="currentColor" stroke-width="2"/><path d="M12 6V18" stroke="currentColor" stroke-width="2"/><path d="M12 6H16" stroke="currentColor" stroke-width="2"/><path d="M12 12H16" stroke="currentColor" stroke-width="2"/><path d="M12 18H16" stroke="currentColor" stroke-width="2"/></svg>'
+    },
+    { 
+        key: 'organizationStructure', 
+        name: '组织结构图',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="4" width="4" height="4" rx="1" stroke="currentColor" stroke-width="2"/><path d="M12 8V12" stroke="currentColor" stroke-width="2"/><path d="M6 12H18" stroke="currentColor" stroke-width="2"/><path d="M6 12V16" stroke="currentColor" stroke-width="2"/><path d="M12 12V16" stroke="currentColor" stroke-width="2"/><path d="M18 12V16" stroke="currentColor" stroke-width="2"/></svg>'
+    },
+    { 
+        key: 'catalogOrganization', 
+        name: '目录组织图',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="4" rx="1" stroke="currentColor" stroke-width="2"/><path d="M6 8V18" stroke="currentColor" stroke-width="2"/><path d="M6 12H10" stroke="currentColor" stroke-width="2"/><rect x="10" y="10" width="10" height="4" rx="1" stroke="currentColor" stroke-width="2"/><path d="M6 18H10" stroke="currentColor" stroke-width="2"/><rect x="10" y="16" width="10" height="4" rx="1" stroke="currentColor" stroke-width="2"/></svg>'
+    },
+    { 
+        key: 'timeline', 
+        name: '时间轴',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12H21" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="18" cy="12" r="2" fill="currentColor"/></svg>'
+    },
+    { 
+        key: 'fishbone', 
+        name: '鱼骨图',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12H21" stroke="currentColor" stroke-width="2"/><path d="M18 12L14 6" stroke="currentColor" stroke-width="2"/><path d="M14 12L10 18" stroke="currentColor" stroke-width="2"/><path d="M10 12L6 6" stroke="currentColor" stroke-width="2"/></svg>'
+    }
+]
+
 // 推理模型选择项（用于设置面板）
 export const thinkingModels = [
     {
@@ -266,11 +299,14 @@ export const thinkingModels = [
     },
 ]
 
-export const layouts = [
-    { key: 'mindMap', name: '思维导图' },
-    { key: 'logicalStructure', name: '逻辑结构图' },
-    { key: 'organizationStructure', name: '组织结构图' },
-    { key: 'catalogOrganization', name: '目录组织图' },
-    { key: 'timeline', name: '时间轴' },
-    { key: 'fishbone', name: '鱼骨图' }
+export const fontFamilyOptions = [
+    { label: '微软雅黑', value: '微软雅黑, Microsoft YaHei' },
+    { label: '宋体', value: '宋体, SimSun, Songti SC' },
+    { label: '楷体', value: '楷体, 楷体_GB2312, SimKai, STKaiti' },
+    { label: '黑体', value: '黑体, SimHei, Heiti SC' },
+    { label: '隶书', value: '隶书, SimLi' },
+    { label: 'Arial', value: 'arial, helvetica, sans-serif' },
+    { label: 'Arial Black', value: 'arial black, avant garde' },
+    { label: 'Times New Roman', value: 'times new roman' },
+    { label: 'Verdana', value: 'Verdana' },
 ]

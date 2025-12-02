@@ -18,7 +18,7 @@
   "thinkingMethod": "设置思考模版",
   "systemPrompt": "知识库",
   "systemPromptPlaceholder": "输入系统知识库",
-  "info": "说明",
+  "moreSettings": "更多设置",
   "layout": "布局",
   "systemPromptUsage": "增加知识库（比如文档信息，网页知识等）或者提示词，会当成AI系统提示词。",
   "shortcuts": "快捷键",
@@ -38,5 +38,14 @@
   "pasteNode": "粘贴节点",
   "collapseAllChildren": "收起所有下级节点",
   "expandAllChildren": "展开所有下级节点",
-  "toggleMode": "详细/简单模式切换"
+  "toggleMode": "详细/简单模式切换",
+  "backgroundColor": "画布背景颜色",
+  "lineColor": "连线颜色",
+  "lineWidth": "连线粗细",
+  "lineStyle": "连线风格",
+  "curve": "曲线",
+  "straight": "直线",
+  "direct": "直连",
+  "fontFamily": "字体",
+  "reset": "恢复默认"
 }

@@ -18,7 +18,7 @@
   "thinkingMethod": "Set Thinking Template",
   "systemPrompt": "Knowledge Base",
   "systemPromptPlaceholder": "Enter system knowledge base",
-  "info": "Info",
+  "moreSettings": "More Settings",
   "layout": "Layout",
   "systemPromptUsage": "Add your own knowledge base (e.g., documents, web knowledge) or let AI follow your intentions.",
   "shortcuts": "Shortcuts",
@@ -38,5 +38,14 @@
   "pasteNode": "Paste Node",
   "collapseAllChildren": "Collapse All Children",
   "expandAllChildren": "Expand All Children",
-  "toggleMode": "Toggle Detailed/Simple Mode"
+  "toggleMode": "Toggle Detailed/Simple Mode",
+  "backgroundColor": "Canvas Background Color",
+  "lineColor": "Line Color",
+  "lineWidth": "Line Width",
+  "lineStyle": "Line Style",
+  "curve": "Curve",
+  "straight": "Straight",
+  "direct": "Direct",
+  "fontFamily": "Font Family",
+  "reset": "Reset Default"
 }

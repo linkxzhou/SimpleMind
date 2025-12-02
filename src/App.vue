@@ -128,7 +128,9 @@
                         <div class="chart-list">
                             <a-button v-for="l in layouts" :key="l.key" size="small" :type="settings?.layout === l.key ? 'primary' : 'default'"
                                 @click="applyLayout(l.key)"
+                                style="display: inline-flex; align-items: center;"
                             >
+                                <span v-html="l.icon" style="display: inline-flex; margin-right: 4px;"></span>
                                 {{ l.name }}
                             </a-button>
                         </div>
@@ -191,11 +193,42 @@
                 </div>
             </a-tab-pane>
 
-            <a-tab-pane :key="'info'" :tab="t('info')">
-                <div class="field">
+            <a-tab-pane :key="'moreSettings'" :tab="t('moreSettings')">
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('backgroundColor') }}：</span>
+                    <input type="color" v-model="settings.backgroundColor" style="cursor: pointer; height: 24px; width: 40px; padding: 0; border: 1px solid #d9d9d9;" />
+                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = '#ffffff'" :title="t('reset')"></a-button>
+                </div>
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('lineColor') }}：</span>
+                    <input type="color" v-model="settings.lineColor" style="cursor: pointer; height: 24px; width: 40px; padding: 0; border: 1px solid #d9d9d9;" />
+                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = '#549688'" :title="t('reset')"></a-button>
+                </div>
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('lineWidth') }}：</span>
+                    <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" style="width: 80px;" />
+                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
+                </div>
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
+                    <a-select v-model:value="settings.lineStyle" style="width: 120px;">
+                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
+                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
+                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
+                    </a-select>
+                </div>
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('fontFamily') }}：</span>
+                    <a-select v-model:value="settings.fontFamily" style="width: 150px;">
+                        <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
+                            {{ font.label }}
+                        </a-select-option>
+                    </a-select>
+                     <a-button size="small" :icon="h(UndoOutlined)" @click="settings.fontFamily = '微软雅黑, Microsoft YaHei'" :title="t('reset')"></a-button>
+                </div>
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span>
-                        - {{ t('shortcuts') }}：{{ t('shortcutsHint') }}<br>
-                        - 关注开源项目：<a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
+                        关注开源项目：<a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
                     </span>
                 </div>
             </a-tab-pane>
@@ -210,6 +243,7 @@ import {
     InputNumber as AInputNumber,
     Textarea as ATextarea,
     Select as ASelect,
+    SelectOption as ASelectOption,
     Modal as AModal,
     Tabs as ATabs,
     TabPane as ATabPane,
@@ -229,14 +263,15 @@ import {
     DeleteOutlined,
     CloudDownloadOutlined,
     UnorderedListOutlined,
-    SisternodeOutlined
+    SisternodeOutlined,
+    UndoOutlined
 } from '@ant-design/icons-vue'
-import { ref, shallowRef, onMounted, onUnmounted, h } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-import { thinkingModels, layouts as layoutOptions, languageOptions, messages } from './const.js'
+import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
 
 // 状态与设置
@@ -261,7 +296,35 @@ const settings = ref({
     thinkingModel: 'default',
     language: 'zh-CN',
     layout: 'mindMap',
+    backgroundColor: '#ffffff',
+    lineColor: '#43a047',
+    lineWidth: 2,
+    lineStyle: 'curve',
+    fontFamily: '微软雅黑, Microsoft YaHei',
 })
+
+// 监听主题设置变化
+watch(
+    () => [
+        settings.value.backgroundColor,
+        settings.value.lineColor,
+        settings.value.lineWidth,
+        settings.value.lineStyle,
+        settings.value.fontFamily
+    ],
+    ([bgColor, lineColor, lineWidth, lineStyle, fontFamily]) => {
+        if (mindMapRef.value) {
+            const themeConfig = {
+                backgroundColor: bgColor,
+                lineColor: lineColor,
+                lineWidth: lineWidth,
+                lineStyle: lineStyle,
+                fontFamily: fontFamily
+            }
+            mindMapRef.value.setThemeConfig(themeConfig)
+        }
+    }
+)
 
 // 保留 t 函数，直接使用 const.js 导出的 messages
 const t = (key) => messages[settings.value.language]?.[key] ?? key
@@ -591,6 +654,15 @@ onMounted(() => {
         data: initialData
     });
     mindMapRef.value = mindMap
+
+    // 初始化主题设置
+    mindMap.setThemeConfig({
+        backgroundColor: settings.value.backgroundColor,
+        lineColor: settings.value.lineColor,
+        lineWidth: settings.value.lineWidth,
+        lineStyle: settings.value.lineStyle,
+        fontFamily: settings.value.fontFamily
+    })
 
     // 初始化缩放
     try {
