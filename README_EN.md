@@ -62,6 +62,17 @@ yarn build
   const repaired = jsonrepair(rawJsonString)
   ```
 
+(2) The `TouchEvent` plugin of `simple-mind-map` intercepts all touch events on mobile devices, causing UI components (such as Ant Design Vue's Select) to become unusable.
+- Cause: The official `TouchEvent` plugin binds `touchstart` and other events to `window` without checking if the event target is within the canvas.
+- Solution: Copy the official plugin code to the local project (e.g., `src/plugins/TouchEvent.js`) and add a check at the beginning of the event handler:
+  ```js
+  // If the touch target is not within the mind map container, ignore it to avoid affecting other UI components
+  if (!this.mindMap.el.contains(e.target)) {
+      return
+  }
+  ```
+- Import the locally modified version when registering the plugin.
+
 ## References
 (1) https://wanglin2.github.io/mind-map-docs/api/constructor/constructor-methods.html#on-event-fn    
 (2) https://ant.design/    

@@ -2,7 +2,14 @@ import { Modal } from 'ant-design-vue'
 import { h } from 'vue'
 import { LoadingOutlined } from '@ant-design/icons-vue'
 import MindMap from 'simple-mind-map'
-import TouchEvent from 'simple-mind-map/src/plugins/TouchEvent.js'
+import TouchEvent from './plugins/TouchEvent.js'
+
+// 使用自定义 TouchEvent 插件替代 simple-mind-map 官方插件。
+// 原因：官方插件直接在 window 上绑定 touchstart/touchmove/touchend 事件，导致在移动端（或模拟移动端）
+// 所有的触摸操作都被拦截，使得 Ant Design Vue 的 Select 下拉框等组件无法正常交互。
+// 解决方案：自定义插件中增加了判断，只有当触摸目标在思维导图容器内时才处理事件，否则放行。
+// import TouchEvent from 'simple-mind-map/src/plugins/TouchEvent.js'
+
 import Drag from 'simple-mind-map/src/plugins/Drag.js'
 import Export from 'simple-mind-map/src/plugins/Export.js'
 import ExportPDF from 'simple-mind-map/src/plugins/ExportPDF.js'
@@ -25,7 +32,7 @@ try {
     MindMap.usePlugin(MindMapLayoutPro)
     Themes.init(MindMap)
 } catch (e) {
-    // 忽略插件重复注册等异常
+    console.warn('SimpleMindMap 插件注册失败：', e)
 }
 
 // 简易翻译函数，直接读取 sessionStorage

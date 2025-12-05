@@ -68,6 +68,17 @@ yarn build
   const repaired = jsonrepair(rawJsonString)
   ```
 
+（2）`simple-mind-map` 的 `TouchEvent` 插件在移动端会拦截所有触摸事件，导致 UI 组件（如 Ant Design Vue 的 Select）不可用。
+- 原因：官方 `TouchEvent` 插件在 `window` 上绑定了 `touchstart` 等事件，且未判断事件目标是否在画布内。
+- 解决：复制官方插件代码到本地（如 `src/plugins/TouchEvent.js`），并在事件处理函数开头增加判断：
+  ```js
+  // 如果触摸目标不在思维导图容器内，则忽略，避免影响其他 UI 组件
+  if (!this.mindMap.el.contains(e.target)) {
+      return
+  }
+  ```
+- 在注册插件时引入本地修改后的版本。
+
 ## 参考
 （1）https://wanglin2.github.io/mind-map-docs/api/constructor/constructor-methods.html#on-event-fn    
 （2）https://ant.design/    
