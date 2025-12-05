@@ -184,7 +184,6 @@
                         :placeholder="t('systemPromptPlaceholder')"
                         :auto-size="{ minRows: 8, maxRows: 20 }"
                     />
-                    <!-- 新增：解析文件并填充到系统提示词 -->
                     <div style="margin-top: 8px;">
                         <a-upload
                             :show-upload-list="false"
@@ -192,7 +191,7 @@
                             accept=".md,.txt,.csv,.pdf"
                             :max-count="1"
                         >
-                            <a-button size="small" type="primary">上传文件，支持解析.md,.txt,.csv,.pdf</a-button>
+                            <a-button size="small" type="primary">{{ t('uploadHint') }}</a-button>
                         </a-upload>
                     </div>
                 </label>
@@ -245,7 +244,7 @@
                 </div>
                 <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span>
-                        关注开源项目：<a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
+                        {{ t('githubFollow') }} <a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
                     </span>
                 </div>
             </a-tab-pane>
@@ -293,19 +292,32 @@ import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsTo
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
 
-// 状态与设置
+// -----------------------------------------------------------------------------
+// 1. 状态定义 (State Definitions)
+// -----------------------------------------------------------------------------
+
+// 核心状态
 const mindMapRef = ref(null)
 const activeNodes = ref([])
-const settingsOpen = ref(false)
-const drawerOpen = ref(false)
 const themeList = getThemeList()
 
-const showDrawer = () => { drawerOpen.value = true }
-const onClose = () => { 
-    drawerOpen.value = false 
-    saveSettings()
-}
+// UI 状态
+const settingsOpen = ref(false)
+const drawerOpen = ref(false)
+const activeKey = ref('settings')
+const isDetailMode = ref(false)
+const isGenerating = ref(false)
+const zoom = ref(1)
 
+// 右键菜单状态
+const type = ref('')                 // 当前右键类型
+const currentNode = shallowRef(null) // 当前右键节点
+const left = ref(0)                  // 菜单X坐标
+const top = ref(0)                   // 菜单Y坐标
+const show = ref(false)              // 是否显示菜单
+const clipboardData = ref(null)      // 剪贴板数据
+
+// 设置状态
 const settings = ref({
     api: ENV_API || '',
     secret: ENV_SECRET || '',
@@ -325,47 +337,48 @@ const settings = ref({
     theme: '',
 })
 
-// 监听主题设置变化
-watch(
-    () => [
-        settings.value.backgroundColor,
-        settings.value.lineColor,
-        settings.value.lineWidth,
-        settings.value.lineStyle,
-        settings.value.fontFamily,
-        settings.value.theme
-    ],
-    ([bgColor, lineColor, lineWidth, lineStyle, fontFamily, theme], 
-    [oldBg, oldLine, oldWidth, oldStyle, oldFont, oldTheme]) => {
-        if (mindMapRef.value) {
-            if (theme !== oldTheme) {
-                mindMapRef.value.setTheme(theme)
-                const targetTheme = themeList.find(item => item.value === theme)
-                if (targetTheme && targetTheme.theme) {
-                    settings.value.backgroundColor = targetTheme.theme.backgroundColor
-                    settings.value.lineColor = targetTheme.theme.lineColor
-                    settings.value.lineWidth = targetTheme.theme.lineWidth
-                    settings.value.themeRootFillColor = targetTheme.theme?.root?.fillColor || '#549688'
-                    return
-                }
-            }
+// -----------------------------------------------------------------------------
+// 2. 工具函数 (Helper Functions)
+// -----------------------------------------------------------------------------
 
-            const themeConfig = {
-                backgroundColor: bgColor,
-                lineColor: lineColor,
-                lineWidth: lineWidth,
-                lineStyle: lineStyle,
-                fontFamily: fontFamily
-            }
-            mindMapRef.value.setThemeConfig(themeConfig)
-        }
-    }
-)
-
-// 保留 t 函数，直接使用 const.js 导出的 messages
+// 翻译辅助
 const t = (key) => messages[settings.value.language]?.[key] ?? key
 
-// 使用浏览器 sessionStorage 读取/保存设置
+// 节点数据获取
+const getNodeText = (node) => node?.data?.text || (node?.getData?.()?.text) || ''
+const getNodeSystemPrompt = (node) => node?.data?.nextSystemPrompt || (node?.getData?.()?.nextSystemPrompt) || ''
+
+// 深拷贝节点数据 (去除uid)
+const cloneNodeData = (node) => {
+    const raw = node?.getData ? node.getData() : { data: node?.data || {}, children: node?.children || [] }
+    const copy = JSON.parse(JSON.stringify(raw))
+    const stripUid = (n) => {
+        if (n?.data) delete n.data.uid
+        if (Array.isArray(n?.children)) n.children.forEach(stripUid)
+    }
+    stripUid(copy)
+    return copy
+}
+
+// 校验是否选中节点
+const validateTargetNode = () => {
+    if (!mindMapRef.value) {
+        showError(t('createMapFirst'))
+        return false
+    }
+    const target = currentNode.value || activeNodes.value?.[0]
+    if (!target) {
+        showError('未选择节点')
+        return false
+    }
+    return true
+}
+
+// -----------------------------------------------------------------------------
+// 3. 设置与主题管理 (Settings & Theme Management)
+// -----------------------------------------------------------------------------
+
+// 加载/保存设置
 const loadSettings = () => {
     try {
         settings.value = loadSettingsFromStorage(settings.value)
@@ -381,17 +394,74 @@ const saveSettings = () => {
     } catch (e) {
         console.error('保存设置失败：', e)
     }
-    // 保存后隐藏设置面板
     settingsOpen.value = false
 }
 
-// 节点数据辅助
-const getNodeText = (node) => node?.data?.text || (node?.getData?.()?.text) || ''
-const getNodeSystemPrompt = (node) => node?.data?.nextSystemPrompt || (node?.getData?.()?.nextSystemPrompt) || ''
+// 监听主题变化
+watch(
+    () => [
+        settings.value.backgroundColor,
+        settings.value.lineColor,
+        settings.value.lineWidth,
+        settings.value.lineStyle,
+        settings.value.fontFamily,
+        settings.value.theme
+    ],
+    ([bgColor, lineColor, lineWidth, lineStyle, fontFamily, theme], 
+    [oldBg, oldLine, oldWidth, oldStyle, oldFont, oldTheme]) => {
+        if (mindMapRef.value) {
+            // 主题切换逻辑
+            if (theme !== oldTheme) {
+                mindMapRef.value.setTheme(theme)
+                const targetTheme = themeList.find(item => item.value === theme)
+                if (targetTheme && targetTheme.theme) {
+                    settings.value.backgroundColor = targetTheme.theme.backgroundColor
+                    settings.value.lineColor = targetTheme.theme.lineColor
+                    settings.value.lineWidth = targetTheme.theme.lineWidth
+                    settings.value.themeRootFillColor = targetTheme.theme?.root?.fillColor || '#549688'
+                    return
+                }
+            }
+            // 自定义样式应用
+            const themeConfig = {
+                backgroundColor: bgColor,
+                lineColor: lineColor,
+                lineWidth: lineWidth,
+                lineStyle: lineStyle,
+                fontFamily: fontFamily
+            }
+            mindMapRef.value.setThemeConfig(themeConfig)
+        }
+    }
+)
 
-// 视图与布局
-const zoom = ref(1)
+// -----------------------------------------------------------------------------
+// 4. UI 交互控制 (UI Interaction Control)
+// -----------------------------------------------------------------------------
 
+const showDrawer = () => { drawerOpen.value = true }
+
+const onClose = () => { 
+    drawerOpen.value = false 
+    saveSettings()
+}
+
+const toggleSettings = () => {
+    settingsOpen.value = !settingsOpen.value
+}
+
+const openExportPanel = () => {
+    settingsOpen.value = true
+    activeKey.value = 'export'
+}
+
+const hideContextMenu = () => { show.value = false }
+
+// -----------------------------------------------------------------------------
+// 5. 视图与布局控制 (View & Layout Control)
+// -----------------------------------------------------------------------------
+
+// 缩放控制
 const applyZoom = (next) => {
     const mm = mindMapRef.value
     const clamped = Math.min(2, Math.max(0.2, Number(next) || 1))
@@ -399,18 +469,14 @@ const applyZoom = (next) => {
     if (!mm) return
     const v = mm.view
 
-    // 优先调用库方法（若存在）
     if (v && typeof v.setScale === 'function') {
         v.setScale(clamped)
         return
     }
-
     if (v && typeof v.scale === 'function') {
-        // 有些库用 scale(value) 设定缩放
         v.scale(clamped)
         return
     }
-
     const el = document.getElementById('mindMapContainer')
     if (el) {
         el.style.transform = `scale(${clamped})`
@@ -421,8 +487,8 @@ const applyZoom = (next) => {
 const zoomIn = () => applyZoom(zoom.value + 0.1)
 const zoomOut = () => applyZoom(zoom.value - 0.1)
 
+// 布局控制
 const layouts = layoutOptions
-
 const applyLayout = (key) => {
     if (!mindMapRef.value) return
     mindMapRef.value.setLayout(key)
@@ -430,44 +496,33 @@ const applyLayout = (key) => {
     settings.value.layout = key
 }
 
-// 右键菜单状态与工具
-const type = ref('')                 // 当前右键类型：'node' 等
-const currentNode = shallowRef(null) // 当前右键的节点
-const left = ref(0)                  // 菜单X坐标（clientX）
-const top = ref(0)                   // 菜单Y坐标（clientY）
-const show = ref(false)              // 是否显示菜单
-const clipboardData = ref(null)      // 复制/剪切的缓存数据
-
-const hideContextMenu = () => { show.value = false }
-
-// 深拷贝节点数据并清理 uid，避免插入时冲突
-const cloneNodeData = (node) => {
-    const raw = node?.getData ? node.getData() : { data: node?.data || {}, children: node?.children || [] }
-    const copy = JSON.parse(JSON.stringify(raw))
-    const stripUid = (n) => {
-        if (n?.data) delete n.data.uid
-        if (Array.isArray(n?.children)) n.children.forEach(stripUid)
-    }
-    stripUid(copy)
-    return copy
-}
-
-const validateTargetNode = () => {
-    if (!mindMapRef.value) {
+// 模式切换
+const toggleMindMapMode = () => {
+    const mm = mindMapRef.value
+    if (!mm) {
         showError('请先创建一个思维导图')
-        return false
+        return
     }
-
-    const target = currentNode.value || activeNodes.value?.[0]
-    if (!target) {
-        showError('未选择节点')
-        return false
-    }
-
-    return true
+    const nextMode = isDetailMode.value ? 'simple' : 'detail'
+    switchTextNoteMode(mindMapRef.value, nextMode)
+    isDetailMode.value = !isDetailMode.value
 }
 
-// 节点操作（右键菜单）
+// 历史记录
+const back = () => {
+    if (!mindMapRef.value) return
+    mindMapRef.value.execCommand('BACK')
+}
+
+const forward = () => {
+    if (!mindMapRef.value) return
+    mindMapRef.value.execCommand('FORWARD')
+}
+
+// -----------------------------------------------------------------------------
+// 6. 节点操作 (Node Operations)
+// -----------------------------------------------------------------------------
+
 const addChildNode = () => {
     if (!validateTargetNode()) return
     const target = currentNode.value || activeNodes.value?.[0]
@@ -512,7 +567,6 @@ const pasteNode = () => {
     hideContextMenu()
 }
 
-// 标记/取消标记节点：isMarked=false 时清空图标
 const markNode = (isMarked = false) => {
     if (!validateTargetNode()) return
     const target = currentNode.value || activeNodes.value?.[0]
@@ -521,23 +575,15 @@ const markNode = (isMarked = false) => {
     hideContextMenu()
 }
 
-const back = () => {
-    if (!mindMapRef.value) return
-    mindMapRef.value.execCommand('BACK')
-}
+// -----------------------------------------------------------------------------
+// 7. 文件与数据操作 (File & Data Operations)
+// -----------------------------------------------------------------------------
 
-const forward = () => {
-    if (!mindMapRef.value) return
-    mindMapRef.value.execCommand('FORWARD')
-}
-
-// 基础导图操作
 const newMap = async (tpl) => {
     if (!mindMapRef.value) {
-        showError('请先创建一个思维导图')
+        showError(t('createMapFirst'))
         return
     }
-
     try {
         let data = { data: { text: '主题' }, children: [] }
         if (typeof tpl === 'string') {
@@ -545,122 +591,21 @@ const newMap = async (tpl) => {
             if (s.startsWith('{') || s.startsWith('[')) {
                 data = JSON.parse(s)
             } else {
-                // 新增：字符串视为 URL/路径，使用 fetch 加载 JSON
                 const res = await fetch(s)
-                if (!res.ok) {
-                    throw new Error(`模板加载失败，HTTP ${res.status}`)
-                }
+                if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
                 const text = await res.text()
                 data = JSON.parse(text)
             }
         } else if (tpl && typeof tpl === 'object') {
             data = (tpl && tpl.data) || { data: { text: '主题' }, children: [] }
         }
-
         mindMapRef.value.setData(data)
         mindMapRef.value.view.reset()
-
-        onClose() // 关闭模态窗口
+        onClose()
     } catch (e) {
-        showError('导入模板失败', String(e?.message || e))
+        showError(t('templateImportFailed'), String(e?.message || e))
     }
-
-    // 默认简单模式
     isDetailMode.value = false
-}
-
-// AI 生成
-const isGenerating = ref(false)
-const aiGenerate = async () => {
-    if (isGenerating.value) return
-    isGenerating.value = true
-
-    // 判断API Base是否配置
-    if (!settings.value.api || settings.value.api.trim().length === 0) {
-        showError('请打开设置，配置API Base')
-        isGenerating.value = false
-        return
-    }
-
-    if (!mindMapRef.value) {
-        showError('请先创建一个思维导图')
-        isGenerating.value = false
-        return
-    }
-
-    const baseNode = activeNodes.value?.[0]
-    const baseText = getNodeText(baseNode)
-    if (!baseText || baseText.trim().length === 0) {
-        showError('请先选择一个节点或者输入一个主题')
-        isGenerating.value = false
-        return
-    }
-
-    // 新增：按模式选择系统提示词
-    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
-    const systemPrompt = settings.value.systemPrompt
-
-    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
-    const prompt = libBuildPrompt(
-        baseText,
-        count,
-        nodeSystemPrompt,
-        systemPrompt,
-        settings.value
-    )
-
-    showLoading('AI生成中...（预计生成时间为3分钟，时间：' + new Date().toLocaleString() + '）', `🧠 Prompt: \n${prompt}`)
-    try {
-        const { data } = await requestCompletions({
-            api: settings.value.api,
-            secret: settings.value.secret,
-            model: settings.value.model || 'gpt-5',
-            temperature: settings.value.temperature,
-            prompt,
-        })
-
-        const ideas = libExtractIdeas(data, count)
-        console.log('解析到子节点：', JSON.stringify(ideas), `共${ideas.length}个`)
-        hideLoading()
-        if (ideas.length) {
-            mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
-        } else {
-            showError('AI返回内容为空或未解析到子节点，请重新生成')
-        }
-    } catch (err) {
-        hideLoading()
-        const msg = err?.message || String(err)
-        showError(`AI生成失败：${msg}，请重新生成`)
-        console.error('AI生成失败：', err)
-    } finally {
-        isGenerating.value = false
-    }
-}
-
-// 设置与导入导出面板
-const activeKey = ref('settings')
-
-const toggleSettings = () => {
-    settingsOpen.value = !settingsOpen.value
-}
-
-const isDetailMode = ref(false)
-
-const toggleMindMapMode = () => {
-    const mm = mindMapRef.value
-    if (!mm) {
-        showError('请先创建一个思维导图')
-        return
-    }
-
-    const nextMode = isDetailMode.value ? 'simple' : 'detail'
-    switchTextNoteMode(mindMapRef.value, nextMode)
-    isDetailMode.value = !isDetailMode.value
-}
-
-const openExportPanel = () => {
-    settingsOpen.value = true
-    activeKey.value = 'export'
 }
 
 const exportMap = (type) => {
@@ -677,12 +622,81 @@ const handleParsePromptUpload = async (file) => {
         const content = await parseFileAsPrompt(file)
         settings.value.systemPrompt = content
     } catch (e) {
-        showError('解析失败', String(e?.message || e))
+        showError(t('parseFailed'), String(e?.message || e))
     }
-    return false // 阻止默认上传行为
+    return false
 }
 
-// 初始化与事件绑定
+// -----------------------------------------------------------------------------
+// 8. AI 生成功能 (AI Generation)
+// -----------------------------------------------------------------------------
+
+const aiGenerate = async () => {
+    if (isGenerating.value) return
+    isGenerating.value = true
+
+    if (!settings.value.api || settings.value.api.trim().length === 0) {
+        showError('请打开设置，配置API Base')
+        isGenerating.value = false
+        return
+    }
+    if (!mindMapRef.value) {
+        showError(t('createMapFirst'))
+        isGenerating.value = false
+        return
+    }
+
+    const baseNode = activeNodes.value?.[0]
+    const baseText = getNodeText(baseNode)
+    if (!baseText || baseText.trim().length === 0) {
+        showError('请先选择一个节点或者输入一个主题')
+        isGenerating.value = false
+        return
+    }
+
+    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
+    const systemPrompt = settings.value.systemPrompt
+    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
+    const prompt = libBuildPrompt(
+        baseText,
+        count,
+        nodeSystemPrompt,
+        systemPrompt,
+        settings.value
+    )
+
+    showLoading(t('aiGenerating') + new Date().toLocaleString() + '）', `🧠 Prompt: \n${prompt}`)
+    try {
+        const { data } = await requestCompletions({
+            api: settings.value.api,
+            secret: settings.value.secret,
+            model: settings.value.model || 'gpt-5',
+            temperature: settings.value.temperature,
+            prompt,
+        })
+
+        const ideas = libExtractIdeas(data, count)
+        console.log('解析到子节点：', JSON.stringify(ideas), `共${ideas.length}个`)
+        hideLoading()
+        if (ideas.length) {
+            mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
+        } else {
+            showError(t('aiNoContent'))
+        }
+    } catch (err) {
+        hideLoading()
+        const msg = err?.message || String(err)
+        showError(t('aiGenerateFailed').replace('{msg}', msg))
+        console.error('AI生成失败：', err)
+    } finally {
+        isGenerating.value = false
+    }
+}
+
+// -----------------------------------------------------------------------------
+// 9. 生命周期 (Lifecycle)
+// -----------------------------------------------------------------------------
+
 onMounted(() => {
     loadSettings()
     const initialData = loadMindMapData({

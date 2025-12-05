@@ -69,4 +69,3 @@ export async function extractTextFromPDF(file) {
     }
     return normalizeText(fullText)
 }
-// ... existing code ...

@@ -20,8 +20,7 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
 <context>
 使用 ${label} 思考方式，${model.description || ''}
 参考原则：${model.prompt}
-</context>
-`
+</context>`
     }
 
     return `${systemPrompt}## Role (角色设定)   

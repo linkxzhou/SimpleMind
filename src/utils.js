@@ -12,6 +12,8 @@ import xmind from 'simple-mind-map/src/parse/xmind.js'
 import MindMapLayoutPro from 'simple-mind-map/src/plugins/MindMapLayoutPro.js'
 import Themes from 'simple-mind-map-plugin-themes'
 import themeList from 'simple-mind-map-plugin-themes/themeList'
+import { messages } from './const.js'
+import { SETTINGS_KEY } from './storage.js'
 
 // 注册 SimpleMindMap 官方导出插件
 try {
@@ -26,6 +28,19 @@ try {
     // 忽略插件重复注册等异常
 }
 
+// 简易翻译函数，直接读取 sessionStorage
+const t = (key) => {
+    let lang = 'zh-CN'
+    try {
+        const raw = sessionStorage.getItem(SETTINGS_KEY)
+        if (raw) {
+            const s = JSON.parse(raw)
+            if (s.language) lang = s.language
+        }
+    } catch (e) {}
+    return messages[lang]?.[key] ?? key
+}
+
 // 从环境变量读取默认值（Vite 约定使用 VITE_ 前缀）
 const env = (import.meta && import.meta.env) ? import.meta.env : {}
 export const ENV_API = (env.VITE_API ?? '').trim()
@@ -33,10 +48,10 @@ export const ENV_SECRET = (env.VITE_SECRET ?? '').trim()
 export const ENV_MODEL = (env.VITE_MODEL ?? '').trim()
 
 // showLoading 修改片段
-export function showLoading(title = '加载中', content = '请稍候...') {
+export function showLoading(title, content) {
     Modal.info({
-        title,
-        content: toModalContent(content),
+        title: title || t('loading'),
+        content: toModalContent(content || t('pleaseWait')),
         icon: h(LoadingOutlined),
         okButtonProps: { style: { display: 'none' } },
         maskClosable: false,
@@ -50,18 +65,18 @@ export function hideLoading() {
 }
 
 // showError 修改片段
-export function showError(title = '错误', content = '') {
+export function showError(title, content = '') {
     Modal.error({
-        title,
+        title: title || t('error'),
         content: toModalContent(content),
         closable: true,
     })
 }
 
 // showSuccess 修改片段
-export function showSuccess(title = '成功', content = '') {
+export function showSuccess(title, content = '') {
     Modal.success({
-        title,
+        title: title || t('success'),
         content: toModalContent(content),
         closable: true,
     })
@@ -81,7 +96,7 @@ function toModalContent(content) {
 
 export function exportMindMap(mindMap, type) {
     if (!mindMap) {
-        showError('请先创建一个思维导图')
+        showError(t('createMapFirst'))
         return
     }
     
@@ -97,13 +112,13 @@ export function exportMindMap(mindMap, type) {
             mindMap.export(type, true, filename)
         }
     } catch (e) {
-        showError('导出失败', String(e?.message || e))
+        showError(t('exportFailed'), String(e?.message || e))
     }
 }
 
 export async function importFileToMindMap(file, mindMap) {
     if (!mindMap) {
-        showError('请先创建一个思维导图')
+        showError(t('createMapFirst'))
         return false
     }
     
@@ -123,7 +138,7 @@ export async function importFileToMindMap(file, mindMap) {
                 }
                 mindMap.view?.reset?.()
             } catch (e) {
-                showError('导入 JSON/SMM 失败', String(e?.message || e))
+                showError(t('importFailedJson'), String(e?.message || e))
             }
             break
         }
@@ -133,7 +148,7 @@ export async function importFileToMindMap(file, mindMap) {
                 mindMap.setData(data)
                 mindMap.view?.reset?.()
             } catch (e) {
-                showError('导入 XMind 失败', String(e?.message || e))
+                showError(t('importFailedXmind'), String(e?.message || e))
             }
             break
         }
@@ -144,16 +159,16 @@ export async function importFileToMindMap(file, mindMap) {
                 mindMap.setData(data)
                 mindMap.view?.reset?.()
             } catch (e) {
-                showError('导入 Markdown 失败', String(e?.message || e))
+                showError(t('importFailedMarkdown'), String(e?.message || e))
             }
             break
         }
         case 'xlsx': {
-            showError('暂未集成 .xlsx 解析，请安装并接入 xlsx 库')
+            showError(t('xlsxNotIntegrated'))
             break
         }
         default: {
-            showError('不支持的文件类型', '请选择 .smm/.json/.xmind/.xlsx/.md')
+            showError(t('unsupportedFileType'), t('selectSupportedFile'))
         }
     }
     
@@ -162,7 +177,7 @@ export async function importFileToMindMap(file, mindMap) {
 
 export function switchTextNoteMode(mindMap, mode = 'detail', options = {}) {
     const input = mindMap.getData()
-    const lineBreak = options.lineBreak ?? '\n详细描述：'
+    const lineBreak = options.lineBreak ?? ('\n' + t('detailDescription'))
     const out = JSON.parse(JSON.stringify(input))
 
     const combineText = (d) => {
@@ -212,7 +227,6 @@ export function switchTextNoteMode(mindMap, mode = 'detail', options = {}) {
 }
 
 export function getThemeList() {
-    console.log(themeList)
     return [
         {
             name: '默认',
