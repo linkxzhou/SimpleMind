@@ -140,16 +140,17 @@
                 <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('theme') }}：</span>
                     <a-select v-model:value="settings.theme" style="width: 150px;">
-                        <a-select-option v-for="item in themeList" :key="item.value" :value="item.value">{{ item.name }}</a-select-option>
-                    </a-select>
-                </div>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
-                    <a-select v-model:value="settings.lineStyle" style="width: 150px;">
-                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
-                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
-                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
+                        <a-select-option 
+                            v-for="item in themeList" 
+                            :key="item.value" 
+                            :value="item.value"
+                            :style="{ 
+                                backgroundColor: item.theme?.backgroundColor || '#ffffff',
+                                color: item.dark ? '#ffffff' : 'inherit'
+                            }"
+                        >
+                            {{ item.name }}
+                        </a-select-option>
                     </a-select>
                 </div>
 
@@ -159,6 +160,15 @@
                         <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
                             {{ font.label }}
                         </a-select-option>
+                    </a-select>
+                </div>
+
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
+                    <a-select v-model:value="settings.lineStyle" style="width: 150px;">
+                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
+                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
+                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
                     </a-select>
                 </div>
 
