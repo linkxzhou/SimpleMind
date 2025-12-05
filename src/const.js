@@ -310,3 +310,16 @@ export const fontFamilyOptions = [
     { label: 'Times New Roman', value: 'times new roman' },
     { label: 'Verdana', value: 'Verdana' },
 ]
+
+export const iconList = [
+    {
+        label: '图标',
+        type: 'icon',
+        list: [
+            {
+                name: 'mark',
+                icon: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCI+CiAgPHBhdGggZD0iTTUxMiA1MTJtLTUxMiAwYTUxMiA1MTIgMCAxIDAgMTAyNCAwIDUxMiA1MTIgMCAxIDAtMTAyNCAwWiIgZmlsbD0ibm9uZSI+PC9wYXRoPgogIDxwYXRoIGQ9Ik02NDQuNTY1MzMzIDMwNi45MDEzMzNjMzIuMTI4IDAgNjUuODM0NjY3LTUuNzYgMTAxLjA3NzMzNC0xNy4yMzczMzNhMTcuMDY2NjY3IDE3LjA2NjY2NyAwIDAgMSAyMi4zNTczMzMgMTYuMjEzMzMzdjMyOC4zMmMtMS4xMDkzMzMgMC43NjggMTAuMzI1MzMzIDI3LjA5MzMzMy05OS4zNzA2NjcgMTkuODQtMTA5LjY1MzMzMy03LjIxMDY2Ny0xODEuNzYtNDUuMDk4NjY3LTI0Ni44NjkzMzMtNDUuMDk4NjY2LTY1LjE1MiAwLTQ5LjMyMjY2NyAyLjY4OC03NC4xNTQ2NjcgOC40MDUzMzN2MTY4LjA2NGEyNC43NDY2NjcgMjQuNzQ2NjY3IDAgMCAxLTI0LjQ5MDY2NiAyNS4yNTg2NjcgMjIuNTI4IDIyLjUyOCAwIDAgMS0xNy4yOC03LjI1MzMzNCAyNC4xNDkzMzMgMjQuMTQ5MzMzIDAgMCAxLTcuMTY4LTE4LjAwNTMzM1YyODEuMjU4NjY3QzI5OS43NzYgMjgwLjQ5MDY2NyAzMjguMTA2NjY3IDI1NiA0MjEuNzYgMjU2czE2NC40MzczMzMgNTAuOTAxMzMzIDIyMi44MDUzMzMgNTAuOTAxMzMzeiIgZmlsbD0iIzAwQUEwMCI+PC9wYXRoPgo8L3N2Zz4=`
+            },
+        ],
+    }
+] 

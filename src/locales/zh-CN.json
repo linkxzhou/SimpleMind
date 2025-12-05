@@ -36,6 +36,8 @@
   "copyNode": "复制节点",
   "cutNode": "剪切节点",
   "pasteNode": "粘贴节点",
+  "markNode": "标记节点",
+  "unmarkNode": "删除标记",
   "collapseAllChildren": "收起所有下级节点",
   "expandAllChildren": "展开所有下级节点",
   "toggleMode": "详细/简单模式切换",
@@ -46,6 +48,7 @@
   "curve": "曲线",
   "straight": "直线",
   "direct": "直连",
+  "theme": "主题",
   "fontFamily": "字体",
   "reset": "恢复默认"
 }

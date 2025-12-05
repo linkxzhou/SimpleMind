@@ -1,4 +1,6 @@
-/** 字体与布局保留，不再使用图标相关的自定义样式 */
+body {
+    margin: 0;
+}
 
 .toolbar {
     position: fixed;

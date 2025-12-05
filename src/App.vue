@@ -1,4 +1,11 @@
 <template>
+  <a-config-provider
+    :theme="{
+      token: {
+        colorPrimary: settings.themeRootFillColor || '#549688',
+      },
+    }"
+  >
     <div class="toolbar">
         <div class="toolbar-inner">
             <div class="zoom-control">
@@ -63,7 +70,7 @@
                         v-for="ex in item.example"
                         :key="ex.name"
                     >
-                        <a-button size="small" type="primary" @click="newMap(ex.content)" style="margin-left: 8px;">
+                        <a-button size="small" @click="newMap(ex.content)" style="margin-left: 8px;">
                             {{ t('open') }}: {{ ex.name }}
                         </a-button>
                     </p>
@@ -89,6 +96,8 @@
         >
             {{ t('pasteNode') }}
         </div>
+        <div class="menu-item" @click="markNode(true)">{{ t('markNode') }}</div>
+        <div class="menu-item" @click="markNode(false)">{{ t('unmarkNode') }}</div>
     </div>
 
     <a-modal
@@ -123,6 +132,36 @@
                     <a-input name="model" v-model:value="settings.model" :placeholder="t('modelPlaceholder')" style="flex: 1; min-width: 0;" />
                 </label>
 
+                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
+                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" style="flex: 0 0 auto; width: 120px;" />
+                </label>
+
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('theme') }}：</span>
+                    <a-select v-model:value="settings.theme" style="width: 150px;">
+                        <a-select-option v-for="item in themeList" :key="item.value" :value="item.value">{{ item.name }}</a-select-option>
+                    </a-select>
+                </div>
+
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
+                    <a-select v-model:value="settings.lineStyle" style="width: 150px;">
+                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
+                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
+                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
+                    </a-select>
+                </div>
+
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <span style="white-space: nowrap;">{{ t('fontFamily') }}：</span>
+                    <a-select v-model:value="settings.fontFamily" style="width: 150px;">
+                        <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
+                            {{ font.label }}
+                        </a-select-option>
+                    </a-select>
+                </div>
+
                 <label class="field">
                     <span>{{ t('layout') }}：</span>
                         <div class="chart-list">
@@ -134,11 +173,6 @@
                                 {{ l.name }}
                             </a-button>
                         </div>
-                </label>
-
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
-                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" style="flex: 0 0 auto; width: 120px;" />
                 </label>
             </a-tab-pane>
 
@@ -196,35 +230,18 @@
             <a-tab-pane :key="'moreSettings'" :tab="t('moreSettings')">
                 <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('backgroundColor') }}：</span>
-                    <input type="color" v-model="settings.backgroundColor" style="cursor: pointer; height: 24px; width: 40px; padding: 0; border: 1px solid #d9d9d9;" />
+                    <input type="color" v-model="settings.backgroundColor" style="cursor: pointer; height: 30px; width: 80px; padding: 0; border: 1px solid #d9d9d9;" />
                     <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = '#ffffff'" :title="t('reset')"></a-button>
                 </div>
                 <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('lineColor') }}：</span>
-                    <input type="color" v-model="settings.lineColor" style="cursor: pointer; height: 24px; width: 40px; padding: 0; border: 1px solid #d9d9d9;" />
+                    <input type="color" v-model="settings.lineColor" style="cursor: pointer; height: 30px; width: 80px; padding: 0; border: 1px solid #d9d9d9;" />
                     <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = '#549688'" :title="t('reset')"></a-button>
                 </div>
                 <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('lineWidth') }}：</span>
                     <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" style="width: 80px;" />
                     <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
-                </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
-                    <a-select v-model:value="settings.lineStyle" style="width: 120px;">
-                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
-                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
-                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
-                    </a-select>
-                </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('fontFamily') }}：</span>
-                    <a-select v-model:value="settings.fontFamily" style="width: 150px;">
-                        <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
-                            {{ font.label }}
-                        </a-select-option>
-                    </a-select>
-                     <a-button size="small" :icon="h(UndoOutlined)" @click="settings.fontFamily = '微软雅黑, Microsoft YaHei'" :title="t('reset')"></a-button>
                 </div>
                 <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span>
@@ -234,6 +251,7 @@
             </a-tab-pane>
         </a-tabs>
     </a-modal>
+  </a-config-provider>
 </template>
 
 <script setup>
@@ -251,6 +269,7 @@ import {
     Drawer as ADrawer, 
     Radio as ARadio,
     Card as ACard,
+    ConfigProvider as AConfigProvider,
 } from 'ant-design-vue'
 import {
     MinusOutlined,
@@ -268,10 +287,10 @@ import {
 } from '@ant-design/icons-vue'
 import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode } from './utils.js'
+import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions } from './const.js'
+import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
 
 // 状态与设置
@@ -279,6 +298,7 @@ const mindMapRef = ref(null)
 const activeNodes = ref([])
 const settingsOpen = ref(false)
 const drawerOpen = ref(false)
+const themeList = getThemeList()
 
 const showDrawer = () => { drawerOpen.value = true }
 const onClose = () => { 
@@ -301,6 +321,8 @@ const settings = ref({
     lineWidth: 2,
     lineStyle: 'curve',
     fontFamily: '微软雅黑, Microsoft YaHei',
+    themeRootFillColor: '#549688',
+    theme: '',
 })
 
 // 监听主题设置变化
@@ -310,10 +332,24 @@ watch(
         settings.value.lineColor,
         settings.value.lineWidth,
         settings.value.lineStyle,
-        settings.value.fontFamily
+        settings.value.fontFamily,
+        settings.value.theme
     ],
-    ([bgColor, lineColor, lineWidth, lineStyle, fontFamily]) => {
+    ([bgColor, lineColor, lineWidth, lineStyle, fontFamily, theme], 
+    [oldBg, oldLine, oldWidth, oldStyle, oldFont, oldTheme]) => {
         if (mindMapRef.value) {
+            if (theme !== oldTheme) {
+                mindMapRef.value.setTheme(theme)
+                const targetTheme = themeList.find(item => item.value === theme)
+                if (targetTheme && targetTheme.theme) {
+                    settings.value.backgroundColor = targetTheme.theme.backgroundColor
+                    settings.value.lineColor = targetTheme.theme.lineColor
+                    settings.value.lineWidth = targetTheme.theme.lineWidth
+                    settings.value.themeRootFillColor = targetTheme.theme?.root?.fillColor || '#549688'
+                    return
+                }
+            }
+
             const themeConfig = {
                 backgroundColor: bgColor,
                 lineColor: lineColor,
@@ -473,6 +509,15 @@ const pasteNode = () => {
     const { data, children = [] } = clipboardData.value
     const target = currentNode.value || activeNodes.value?.[0]
     mindMapRef.value.execCommand('INSERT_CHILD_NODE', false, [target], data, children)
+    hideContextMenu()
+}
+
+// 标记/取消标记节点：isMarked=false 时清空图标
+const markNode = (isMarked = false) => {
+    if (!validateTargetNode()) return
+    const target = currentNode.value || activeNodes.value?.[0]
+    const icons = isMarked ? ['icon_mark'] : []
+    mindMapRef.value.execCommand('SET_NODE_ICON', target, icons)
     hideContextMenu()
 }
 
@@ -651,7 +696,9 @@ onMounted(() => {
         mousewheelAction: 'zoom',
         mousewheelZoomActionReverse: true,
         layout: settings.value.layout || 'mindMap',
-        data: initialData
+        theme: settings.value.theme || '',
+        data: initialData,
+        iconList: iconList,
     });
     mindMapRef.value = mindMap
 

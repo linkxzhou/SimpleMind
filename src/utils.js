@@ -9,6 +9,9 @@ import ExportPDF from 'simple-mind-map/src/plugins/ExportPDF.js'
 import ExportXMind from 'simple-mind-map/src/plugins/ExportXMind.js'
 import markdown from 'simple-mind-map/src/parse/markdown.js'
 import xmind from 'simple-mind-map/src/parse/xmind.js'
+import MindMapLayoutPro from 'simple-mind-map/src/plugins/MindMapLayoutPro.js'
+import Themes from 'simple-mind-map-plugin-themes'
+import themeList from 'simple-mind-map-plugin-themes/themeList'
 
 // 注册 SimpleMindMap 官方导出插件
 try {
@@ -17,6 +20,8 @@ try {
     MindMap.usePlugin(ExportXMind)
     MindMap.usePlugin(TouchEvent)
     MindMap.usePlugin(Drag)
+    MindMap.usePlugin(MindMapLayoutPro)
+    Themes.init(MindMap)
 } catch (e) {
     // 忽略插件重复注册等异常
 }
@@ -204,4 +209,20 @@ export function switchTextNoteMode(mindMap, mode = 'detail', options = {}) {
     // 更新思维导图数据
     mindMap.setData(out)
     mindMap.view?.reset?.()
+}
+
+export function getThemeList() {
+    console.log(themeList)
+    return [
+        {
+            name: '默认',
+            value: '',
+            theme: {
+                backgroundColor: '#f5f5f5',
+                lineColor: '#549688',
+                lineWidth: 2,
+            }
+        }, 
+        ...themeList
+    ];
 }

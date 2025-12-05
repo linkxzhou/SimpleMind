@@ -36,6 +36,8 @@
   "copyNode": "Copy Node",
   "cutNode": "Cut Node",
   "pasteNode": "Paste Node",
+  "markNode": "Mark Node",
+  "unmarkNode": "Remove Mark",
   "collapseAllChildren": "Collapse All Children",
   "expandAllChildren": "Expand All Children",
   "toggleMode": "Toggle Detailed/Simple Mode",
@@ -46,6 +48,7 @@
   "curve": "Curve",
   "straight": "Straight",
   "direct": "Direct",
+  "theme": "Theme",
   "fontFamily": "Font Family",
   "reset": "Reset Default"
 }
