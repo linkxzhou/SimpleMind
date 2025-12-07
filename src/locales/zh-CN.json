@@ -37,7 +37,7 @@
   "cutNode": "剪切节点",
   "pasteNode": "粘贴节点",
   "markNode": "标记节点",
-  "unmarkNode": "删除标记",
+  "unmarkNode": "标记删除",
   "collapseAllChildren": "收起所有下级节点",
   "expandAllChildren": "展开所有下级节点",
   "toggleMode": "详细/简单模式切换",

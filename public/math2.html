@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "一年级数学下册总结",
+    "expand": true,
+    "uid": "d04d905b-6640-4a68-8854-b1850e1a2348",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "认识图形（二）",
+        "note": "认识长方形、正方形、三角形、平行四边形、圆等平面图形，学会用这些图形拼组新图形，初步体会平面图形和立体图形的关系。通过观察、操作、分类等活动，培养空间观念和几何直觉。",
+        "nextSystemPrompt": "基于平面图形认识，总结出图形特征识别、图形拼组、图形分类等子知识点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "5f13682e-6120-4e72-978c-bae3955e3569",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "平面图形的认识与特征",
+            "note": "识别长方形、正方形、三角形、平行四边形、圆的基本特征，能从生活中找到这些图形，理解每种图形的基本属性和区别。",
+            "nextSystemPrompt": "掌握各种平面图形的识别方法和基本特征",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f4b5eb63-7bea-4183-80f4-8bf4ae89e372"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "图形的拼组与分解",
+            "note": "用两个相同的三角形拼成平行四边形，用两个长方形拼成正方形，学会用七巧板拼出不同图形，培养空间想象能力。",
+            "nextSystemPrompt": "学习图形拼组的基本方法和创意拼图技巧",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e080b17c-9f53-4883-bc7c-18d5091a5e3f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "立体图形与平面图形的关系",
+            "note": "通过观察立体图形的各个面，理解立体图形表面是由平面图形组成的，能识别长方体、正方体各个面的形状。",
+            "nextSystemPrompt": "探索立体图形表面的平面图形构成规律",
+            "color": "#3CB371",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7d1c198d-f8fe-4bc7-abe0-034e09dd92f2"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "20以内的退位减法",
+        "note": "掌握20以内退位减法的计算方法，包括十几减9、减8、减7、减6、减5、减4、减3、减2的计算规律，能熟练进行口算，解决简单的实际问题。",
+        "nextSystemPrompt": "基于退位减法计算，总结出破十法、想加算减法、实际应用等子知识点",
+        "color": "#B22222",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "334b7453-1dd2-401b-8734-86f5c1c50e19",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "十几减9的计算方法",
+            "note": "学会用破十法计算十几减9，如15-9=6，可以想10-9=1，1+5=6，或者想9+6=15，所以15-9=6。",
+            "nextSystemPrompt": "掌握十几减9的破十法和想加算减法",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1693f3c0-51fe-4c01-b059-1439473cd98c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "十几减8、7、6的计算",
+            "note": "运用破十法计算十几减8、7、6，如12-8=4，想10-8=2，2+2=4，逐步熟练掌握各种退位减法。",
+            "nextSystemPrompt": "熟练运用破十法进行十几减8、7、6的计算",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "32ef1881-a50d-4e32-bba6-075f72558a52"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "十几减5、4、3、2的计算",
+            "note": "继续运用破十法和想加算减法，完成十几减5、4、3、2的计算，形成完整的20以内退位减法体系。",
+            "nextSystemPrompt": "完善20以内退位减法的计算方法体系",
+            "color": "#F08080",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2f2c81a9-9d70-40b9-864d-b43f7014c133"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "退位减法的实际应用",
+            "note": "运用20以内退位减法解决生活中的实际问题，如购物找零、比较多少等，培养数学应用意识。",
+            "nextSystemPrompt": "学会用退位减法解决生活中的实际问题",
+            "color": "#FA8072",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f3a1201d-1ba6-466f-bed5-49d7d1e952c3"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "分类与整理",
+        "note": "学会按照不同标准对物体进行分类，能用表格、图表等方式整理和表示分类结果，培养统计意识和数据分析的初步能力。",
+        "nextSystemPrompt": "基于分类整理方法，总结出分类标准、数据表示、统计分析等子知识点",
+        "color": "#4169E1",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "986ecaaf-30c6-4c93-a729-be458d41dc0f",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "按单一标准分类",
+            "note": "学会按形状、颜色、大小等单一标准对物体进行分类，理解分类的意义和方法，能准确进行分类操作。",
+            "nextSystemPrompt": "掌握按单一标准进行分类的基本方法",
+            "color": "#0000CD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "26ced23b-6e62-4606-a8be-5c44c9182de4"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "按多重标准分类",
+            "note": "学会同时按照两个或多个标准对物体进行分类，如既按性别又按年龄分组，理解分类标准的多样性。",
+            "nextSystemPrompt": "学习多重标准分类的方法和应用",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3a637653-d0fc-4f5e-af2f-8c23f8d387ac"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "用表格整理数据",
+            "note": "学会用表格的形式记录和整理分类结果，能填写简单的统计表，初步体验数据整理的方法。",
+            "nextSystemPrompt": "掌握用表格整理和表示分类数据的方法",
+            "color": "#00BFFF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "23fb3c2d-561c-498f-8a65-e3b88e7c8d7a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分析分类结果",
+            "note": "能根据分类结果回答简单问题，如哪种最多、哪种最少，比较不同类别的数量关系，培养数据分析能力。",
+            "nextSystemPrompt": "学会分析分类结果并解决相关问题",
+            "color": "#87CEEB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8f3813c3-b225-4f6c-bce5-6f8c88b7e459"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "100以内数的认识",
+        "note": "认识100以内的数，掌握数的读写、数的组成、数的顺序和大小比较，理解数位的概念，能用100以内的数描述生活中的事物。",
+        "nextSystemPrompt": "基于100以内数的认识，总结出数数方法、数的组成、数的比较等子知识点",
+        "color": "#8B008B",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "c1ab9fdc-5192-48a3-bb7d-a935a9acec52",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "数数和数的组成",
+            "note": "学会一个一个地数、十个十个地数，理解10个十是一百，掌握两位数由几个十和几个一组成，理解数位概念。",
+            "nextSystemPrompt": "掌握100以内数的数数方法和组成规律",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1f404b2f-56fb-4c5b-8d53-6d590662d7b7"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的读写",
+            "note": "学会正确读写100以内的数，理解数字在不同数位上表示的意义，掌握从高位到低位的读写规则。",
+            "nextSystemPrompt": "熟练掌握100以内数的正确读写方法",
+            "color": "#BA55D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d9f9874f-0fae-4296-9557-4788fe03c2dc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的顺序和比较",
+            "note": "掌握100以内数的排列顺序，学会比较两个数的大小，理解相邻数的关系，能在数轴上表示数的位置。",
+            "nextSystemPrompt": "学会100以内数的排序和大小比较方法",
+            "color": "#DA70D6",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c32bb345-a9ac-43ac-84a8-a737d73c7c7b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "整十数加减一位数",
+            "note": "掌握整十数加一位数及相应减法的计算方法，如30+2=32，32-2=30，32-30=2，理解数的组成与分解。",
+            "nextSystemPrompt": "熟练进行整十数与一位数的加减运算",
+            "color": "#FF69B4",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d9f57475-2e63-4160-9cfa-7a7d72da314b"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "认识人民币",
+        "note": "认识人民币的单位元、角、分，了解不同面值人民币的特征，掌握人民币之间的换算关系，学会简单的购物计算。",
+        "nextSystemPrompt": "基于人民币认识，总结出币值识别、换算关系、购物计算等子知识点",
+        "color": "#FF8C00",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "9e293cb2-d917-4ceb-887d-ce2a5c62a473",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "人民币的认识",
+            "note": "认识1元、5元、10元、20元、50元、100元纸币和1角、5角、1元硬币，了解人民币的基本特征和防伪标识。",
+            "nextSystemPrompt": "熟练识别各种面值的人民币",
+            "color": "#FF7F50",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "73f25084-161d-410c-88f5-8bc5d92fa40a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "人民币的换算",
+            "note": "掌握1元=10角，1角=10分的换算关系，能进行不同单位人民币之间的换算，如18角=1元8角。",
+            "nextSystemPrompt": "熟练进行人民币单位间的换算",
+            "color": "#FFA500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9f8900aa-d94f-4dfb-b674-aa4584c3ef06"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "简单的购物计算",
+            "note": "学会计算购买物品需要多少钱，掌握付钱和找零的方法，能解决简单的购物问题。",
+            "nextSystemPrompt": "学会用人民币进行简单的购物计算",
+            "color": "#FFD700",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "067bb6d6-063d-4bce-9300-1603f1ed81de"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "人民币的实际应用",
+            "note": "在生活情境中正确使用人民币，培养理财意识，学会合理消费，了解人民币在日常生活中的重要作用。",
+            "nextSystemPrompt": "培养正确的人民币使用和理财观念",
+            "color": "#FFFF00",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7ccdff50-cdf9-4ef5-a88d-a13d3a999346"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "100以内的加法和减法（一）",
+        "note": "学习100以内两位数加减一位数、整十数的口算方法，掌握不进位加法和不退位减法的计算技巧，能解决相关的实际问题。",
+        "nextSystemPrompt": "基于100以内加减法，总结出整十数运算、两位数加减法、实际应用等子知识点",
+        "color": "#8B4513",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "dcf74c89-e556-4d10-9b9a-fcde9da42769",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "整十数加减整十数",
+            "note": "掌握整十数加减整十数的计算方法，如30+20=50，70-30=40，理解可以先算几个十加减几个十。",
+            "nextSystemPrompt": "熟练进行整十数的加减运算",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ae7698d0-45fa-4831-8201-a9ce4eab05b8"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "两位数加一位数（不进位）",
+            "note": "学会两位数加一位数不进位的计算，如23+5=28，掌握个位相加、十位不变的计算方法。",
+            "nextSystemPrompt": "掌握两位数加一位数不进位的计算方法",
+            "color": "#D2691E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "00ebaf13-d78e-400c-a22d-2dfb87b6f0b2"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "两位数加整十数",
+            "note": "掌握两位数加整十数的计算方法，如26+30=56，理解十位相加、个位不变的计算规律。",
+            "nextSystemPrompt": "熟练进行两位数加整十数的运算",
+            "color": "#CD853F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d998ee86-bab4-45fa-b062-264aa5e7c56f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "两位数减一位数（不退位）",
+            "note": "学会两位数减一位数不退位的计算，如28-5=23，掌握个位相减、十位不变的计算方法。",
+            "nextSystemPrompt": "掌握两位数减一位数不退位的计算方法",
+            "color": "#F4A460",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "93d462f5-7a79-4c7a-9de5-cc21cd93c716"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "两位数减整十数",
+            "note": "掌握两位数减整十数的计算方法，如56-30=26，理解十位相减、个位不变的计算规律。",
+            "nextSystemPrompt": "熟练进行两位数减整十数的运算",
+            "color": "#DEB887",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "27613ba4-f7b0-4649-8faa-342e12a59371"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "找规律",
+        "note": "观察、发现并描述简单的排列规律，能按规律继续排列，培养观察能力、分析能力和逻辑思维能力。",
+        "nextSystemPrompt": "基于找规律方法，总结出图形规律、数字规律、颜色规律等子知识点",
+        "color": "#006400",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "598c8c5d-2772-4d6f-8591-7c8319649314",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "图形排列规律",
+            "note": "观察图形的排列规律，如圆、三角形、正方形循环排列，能找出规律并继续画下去。",
+            "nextSystemPrompt": "学会识别和延续图形的排列规律",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "cf86a62b-6164-43f3-b722-59e8c3a5cddb"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "颜色排列规律",
+            "note": "观察颜色的变化规律，如红、黄、蓝循环出现，能根据规律为后面的图形涂上正确的颜色。",
+            "nextSystemPrompt": "掌握颜色排列的规律识别方法",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "caf0adf3-63d8-4b5d-ab39-557e361d8668"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数字排列规律",
+            "note": "发现数字的排列规律，如按顺序递增、递减或隔数排列，能按规律填写缺失的数字。",
+            "nextSystemPrompt": "学会分析数字序列的变化规律",
+            "color": "#9ACD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "260d4892-b195-40df-97f3-0164d7035706"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "综合规律的应用",
+            "note": "在复杂情境中找出多种要素的变化规律，如图形、颜色、大小同时变化的规律，培养综合分析能力。",
+            "nextSystemPrompt": "学会分析多要素综合变化的规律",
+            "color": "#ADFF2F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "419c62f4-0484-432e-a103-3ec7834f450b"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>

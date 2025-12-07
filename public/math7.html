@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "四年级数学上册总结",
+    "expand": true,
+    "uid": "b18ace7e-c4c8-41bc-a13e-380bf3f4d2de",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "大数的认识",
+        "note": "学习万以上的数，包括亿以内数和亿以上数的认识。掌握数位、计数单位、数级的概念，学会读数、写数、比较大小和求近似数的方法。了解数字的产生和发展历史，认识自然数的概念。",
+        "nextSystemPrompt": "基于大数的认识知识点，总结出数位与计数单位、读写数方法、比较与近似等核心子知识点",
+        "color": "#1E3A8A",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "7496bbec-cdde-4bb0-98a5-ddf45440c44a",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "数位与计数单位",
+            "note": "理解个级、万级、亿级的数位排列。掌握个、十、百、千、万、十万、百万、千万、亿等计数单位。明确相邻两个计数单位间的十进制关系。",
+            "nextSystemPrompt": "基于数位与计数单位，详细解析各级数位的组成和计数单位的进率关系",
+            "color": "#1E40AF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "63193355-c2cd-474d-815a-5e067f2c9420"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "亿以内数的读写",
+            "note": "学会分级读数法：先读万级，再读个级，万级数后加'万'字。掌握0的读法规则：末尾的0不读，中间的0只读一个。写数时先写万级再写个级，没有单位的数位写0。",
+            "nextSystemPrompt": "基于亿以内数的读写方法，总结分级读写技巧和0的处理规则",
+            "color": "#1D4ED8",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bcee149e-d1df-49e4-b8bf-1b2f4f9af391"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "亿以上数的认识",
+            "note": "认识十亿、百亿、千亿等更大的计数单位。掌握亿以上数的读写方法，理解三级数的分级原理。学会用'亿'作单位改写大数，简化数的表示。",
+            "nextSystemPrompt": "基于亿以上数的认识，总结大数的分级读写和单位改写方法",
+            "color": "#2563EB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d09f090c-3f14-417d-9cf5-86654d4b3718"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的大小比较",
+            "note": "掌握多位数比较方法：位数多的数大；位数相同时，从最高位比起，最高位大的数就大；最高位相同就比较下一位。能正确排列数的大小顺序。",
+            "nextSystemPrompt": "基于数的大小比较规则，总结位数比较和逐位比较的具体方法",
+            "color": "#3B82F6",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8319986b-37c6-4a13-8d3a-de923e9165b0"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求近似数",
+            "note": "掌握四舍五入法求近似数。能省略万位或亿位后面的尾数求近似数。理解近似数在生活中的应用，区分准确数和近似数。",
+            "nextSystemPrompt": "基于求近似数的方法，总结四舍五入法的应用和近似数的实际意义",
+            "color": "#60A5FA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2b13b77a-10c5-4207-b6e8-fa4087163bf9"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数字的产生",
+            "note": "了解数字发展历史：从实物记数、刻道记数、结绳记数到各种记数符号。认识巴比伦数字、中国数字、罗马数字，最终统一为阿拉伯数字。",
+            "nextSystemPrompt": "基于数字的产生历史，总结各种记数方法的演变和阿拉伯数字的普及",
+            "color": "#93C5FD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a8807e6d-5230-454a-b1cd-9d7d5af01ef1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "自然数概念",
+            "note": "理解自然数的定义：表示物体个数的1,2,3,4...都是自然数，0也是自然数。明确最小的自然数是0，自然数的个数是无限的，所有自然数都是整数。",
+            "nextSystemPrompt": "基于自然数概念，总结自然数的特征和在数学中的基础地位",
+            "color": "#DBEAFE",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f0b9f8b8-64e2-4f52-8aed-36e3923059bb"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "计算工具认识",
+            "note": "了解计算工具发展：算筹→算盘→计算尺→机械计算器→电子计算器→电子计算机。重点学习算盘的使用方法和计算器的基本操作。",
+            "nextSystemPrompt": "基于计算工具的认识，总结各种计算工具的特点和使用方法",
+            "color": "#1E3A8A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d8a60423-411d-4453-9884-4f532a3bb3b9"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "公顷和平方千米",
+        "note": "学习测量大面积土地的单位。掌握公顷和平方千米的概念，理解它们与平方米的换算关系。能够根据实际情况选择合适的面积单位进行计算和估算。",
+        "nextSystemPrompt": "基于公顷和平方千米知识点，总结面积单位的概念、换算关系和实际应用",
+        "color": "#059669",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "8fc5a3fa-23bb-4419-9f99-910ecedcd4c6",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "公顷的认识",
+            "note": "理解公顷的概念：边长100米的正方形面积是1公顷。掌握换算关系：1公顷=10000平方米。通过实际例子感受1公顷的大小，如400米跑道围成的面积约1公顷。",
+            "nextSystemPrompt": "基于公顷的认识，总结公顷的定义、换算和实际大小的感知方法",
+            "color": "#047857",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "03957507-d0ff-4e18-9bcf-f5f37c98de95"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平方千米的认识",
+            "note": "理解平方千米的概念：边长1千米的正方形面积是1平方千米。掌握换算关系：1平方千米=1000000平方米=100公顷。了解我国陆地面积约960万平方千米。",
+            "nextSystemPrompt": "基于平方千米的认识，总结平方千米的定义、换算和在地理测量中的应用",
+            "color": "#065F46",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7a1c4aa8-2dad-4b8e-b8f3-53e42e4a59cc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "面积单位换算",
+            "note": "熟练掌握面积单位间的换算：平方米↔公顷↔平方千米。能进行单位换算计算，解决实际问题。理解大单位与小单位的换算规律。",
+            "nextSystemPrompt": "基于面积单位换算，总结各单位间的换算方法和计算技巧",
+            "color": "#10B981",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "93b10dfa-9e12-4f6f-8f41-9179ccbd9100"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "实际应用",
+            "note": "能根据实际情况选择合适的面积单位。解决与土地面积相关的实际问题，如计算学校操场面积、城市占地面积等。培养空间观念和估算能力。",
+            "nextSystemPrompt": "基于面积单位的实际应用，总结问题解决策略和单位选择原则",
+            "color": "#34D399",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "78327817-35f9-4f19-9223-3d6cec134c95"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "角的度量",
+        "note": "深入学习角的概念和度量方法。认识线段、直线、射线的区别，掌握角的组成要素。学会使用量角器测量和画角，理解角的分类和相互关系。",
+        "nextSystemPrompt": "基于角的度量知识点，总结线段直线射线、角的概念、度量方法和分类等核心内容",
+        "color": "#7C2D12",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "95d1da19-8ab7-41bc-a06a-f4e12efc9562",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "线段、直线、射线",
+            "note": "理解三者区别：线段有两个端点，可测量长度；直线无端点，无限长；射线有一个端点，向一端无限延伸。掌握它们的表示方法和实际应用。",
+            "nextSystemPrompt": "基于线段直线射线的概念，总结它们的特征、表示方法和相互关系",
+            "color": "#92400E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0a5857a2-e701-441f-b884-02c4f6411859"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "角的概念",
+            "note": "理解角的定义：从一点引出两条射线组成的图形。认识角的组成：顶点和两条边。掌握角的表示方法，如∠1、∠ABC等。理解角的形成过程。",
+            "nextSystemPrompt": "基于角的概念，总结角的定义、组成要素和表示方法",
+            "color": "#A16207",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6f9b2de5-d01d-448d-bf01-0b76cd0f479b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "角的度量",
+            "note": "掌握度的概念：圆周的1/360为1度。学会使用量角器：中心对顶点，0°线对一边，另一边读刻度。能准确测量各种角的度数。",
+            "nextSystemPrompt": "基于角的度量方法，总结量角器的使用步骤和测量技巧",
+            "color": "#D97706",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2eaa0264-975b-4237-8e66-305287c7b5af"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "角的分类",
+            "note": "掌握角的分类：锐角(0°-90°)、直角(90°)、钝角(90°-180°)、平角(180°)、周角(360°)。理解各类角的特征和相互关系。",
+            "nextSystemPrompt": "基于角的分类，总结各类角的度数范围、特征和判断方法",
+            "color": "#F59E0B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "52169715-4d52-4cd1-85f7-812b59c87c4a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "画角",
+            "note": "掌握画角的步骤：画射线作一边，量角器中心对端点，0°线对射线，在指定度数处点点，连接画第二条边。能画出指定度数的角。",
+            "nextSystemPrompt": "基于画角的方法，总结画角的步骤和注意事项",
+            "color": "#FBBF24",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b658e3ea-8078-4e59-b99c-edcd40fc1c61"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "角的关系",
+            "note": "理解角之间的关系：1周角=2平角=4直角。掌握角的大小比较方法。了解互补角、互余角等特殊角度关系。能解决角度计算问题。",
+            "nextSystemPrompt": "基于角的关系，总结各种角度关系和角度计算方法",
+            "color": "#FCD34D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8d350520-280a-4530-b5e9-05e097afa66e"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "三位数乘两位数",
+        "note": "在两位数乘法基础上，学习三位数乘两位数的笔算方法。掌握竖式计算的步骤和要点，理解算理，能正确进行计算并解决实际问题。",
+        "nextSystemPrompt": "基于三位数乘两位数知识点，总结笔算方法、计算技巧和实际应用",
+        "color": "#7C2D12",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "0f5c8768-c0d2-4c0e-b2e4-ca00f13285a5",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "笔算方法",
+            "note": "掌握竖式计算步骤：用两位数的个位和十位分别与三位数相乘，得到两个部分积，然后相加。注意第二个部分积要向左错一位对齐。",
+            "nextSystemPrompt": "基于三位数乘两位数的笔算方法，总结竖式计算的具体步骤和对齐规则",
+            "color": "#92400E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "247cf3df-6d6e-4962-b033-9de1f721a65b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "因数末尾有0",
+            "note": "掌握因数末尾有0的简便算法：先把0前面的数相乘，再在积的末尾添上相应个数的0。能灵活运用口算和笔算两种方法。",
+            "nextSystemPrompt": "基于因数末尾有0的乘法，总结简便计算方法和0的处理规则",
+            "color": "#A16207",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8d656514-be5f-45d9-93d0-21722178fa4f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "估算方法",
+            "note": "学会用估算检验计算结果的合理性。掌握估算策略：将因数看作整十、整百数进行估算。培养数感，提高计算准确性。",
+            "nextSystemPrompt": "基于乘法估算方法，总结估算策略和检验计算结果的技巧",
+            "color": "#D97706",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2cc15830-a75e-4db6-b293-84140f429755"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "实际应用",
+            "note": "能运用三位数乘两位数解决生活中的实际问题，如计算路程、面积、总价等。培养分析问题和解决问题的能力。",
+            "nextSystemPrompt": "基于三位数乘两位数的实际应用，总结问题分析和解决策略",
+            "color": "#F59E0B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c53800fb-860d-4323-bec1-909074c5610a"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "平行四边形和梯形",
+        "note": "认识平行四边形和梯形的特征，学会判断和分类。掌握它们的性质，了解与其他图形的关系。培养空间观念和几何直觉。",
+        "nextSystemPrompt": "基于平行四边形和梯形知识点，总结图形特征、性质和分类方法",
+        "color": "#1F2937",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "c8ea4523-299e-4e67-a403-d7df15ec8fb5",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "平行四边形认识",
+            "note": "理解平行四边形定义：两组对边分别平行的四边形。掌握其特征：对边平行且相等，对角相等。能识别和判断平行四边形。",
+            "nextSystemPrompt": "基于平行四边形的认识，总结定义、特征和判断方法",
+            "color": "#374151",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f27f763a-a6a0-4e60-a8e3-5e548a729f6d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "梯形认识",
+            "note": "理解梯形定义：只有一组对边平行的四边形。认识梯形的各部分名称：上底、下底、腰、高。了解等腰梯形和直角梯形。",
+            "nextSystemPrompt": "基于梯形的认识，总结定义、组成部分和特殊梯形的特征",
+            "color": "#4B5563",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6693b5a8-d77c-465f-b8ac-9cd4015a0736"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "图形关系",
+            "note": "理解各四边形间的关系：正方形是特殊的长方形，长方形是特殊的平行四边形。掌握图形的包含关系和分类标准。",
+            "nextSystemPrompt": "基于四边形的关系，总结各图形间的包含关系和分类体系",
+            "color": "#6B7280",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c911ea5b-dd2a-4cb4-a5d1-abc141231224"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "画图方法",
+            "note": "学会在方格纸上画平行四边形和梯形。掌握利用平行线画图的方法。能根据要求画出符合条件的图形。",
+            "nextSystemPrompt": "基于平行四边形和梯形的画图方法，总结作图步骤和技巧",
+            "color": "#9CA3AF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5850dc4e-9f2b-4b2e-beac-2d9544519491"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "除数是两位数的除法",
+        "note": "学习除数是两位数的除法计算方法。掌握试商技巧，理解商的变化规律。能正确进行笔算，并运用到实际问题的解决中。",
+        "nextSystemPrompt": "基于除数是两位数的除法知识点，总结试商方法、笔算步骤和实际应用",
+        "color": "#7C2D12",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "6ea465d1-c3c7-4ed7-bc73-8426d0b3844c",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "口算除法",
+            "note": "掌握整十数除法的口算方法：先算基本除法，再确定商的位数。如800÷40，先算8÷4=2，再添一个0得20。培养数感和计算能力。",
+            "nextSystemPrompt": "基于两位数除法的口算方法，总结整十数除法的计算技巧",
+            "color": "#92400E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0e6cf889-562d-46c4-8b39-dad9bdf9b753"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "笔算除法",
+            "note": "掌握除数是两位数的笔算方法：从被除数的最高位试商，不够除就看前两位。学会试商技巧：把除数看作整十数试商，商大了就调小，商小了就调大。",
+            "nextSystemPrompt": "基于两位数除法的笔算方法，总结试商技巧和计算步骤",
+            "color": "#A16207",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3fe95402-9786-4e81-837c-0acb24d17c8a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "试商方法",
+            "note": "掌握试商技巧：用'四舍五入'法把除数看作整十数试商。理解试商过程中的调整方法：商大了就减小，商小了就增大。提高试商的准确性。",
+            "nextSystemPrompt": "基于除法试商方法，总结各种试商技巧和调整策略",
+            "color": "#D97706",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0bd009bc-b6ba-4f7e-bae3-967edf45ab9d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "商的变化规律",
+            "note": "理解商的变化规律：被除数和除数同时乘或除以相同的数(0除外)，商不变。被除数乘几，商就乘几；除数乘几，商就除以几。",
+            "nextSystemPrompt": "基于商的变化规律，总结被除数和除数变化对商的影响",
+            "color": "#F59E0B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "359452cb-29aa-4af0-8f0f-8bd2326985af"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "解决问题",
+            "note": "运用除数是两位数的除法解决实际问题。能分析题意，选择合适的计算方法。掌握有余数除法在实际问题中的应用。",
+            "nextSystemPrompt": "基于除法解决问题，总结问题分析方法和计算策略的选择",
+            "color": "#FBBF24",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "811fe976-cc39-4d33-996a-6d69132c7c3d"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "条形统计图",
+        "note": "学习制作和分析条形统计图。掌握统计图的组成要素，能根据数据制作统计图，并从图中获取信息解决问题。培养数据分析意识。",
+        "nextSystemPrompt": "基于条形统计图知识点，总结统计图的制作方法、分析技巧和实际应用",
+        "color": "#059669",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "f409184d-3ec7-4a85-859c-f8eed6a9c29d",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "统计图认识",
+            "note": "认识条形统计图的组成：标题、横轴、纵轴、数据条。理解统计图的作用：直观显示数据，便于比较和分析。掌握读图的基本方法。",
+            "nextSystemPrompt": "基于条形统计图的认识，总结统计图的组成要素和基本功能",
+            "color": "#047857",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2d88f05e-0f51-4315-aa44-ab9da821652b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "制作统计图",
+            "note": "掌握制作条形统计图的步骤：确定标题和坐标轴，选择合适的单位长度，画出数据条，标注数据。能根据统计表制作统计图。",
+            "nextSystemPrompt": "基于统计图的制作方法，总结制作步骤和注意事项",
+            "color": "#065F46",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7a80235b-536c-4baf-b15c-f7dd40c7a87a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数据分析",
+            "note": "能从条形统计图中获取信息：比较数据大小，分析变化趋势，计算总数和平均数等。培养数据分析和解读能力。",
+            "nextSystemPrompt": "基于统计图的数据分析，总结信息获取和数据解读的方法",
+            "color": "#10B981",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "def29213-11b0-4be6-99a7-b1e14078929e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "实际应用",
+            "note": "运用条形统计图解决实际问题，如分析班级成绩、调查结果等。能根据统计图提出问题并解答。培养统计意识和应用能力。",
+            "nextSystemPrompt": "基于条形统计图的实际应用，总结问题解决和统计思维的培养",
+            "color": "#34D399",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "24d85676-9406-4719-80da-7ceae14127e8"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "数学广角—优化",
+        "note": "通过具体实例学习优化思想，掌握合理安排时间、统筹规划的方法。培养逻辑思维能力和解决实际问题的策略意识。",
+        "nextSystemPrompt": "基于数学广角优化知识点，总结优化思想、统筹方法和策略思维",
+        "color": "#7C2D12",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "ed1efd48-e583-4918-8958-6157e58358f8",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "优化思想",
+            "note": "理解优化的含义：在众多方案中选择最佳方案。掌握优化的基本思路：分析问题、寻找方案、比较优劣、选择最优。培养优化意识。",
+            "nextSystemPrompt": "基于优化思想的理解，总结优化的基本概念和思维方法",
+            "color": "#92400E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3cb87e90-dac9-4fcd-83b1-22e108530e5c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "统筹安排",
+            "note": "学会合理安排时间和资源，掌握统筹的基本方法：并行处理、合理分工、充分利用等待时间。能解决生活中的统筹问题。",
+            "nextSystemPrompt": "基于统筹安排的方法，总结时间管理和资源配置的策略",
+            "color": "#A16207",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e26fb386-1f90-4dce-990f-4093ddd73da5"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "策略选择",
+            "note": "掌握解决问题的多种策略，能比较不同方案的优缺点。学会从多个角度思考问题，培养策略意识和决策能力。",
+            "nextSystemPrompt": "基于策略选择的方法，总结问题解决的多元思维和决策技巧",
+            "color": "#D97706",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7b38bed1-b905-401d-8644-26f034f3661e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "实际应用",
+            "note": "运用优化思想解决生活中的实际问题，如排队、搭配、路径选择等。培养数学建模意识和实际应用能力。",
+            "nextSystemPrompt": "基于优化思想的实际应用，总结生活问题的数学化和解决策略",
+            "color": "#F59E0B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ebee2e99-d854-4800-baab-4d62e5d2b857"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>

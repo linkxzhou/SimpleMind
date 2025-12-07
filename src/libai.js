@@ -7,67 +7,69 @@ export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settin
     const language = settings.language || '中文'
 
     if (!nextSystemPrompt || nextSystemPrompt.trim().length === 0) {
-        nextSystemPrompt = "最相关的知识点"
+        nextSystemPrompt = "Most relevant key points"
     }
     if (systemPrompt && systemPrompt.trim().length > 0) {
-        systemPrompt = "## Context & Data (背景与数据)\n<context>\n" + systemPrompt + "\n</context>\n\n"
+        systemPrompt = "## Context & Data\n<context>\n" + systemPrompt + "\n</context>\n\n"
     }
 
     let thinkingPrompt = ""
     if (model.prompt && model.prompt.trim() !== '') {
-        let label = model.label || '任意'
-        thinkingPrompt = `## Thinking (思考方式) 
+        let label = model.label || 'Any'
+        thinkingPrompt = `## Thinking Model 
 <context>
-使用 ${label} 思考方式，${model.description || ''}
-参考原则：${model.prompt}
+Use ${label} thinking model, ${model.description || ''}
+Reference principles: ${model.prompt}
 </context>`
     }
 
-    return `${systemPrompt}## Role (角色设定)   
-现在你是一个善于整理思维导图的专家，精通 “${topic}” 的相关知识。
+    return `${systemPrompt}## Role Definition   
+You are an expert in organizing mind maps, proficient in knowledge related to "${topic}".
 
 ${thinkingPrompt}
 
-## Output Examples (输出样例)
+## Output Examples
 <examples>
 \`\`\`json
 [
     {
         "data": {
-            "text": "相关知识点1",
-            "note": "相关知识点描述",
-            "nextSystemPrompt": "子知识点的提示词",
-            "color": "知识点颜色，使用16进制颜色码"
+            "text": "Relevant Key Point 1",
+            "note": "Description of the key point",
+            "nextSystemPrompt": "Prompt for child key points",
+            "color": "Key point color in Hex code"
         },
         "children": [
             {   
-                "data": {}, // 下一级知识点
-                "children": [] // 下一级的子知识点
+                "data": {}, // Next level key point
+                "children": [] // Next level child key points
             },
-            // ... 其他子知识点
+            // ... other child key points
         ]
     },
-    // ... 其他知识点
+    // ... other key points
 ]
 \`\`\`
 </examples>
  
-## Rules (具体规则)
-请严格遵守以下规则：
+## Rules
+Please strictly follow these rules:
 <rules>
-- 输出JSON数组格式，默认生成2层思维导图结构，包括JSON第一层数组和\`children\`数组
-- JSON数组最少为${count}个元素，最多为${count * 2}个元素
-- 输出语言：${language}
-- 思考方向：${nextSystemPrompt}
-- JSON字段\`children\`是子知识点数组，数组长度为${count}，每个元素为一个子知识点，子知识点是一个JSON对象，包含\`data\`和\`children\`字段
-- JSON字段\`text\`是 ”简要描述“，限制 20-50 个字，数据不能为空
-- JSON字段\`note\`是 ”详细描述“，限制 100-400 个字，数据不能为空
-- JSON字段\`nextSystemPrompt\`是 ”当前层总结关键词和下一级子知识点的AI提示词“，限制在 50-100 个字，样例：基于xxx知识点，总结出xxx子知识点
-- JSON字段\`color\`是根据 ”色彩心理学“ 原则标注知识点颜色，使用16进制颜色码，避免浅色，RGB每个值小于200，样例：\`#8B0A50\`
+- Output in JSON array format
+- Output Language: ${language}
+- Generate a 2-layer mind map structure by default, including the first level array and \`children\` arrays.
+- The first level JSON array must have at least ${count} elements and at most ${count * 2} elements.
+- The \`children\` array of each array element must have at least ${count} elements and at most ${count * 2} elements.
+- Thinking Direction: ${nextSystemPrompt}
+- JSON field \`children\` is an array of child key points. Each element is a child key point, which is a JSON object containing \`data\` and \`children\` fields.
+- JSON field \`text\` is a "Brief Description", limited to 20-50 words, and must not be empty.
+- JSON field \`note\` is a "Detailed Description", limited to 40-200 words, and must not be empty.
+- JSON field \`nextSystemPrompt\` is "Keywords summarizing the current level and AI prompt for the next level child key points", limited to 30-60 words. Example: Based on xxx key point, summarize xxx child key points.
+- JSON field \`color\` marks the key point color based on "Color Psychology" principles, using Hex color code. Avoid light colors; each RGB value should be less than 200. Example: \`#8B0A50\`.
 </rules>
 
-## Task (任务)
-现在基于 “${topic}” ，按照 ”输出样例“ 中的JSON数组结构输出思维导图。    
+## Task
+Now, based on "${topic}", output the mind map following the structure in "Output Examples".    
 `
 }
 

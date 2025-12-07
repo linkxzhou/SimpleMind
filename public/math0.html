@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "小学数学必须背诵的知识点，从一年级到六年级，主要是必须背诵的知识点，第一层提供每个大的知识点，第二层为详细的知识点和样例",
+    "expand": true,
+    "uid": "a5dd2886-1287-4b30-a24a-899ad79d7c71",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "数的认识与读写",
+        "note": "包括整数、小数、分数的认识，数位的理解，大数的读写方法。例如：认识万以内的数，理解个、十、百、千、万位；小数的读法如3.14读作三点一四；分数的认识如1/2表示一半。",
+        "nextSystemPrompt": "基于数的认识与读写，总结数的组成、数位顺序表、数的读写规则、数字的日常应用等子知识点。",
+        "color": "#8B0000",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "558bca3e-f97c-4673-b827-445c262d4b10",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "20以内数的认识与组成",
+            "note": "认识1-20的数字，掌握数的组成。例如：15由1个十和5个一组成；8可以分成3和5。通过实物操作理解数的分解与组合。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "968465a6-599f-429e-a8a0-b08937e84a41"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "100以内数的认识与数位",
+            "note": "认识百以内的数，理解个位和十位的概念。例如：36的十位是3表示3个十，个位是6表示6个一。掌握百以内数的读法和写法。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6dcc9a15-ce5a-4032-a23f-fefc00158b61"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "万以内数的认识与读写",
+            "note": "认识万以内的数，掌握个、十、百、千、万数位顺序。例如：2357读作二千三百五十七；4090由4个千、0个百、9个十、0个一组成。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "03da7cc0-334a-463c-b07b-3be4f4fa05de"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "大数的认识与读写（亿以内）",
+            "note": "认识亿以内的大数，掌握数级（个级、万级、亿级）和数位顺序表。例如：12,045,300读作一千二百零四万五千三百；掌握“每四位一级”的读数规则。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ade4ce32-2819-4920-9c48-3f83f4e81d23"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的初步认识与读写",
+            "note": "认识小数，理解小数点意义，掌握小数的读法和写法。例如：0.5读作零点五，表示十分之五；3.25由3个一、2个十分之一、5个百分之一组成。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6bd6e07e-6421-4fdf-ae54-579fa374e081"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的初步认识与读写",
+            "note": "认识分数，理解分子、分母和分数线的意义，掌握分数的读法和写法。例如：1/2读作二分之一，表示把一个整体平均分成2份取其中的1份。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "904f820c-5b13-4b76-8770-2be0fde9c827"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "正负数的初步认识",
+            "note": "认识正数和负数，理解0的意义，掌握正负数的读法和写法。例如：+5读作正五，-3读作负三；用正负数表示零上温度和零下温度。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0c76406c-382f-49b1-b127-23fc6829d47d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的顺序与大小比较",
+            "note": "掌握数的顺序排列和大小比较方法。例如：15 < 23；0.3 > 0.25；1/2 > 1/3。会比较整数、小数、分数的大小。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e1e43a76-c327-4b0e-a1da-dfc47de7d10c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "近似数与四舍五入",
+            "note": "理解近似数的意义，掌握四舍五入法求近似数。例如：248≈250（十位四舍五入）；3.1416≈3.14（保留两位小数）。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "43ac3181-8b56-4302-9efe-9aacf43eb532"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数字的日常应用",
+            "note": "理解数字在生活中的应用，如电话号码、邮政编码、商品价格等。例如：电话号码由11位数字组成；商品标价12.5元表示十二元五角。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e764032d-2b57-41fb-801b-a424894f0e96"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "计数单位与进率",
+            "note": "掌握常用的计数单位及其进率。例如：10个一是十，10个十是百，10个百是千；小数部分：10个0.1是1，10个0.01是0.1。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "840d000b-5fb8-45d0-8cad-725f01f4b67b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数位顺序表背诵",
+            "note": "背诵整数和小数的数位顺序表。整数部分：个位、十位、百位、千位、万位……；小数部分：十分位、百分位、千分位……。必须熟记。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a51e2c23-3199-4cf7-b346-2079868f05d3"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数字的书写规范",
+            "note": "掌握数字的正确书写方法，包括笔顺和格式。例如：阿拉伯数字0-9在田字格中的占位；小数点的位置；分数线的画法等。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6bcce3cb-7cbb-4b55-89ba-3965b29323cc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的分类",
+            "note": "了解数的分类：自然数、整数、分数、小数、正数、负数等。例如：0和正整数是自然数；像-1，-2是负整数；0.5是小数也是分数。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d81a3857-1bda-4777-b259-b30eb77395a6"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数字与数量的对应",
+            "note": "建立数字与实际数量的对应关系。例如：数字“5”可以代表5个苹果、5厘米长度、5点钟等。强化数感。",
+            "nextSystemPrompt": "",
+            "color": "#8B1A1A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8d33cfc0-31b5-4f9e-adf2-0f9d8c123723"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "四则运算",
+        "note": "包括加、减、乘、除四种基本运算的定义、法则、运算顺序和验算方法。例如：加法交换律a+b=b+a；先乘除后加减；除法验算：商×除数=被除数。",
+        "nextSystemPrompt": "基于四则运算，总结加法减法法则、乘法口诀与计算、除法运算规则、混合运算顺序、运算定律等子知识点。",
+        "color": "#006400",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "125fbcd1-c71a-4392-9372-09ec48e833e8",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "加法运算与进位",
+            "note": "掌握加法计算方法，理解进位概念。例如：27+48=75，个位7+8=15，向十位进1；背诵20以内进位加法表。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9f6136f4-1af2-493e-bb85-e64d024bee52"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "减法运算与退位",
+            "note": "掌握减法计算方法，理解退位（借位）概念。例如：42-17=25，个位2减7不够，从十位退1当10；背诵20以内退位减法表。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1d9f30c5-ea67-4cab-b057-299a987aba84"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法口诀表（九九表）",
+            "note": "必须熟练背诵完整的乘法口诀表（从一一得一至九九八十一）。这是所有乘法计算的基础。例如：七八五十六，六九五十四。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "4c25afbf-3cfe-48f6-b152-70279bc01009"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "一位数乘多位数",
+            "note": "掌握一位数乘两位数、三位数的计算方法。例如：24×3=72；123×6=738。注意从个位乘起，满几十向前一位进几。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bdaeb33a-2a27-4b2f-9594-26cd20c36f19"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "两位数乘两位数",
+            "note": "掌握两位数乘两位数的笔算方法。例如：23×45=1035。先用第二个因数的个位乘第一个因数，再用十位乘，最后把两次乘积相加。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "752259e6-c395-4eae-a6e3-38250a66feb4"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "除数是一位数的除法",
+            "note": "掌握除数是一位数的笔算除法。例如：84÷4=21；256÷8=32。从被除数的高位除起，每次除后余数必须比除数小。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "58e561ac-8a4d-4d62-9295-fbdc71712d3a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "除数是两位数的除法",
+            "note": "掌握除数是两位数的笔算除法，包括试商、调商。例如：196÷28=7；425÷17=25。掌握“四舍五入”法试商。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8811fd9d-42ba-4aa8-bd40-3a748fb73cab"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "加减乘除混合运算顺序",
+            "note": "掌握运算顺序：先乘除，后加减；有括号先算括号里面的。例如：5+3×4=17；(5+3)×4=32。必须熟记此规则。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "51435a9a-e864-4e99-8cdd-929f47667249"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "加法运算定律",
+            "note": "掌握加法交换律和结合律。交换律：a+b=b+a；结合律：(a+b)+c=a+(b+c)。例如：25+37=37+25；(13+27)+40=13+(27+40)。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "da3fdd1c-a6b8-4e61-9fa6-910f3d2781ff"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法运算定律",
+            "note": "掌握乘法交换律、结合律和分配律。交换律：a×b=b×a；结合律：(a×b)×c=a×(b×c)；分配律：a×(b+c)=a×b+a×c。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "aa4003f9-f7a8-4669-a19e-0fe0053de7d8"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "减法的性质",
+            "note": "掌握减法的性质：一个数连续减去两个数，等于减去这两个数的和。a-b-c=a-(b+c)。例如：125-37-63=125-(37+63)=25。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6fb1fa84-98fd-4652-a13e-d1e9e9a8ad03"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "除法的性质",
+            "note": "掌握除法的性质：一个数连续除以两个数，等于除以这两个数的积。a÷b÷c=a÷(b×c)。例如：120÷5÷4=120÷(5×4)=6。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "65e53a07-2244-4283-8c73-56d53896619d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "加、减法验算方法",
+            "note": "掌握加减法的验算方法。加法验算：和减一个加数等于另一个加数；减法验算：差加减数等于被减数，或被减数减差等于减数。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "78314db1-f832-452a-8715-e6fc9ab8ccd1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘、除法验算方法",
+            "note": "掌握乘除法的验算方法。乘法验算：积除以一个因数等于另一个因数；除法验算：商乘除数等于被除数（有余数时：商×除数+余数=被除数）。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c2f412e5-45b7-43cd-9e1c-4a0cf0c0e80d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "0和1在运算中的特性",
+            "note": "掌握0和1在四则运算中的特性。例如：任何数加0或减0得原数；任何数乘0得0；任何数乘1得原数；0除以任何非零数得0；1除以1得1等。",
+            "nextSystemPrompt": "",
+            "color": "#2E8B57",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3cb785c8-0f11-4faf-8400-644d7d268fe7"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "小数与分数",
+        "note": "包括小数和分数的意义、性质、读写、比较大小、互化以及四则运算。例如：0.5=1/2；分数的基本性质：分子分母同乘或除以同一个数（0除外），分数大小不变。",
+        "nextSystemPrompt": "基于小数与分数，总结小数的意义与性质、分数的意义与性质、小数分数互化、小数分数加减乘除运算等子知识点。",
+        "color": "#8B008B",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "ad272257-98b1-4384-8a82-b77b96d9f826",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "小数的意义与计数单位",
+            "note": "理解小数的意义，掌握小数的计数单位。例如：0.1表示十分之一，是小数部分的基本单位；0.01表示百分之一；0.325由3个0.1，2个0.01，5个0.001组成。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bc62f833-4d8e-4fb7-a394-7c75d19b3007"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的基本性质",
+            "note": "掌握小数的基本性质：在小数末尾添上或去掉0，小数的大小不变。例如：0.5=0.50=0.500；利用此性质化简小数或改写小数。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b20846c0-5894-40fa-af76-b83c1a4993e6"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的大小比较",
+            "note": "掌握小数比较大小的方法：先比较整数部分，整数部分相同再比较十分位，依次类推。例如：3.14 > 3.09；0.256 < 0.3。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "741fa7a2-8d5c-48b9-8797-328e4c91eb8e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数点移动引起大小变化",
+            "note": "掌握小数点移动引起小数大小变化的规律：向右移一位扩大10倍，向左移一位缩小为原来的1/10。例如：3.5→35（扩大10倍）；0.72→0.072（缩小10倍）。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "73d1dbd6-f8e7-4e30-b128-5c90b228e6b1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的意义与单位“1”",
+            "note": "理解分数的意义，明确单位“1”的概念。分数表示把单位“1”平均分成若干份，表示这样的一份或几份的数。例如：3/4表示把整体平均分4份取3份。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "13be7965-0d2f-472c-b6e3-055edcd5f043"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的基本性质",
+            "note": "掌握分数的基本性质：分子和分母同时乘或除以相同的数（0除外），分数的大小不变。例如：1/2 = 2/4 = 4/8。这是约分和通分的依据。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "4bcdadc7-5df5-4bfb-a49d-db629e479031"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的大小比较",
+            "note": "掌握同分母、同分子以及异分母分数比较大小的方法。同分母看分子，分子大分数大；同分子看分母，分母大分数小；异分母先通分再比较。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "436f8449-2f91-4386-8978-3907ee058b59"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "真分数、假分数与带分数",
+            "note": "理解并区分真分数（分子<分母，如2/3）、假分数（分子≥分母，如5/3）和带分数（整数和真分数合成，如1又2/3）。掌握它们之间的互化。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bf947839-4904-415d-b99b-65bfa7112e95"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "约分与最简分数",
+            "note": "掌握约分的方法，将分数化成分子分母互质的最简分数。例如：12/18约分后为2/3。必须熟记约分的步骤和判断互质的方法。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "050263a1-a37f-4b03-b62e-b133f1a9b174"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "通分",
+            "note": "掌握通分的方法，把异分母分数化成同分母分数（通常取最小公倍数作公分母）。例如：比较1/4和2/5，通分为5/20和8/20，所以1/4<2/5。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c19205c8-48bc-4c53-b1ed-76a1900394d0"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数化分数",
+            "note": "掌握小数化分数的方法：一位小数写成十分之几，两位小数写成百分之几……然后约分。例如：0.3=3/10；0.25=25/100=1/4。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "fb831d19-97ee-4633-b333-e479c29559f9"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数化小数",
+            "note": "掌握分数化小数的方法：用分子除以分母。例如：1/4=0.25；3/8=0.375。对于不能除尽的，通常按要求保留小数位数。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b48b42b3-eb27-4fd5-8b8b-adb9bdd07451"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数加减法",
+            "note": "掌握小数加减法的计算法则：小数点对齐（即相同数位对齐），然后按照整数加减法计算，最后在得数里对齐横线上的小数点点上小数点。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f95ba832-1c99-4d1d-8fec-5650dfe36bd7"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数乘除法",
+            "note": "掌握小数乘除法的计算法则。乘法：先按整数乘法算出积，再看因数中一共有几位小数，就从积的右边起数出几位点上小数点。除法：移动除数小数点使之变整数，被除数小数点随之移动，按整数除法计算。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3c2ff58e-bbfb-4f20-99d5-f9de4b488f50"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数加减法",
+            "note": "掌握同分母分数加减法（分母不变，分子相加减）和异分母分数加减法（先通分，再按同分母分数加减法计算）。例如：1/3+1/6=2/6+1/6=3/6=1/2。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7a8c9b57-d32d-4ca0-a9ad-d86d1184faee"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "量的计量",
+        "note": "包括长度、面积、体积（容积）、质量、时间、货币等常用计量单位的认识、换算及简单计算。例如：1米=100厘米；1小时=60分钟；1元=10角=100分。",
+        "nextSystemPrompt": "基于量的计量，总结长度单位、面积单位、体积容积单位、质量单位、时间单位、人民币单位及其换算关系等子知识点。",
+        "color": "#8B4513",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "4a1eb1d1-6d81-46bd-944d-f571651195b0",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "长度单位及换算",
+            "note": "认识常用长度单位：千米(km)、米(m)、分米(dm)、厘米(cm)、毫米(mm)。掌握它们之间的进率：1千米=1000米，1米=10分米=100厘米=1000毫米。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6cd0a709-98ca-451b-bb74-4b634f8baaf1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "面积单位及换算",
+            "note": "认识常用面积单位：平方千米、公顷、平方米、平方分米、平方厘米。掌握进率：1平方千米=100公顷，1公顷=10000平方米，1平方米=100平方分米，1平方分米=100平方厘米。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "877ad234-b5ce-4256-97a6-8bc8fe1227d3"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "体积与容积单位",
+            "note": "认识体积单位：立方米、立方分米、立方厘米；容积单位：升、毫升。掌握进率：1立方米=1000立方分米，1立方分米=1000立方厘米；1升=1000毫升，1立方分米=1升。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "4affcbae-c691-4c2d-86d6-d1a9f9b5ddaf"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "质量单位及换算",
+            "note": "认识常用质量单位：吨(t)、千克(kg)、克(g)。掌握它们之间的进率：1吨=1000千克，1千克=1000克。例如：一袋大米重10千克。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f98c3aad-7e6e-42ea-b1f4-8515ec9552c7"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间单位及换算",
+            "note": "认识时间单位：世纪、年、月、日、时、分、秒。掌握基本进率：1世纪=100年，1年=12月，1日=24时，1时=60分，1分=60秒。熟记大月小月天数。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "097d4e32-1684-4115-a2bc-5e262b36ad9d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "人民币单位及换算",
+            "note": "认识人民币单位：元、角、分。掌握它们之间的进率：1元=10角，1角=10分，所以1元=100分。例如：3元5角=35角=350分。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "88460841-40d4-40e3-98cc-bde473e59de5"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "单位换算方法",
+            "note": "掌握单位换算的基本方法：高级单位化低级单位乘进率，低级单位化高级单位除以进率。例如：2米=200厘米（×100）；500克=0.5千克（÷1000）。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3ca1f200-50cb-42ee-b704-910723fa1abc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "24时计时法与普通计时法",
+            "note": "掌握24时计时法和普通计时法（12时计时法）的表示方法及相互转换。例如：下午3时用24时计时法是15时；20时用普通计时法是晚上8时。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9256368d-f962-4591-90a2-2197311d9881"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "年、月、日知识",
+            "note": "掌握年、月、日的相关知识：平年365天，闰年366天；大月（1,3,5,7,8,10,12月）31天，小月（4,6,9,11月）30天；平年2月28天，闰年2月29天。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "42541207-bef5-4f4e-a909-2f9781b68667"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "闰年判断方法",
+            "note": "掌握闰年的判断方法：公历年份是4的倍数的一般是闰年；但公历年份是整百数的，必须是400的倍数才是闰年。例如：2000年是闰年，1900年不是闰年。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2feb14d3-495f-4267-97a3-d9d717676f0c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间段的计算",
+            "note": "掌握计算经过时间的方法：结束时刻-开始时刻=经过时间。例如：从8:10到11:30，经过了3小时20分钟。可以用数格法或计算法。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "10354d63-3ba0-4ac5-8e09-997d70132a9b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "测量工具的认识",
+            "note": "认识常用的测量工具及其用途。例如：尺子测量长度，天平测量质量，钟表测量时间，量杯测量液体体积等。了解其基本使用方法。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "03355858-e0f9-4666-abb5-47ecace47342"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "估计与实测",
+            "note": "培养对常见量的估测能力，并能进行实际测量验证。例如：估计课桌高度大约80厘米，然后用尺子实际测量；估计一袋盐重500克。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "879cfa16-1110-4293-ae01-e5c05cc5910f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "单名数与复名数",
+            "note": "理解单名数（只带一个单位名称的数）和复名数（带有两个或以上单位名称的数），并掌握它们之间的换算。例如：3米5分米=3.5米=35分米。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d22cf0e5-39b9-4dcc-9f56-85153841e10c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "生活中的计量应用",
+            "note": "能将计量知识应用于解决实际问题，如购物算钱、计算行程时间、比较物体轻重、估算房间面积等。例如：买一支笔2元5角，付5元，找回2元5角。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f5673f65-b38f-47c2-882b-0f46ba8d6c68"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "几何初步",
+        "note": "包括平面图形和立体图形的认识、特征、周长、面积、体积的计算公式，以及图形的运动、位置与方向等。例如：长方形周长=(长+宽)×2；三角形内角和180°。",
+        "nextSystemPrompt": "基于几何初步，总结平面图形认识、平面图形周长面积、立体图形认识、立体图形表面积体积、图形运动与位置等子知识点。",
+        "color": "#00008B",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "2f847a6d-0d2b-4bda-90e1-eb266770aa6f",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "平面图形的认识",
+            "note": "认识常见的平面图形：长方形、正方形、三角形、平行四边形、梯形、圆形、扇形等，了解它们的基本特征（如边、角关系）。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e9b47682-a525-4b23-a0f6-d38658b13862"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "线的认识",
+            "note": "认识直线、射线、线段，了解它们的特征和区别。掌握两点确定一条直线，线段有两个端点，射线有一个端点，直线没有端点。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "19d1ebb2-c47c-4299-be76-0eb67251d25f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "角的认识与分类",
+            "note": "认识角，知道角的各部分名称（顶点、边）。掌握角的分类：锐角（<90°）、直角（=90°）、钝角（>90°且<180°）、平角（=180°）、周角（=360°）。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b929334a-5a04-4866-ba52-db8b97555516"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长方形和正方形的特征",
+            "note": "掌握长方形和正方形的特征。长方形：对边相等，四个角都是直角。正方形：四条边都相等，四个角都是直角。正方形是特殊的长方形。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7747cd3f-e82f-4b28-afb8-1a16b190c9af"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三角形特征与分类",
+            "note": "掌握三角形的特征（三条边、三个角、内角和180°）和分类。按角分：锐角、直角、钝角三角形；按边分：等边、等腰、不等边三角形。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "22e43357-c517-4e6b-9004-d2b88243d07b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平行四边形和梯形的特征",
+            "note": "掌握平行四边形（两组对边分别平行且相等）和梯形（只有一组对边平行）的特征。认识等腰梯形和直角梯形。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d7f2d186-3af9-44e6-b10f-b9eab4feb017"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "圆的认识",
+            "note": "认识圆，掌握圆心(O)、半径(r)、直径(d)的概念及关系：d=2r。圆是轴对称图形，直径所在的直线是它的对称轴，有无数条对称轴。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "383537fb-345b-4b97-9b85-d933848fd6bc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长概念与公式",
+            "note": "理解周长的概念（封闭图形一周的长度）。背诵常见图形的周长公式：长方形C=(a+b)×2，正方形C=4a，圆的周长C=πd=2πr。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "eb374641-1d53-4dd7-a422-30375c1817c3"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "面积概念与公式",
+            "note": "理解面积的概念（物体表面或平面图形的大小）。背诵常见图形的面积公式：长方形S=ab，正方形S=a²，平行四边形S=ah，三角形S=ah÷2，梯形S=(a+b)h÷2，圆S=πr²。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "525f7dc8-59e0-4fc3-848d-c1fbc180332d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "立体图形的认识",
+            "note": "认识常见的立体图形：长方体、正方体、圆柱、圆锥、球。了解它们的基本特征（面、棱、顶点的数量及关系）。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "cf06940d-d0bd-4fa0-8968-770a1955618b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长方体与正方体的特征",
+            "note": "掌握长方体和正方体的特征。长方体：6个面（相对面相同），12条棱（相对棱长度相等），8个顶点。正方体是特殊的长方体（所有面、所有棱都相等）。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b4f6c090-54b8-4536-a79f-69bcb4124dda"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "圆柱与圆锥的特征",
+            "note": "掌握圆柱（上下底面是相等的圆，侧面展开是长方形）和圆锥（一个底面是圆，一个顶点，侧面展开是扇形）的特征。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "fdac0900-d236-4175-a000-b7efe3edf474"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "表面积概念与公式",
+            "note": "理解表面积的概念（立体图形所有面的面积总和）。背诵常见立体图形的表面积公式：长方体S=2(ab+ah+bh)，正方体S=6a²，圆柱侧面积S=Ch=2πrh，圆柱表面积S=2πr²+2πrh。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d8adf183-6105-4c0d-a9f1-5a58caf0a40b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "体积概念与公式",
+            "note": "理解体积的概念（物体所占空间的大小）。背诵常见立体图形的体积公式：长方体V=abh，正方体V=a³，圆柱V=πr²h",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "57e54b10-833f-4dae-a6ca-03d57f847056"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>

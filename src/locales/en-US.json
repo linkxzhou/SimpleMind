@@ -37,7 +37,7 @@
   "cutNode": "Cut Node",
   "pasteNode": "Paste Node",
   "markNode": "Mark Node",
-  "unmarkNode": "Remove Mark",
+  "unmarkNode": "Mark Remove",
   "collapseAllChildren": "Collapse All Children",
   "expandAllChildren": "Expand All Children",
   "toggleMode": "Toggle Detailed/Simple Mode",

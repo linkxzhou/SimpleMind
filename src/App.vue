@@ -220,6 +220,7 @@
                     <a-button size="small" @click="exportMap('md')">.md</a-button>
                     <a-button size="small" @click="exportMap('xmind')">.xmind</a-button>
                     <a-button size="small" @click="exportMap('txt')">.txt</a-button>
+                    <a-button size="small" type="primary" @click="exportMap('cardhtml')">card.html</a-button>
                 </div>
             </a-tab-pane>
 
@@ -344,7 +345,7 @@ const settings = ref({
     lineStyle: 'curve',
     fontFamily: '微软雅黑, Microsoft YaHei',
     themeRootFillColor: '#549688',
-    theme: '',
+    theme: 'mint',
 })
 
 // -----------------------------------------------------------------------------
@@ -424,11 +425,14 @@ watch(
             if (theme !== oldTheme) {
                 mindMapRef.value.setTheme(theme)
                 const targetTheme = themeList.find(item => item.value === theme)
+                console.log('targetTheme', targetTheme.theme)
                 if (targetTheme && targetTheme.theme) {
                     settings.value.backgroundColor = targetTheme.theme.backgroundColor
                     settings.value.lineColor = targetTheme.theme.lineColor
                     settings.value.lineWidth = targetTheme.theme.lineWidth
-                    settings.value.themeRootFillColor = targetTheme.theme?.root?.fillColor || '#549688'
+                    settings.value.themeRootFillColor = (targetTheme.theme?.root?.fillColor == '#fff' || 
+                        targetTheme.theme?.root?.fillColor == 'rgb(255, 255, 255)'
+                        ? '#549688' : targetTheme.theme?.root?.fillColor) || '#549688'
                     return
                 }
             }

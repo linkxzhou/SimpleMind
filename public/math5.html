@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "三年级数学上册总结",
+    "expand": true,
+    "uid": "bea71939-46c8-4d03-ab83-c29f93a8031a",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "时间单位与计量",
+        "note": "学习时、分、秒的概念和相互关系，掌握时间单位的换算方法。重点理解秒是比分更小的时间单位，1分=60秒，1时=60分。学会读取钟表时间，包括电子表和秒表的使用，能够估算和测量时间长度，解决生活中的时间计算问题。",
+        "nextSystemPrompt": "基于时间单位与计量知识点，总结出时间单位换算、时间测量工具、时间计算应用等子知识点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "19ee1077-5563-4c16-8047-57f02c9cf8e4",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "时间单位认识与换算",
+            "note": "掌握时、分、秒三个时间单位的概念，理解它们之间的进率关系：1时=60分，1分=60秒。能够进行不同时间单位之间的换算，如将120秒换算成2分钟。",
+            "nextSystemPrompt": "",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "49cba46c-7d63-4479-81d8-7bfd22c1ec7b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "钟表的认识与使用",
+            "note": "认识钟面上的时针、分针和秒针，理解秒针走1小格是1秒，走一圈是1分钟。学会读取各种钟表显示的时间，包括指针式钟表和数字式电子表。",
+            "nextSystemPrompt": "",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "76070738-4275-4e71-8f0d-db866beb8714"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间的估算与测量",
+            "note": "培养时间感知能力，能够估算日常活动所需的时间长度。学会使用秒表等工具测量时间，记录各种活动的实际用时，提高时间估算的准确性。",
+            "nextSystemPrompt": "",
+            "color": "#6B8E23",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "827726d8-9614-42c0-9cac-a7798a6bfa17"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间计算与应用",
+            "note": "学会计算时间间隔，解决生活中的时间问题。如计算从一个时刻到另一个时刻经过了多长时间，或者知道起始时间和经过时间求结束时间。",
+            "nextSystemPrompt": "",
+            "color": "#556B2F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6b247796-a478-4676-bd99-0d6040f556d0"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间单位的生活应用",
+            "note": "将时间知识应用到实际生活中，如制定作息时间表，估算各种活动的时间需求，培养良好的时间管理意识和习惯。",
+            "nextSystemPrompt": "",
+            "color": "#8FBC8F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "35e6bc4a-3bcf-41bc-a5d8-83c4a37bb539"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "长度单位与测量",
+        "note": "学习毫米、厘米、分米、米、千米等长度单位，掌握各单位间的换算关系。重点掌握1厘米=10毫米，1分米=10厘米，1米=10分米，1千米=1000米。学会使用直尺等工具测量物体长度，能够选择合适的长度单位。",
+        "nextSystemPrompt": "基于长度单位与测量知识点，总结出长度单位换算、测量工具使用、长度估算等子知识点",
+        "color": "#4682B4",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "2dff5575-947e-4c76-9501-dfee07981bc2",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "长度单位的认识",
+            "note": "认识毫米、厘米、分米、米、千米等长度单位，理解各单位的大小关系和使用场合。毫米用于测量很短的长度，千米用于测量较长的距离。",
+            "nextSystemPrompt": "",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "45bd6c03-ba90-4d39-a6f8-43befd550548"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长度单位换算",
+            "note": "掌握相邻长度单位间的进率：1厘米=10毫米，1分米=10厘米，1米=10分米，1千米=1000米。能够进行不同长度单位之间的换算计算。",
+            "nextSystemPrompt": "",
+            "color": "#0000CD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7a72fc83-d77b-4277-9c43-5228d2d09439"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "测量工具的使用",
+            "note": "学会正确使用直尺、卷尺等测量工具，掌握测量的基本方法和注意事项。能够准确读取测量结果，包括整厘米和毫米的读数。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0687043b-1fae-4b78-a874-3b7a0c0025a1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长度的估算",
+            "note": "培养长度感知能力，能够估算常见物体的长度。通过实际测量验证估算结果，提高估算的准确性，建立长度单位的直观概念。",
+            "nextSystemPrompt": "",
+            "color": "#483D8B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c5554334-e05f-4f81-a428-1de72d135e8a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长度测量的应用",
+            "note": "将长度测量知识应用到实际问题中，如计算路程、比较长度、解决几何图形的周长问题等，培养解决实际问题的能力。",
+            "nextSystemPrompt": "",
+            "color": "#6495ED",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e7ee1c59-fc75-43f8-94ee-2c797438bd3e"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "质量单位与认识",
+        "note": "学习克、千克、吨等质量单位，掌握单位间的换算关系：1千克=1000克，1吨=1000千克。能够根据物体的轻重选择合适的质量单位，解决生活中的质量计算问题，培养质量概念和估算能力。",
+        "nextSystemPrompt": "基于质量单位与认识知识点，总结出质量单位换算、质量估算、质量应用等子知识点",
+        "color": "#8B4513",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "093f0797-1d4d-4157-8afc-c4fba6e6f307",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "质量单位的认识",
+            "note": "认识克、千克、吨三个质量单位，了解它们的使用场合。克用于较轻物品，千克用于一般物品，吨用于很重的物品或大宗商品的计量。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9c233994-7541-431e-be0b-463563ebb1a5"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "质量单位换算",
+            "note": "掌握质量单位间的进率关系：1千克=1000克，1吨=1000千克。能够进行不同质量单位之间的换算，解决相关的计算问题。",
+            "nextSystemPrompt": "",
+            "color": "#D2691E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "cab09809-3a58-4909-9432-f46974971d1b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "质量的估算",
+            "note": "培养质量感知能力，能够估算常见物体的质量。通过实际称重验证估算结果，建立质量单位的直观概念，提高估算准确性。",
+            "nextSystemPrompt": "",
+            "color": "#CD853F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "eb6b9d9f-8c27-4932-b161-56aa184706dc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "质量计算应用",
+            "note": "运用质量知识解决实际问题，如计算总质量、比较轻重、解决载重问题等。学会分析问题中的质量关系，选择合适的计算方法。",
+            "nextSystemPrompt": "",
+            "color": "#DEB887",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5a3574d1-610f-44a3-8bc4-1e25d44a4679"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "质量单位的生活应用",
+            "note": "将质量知识应用到日常生活中，如购物时理解商品重量、理解载重限制、节约资源等，培养实际应用能力和生活常识。",
+            "nextSystemPrompt": "",
+            "color": "#F4A460",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9f38723d-43fa-4aff-a3af-326962e651f8"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "万以内加减法计算",
+        "note": "掌握万以内数的加减法计算方法，包括不进位加法、进位加法、不退位减法、退位减法。学会列竖式计算，理解相同数位对齐的原则，掌握进位和退位的处理方法。能够进行验算，培养计算的准确性。",
+        "nextSystemPrompt": "基于万以内加减法计算知识点，总结出竖式计算方法、进退位处理、验算方法等子知识点",
+        "color": "#B22222",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "4bde4286-2d6e-42c1-8150-73bf4be5d119",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "竖式计算的基本方法",
+            "note": "学会列竖式进行万以内加减法计算，掌握相同数位对齐的基本原则，从个位开始计算的方法。理解竖式计算的优势和规范写法。",
+            "nextSystemPrompt": "",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "abe0c5bc-e82a-45a4-a35a-2af203fa5c73"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "进位加法的处理",
+            "note": "掌握加法中的进位处理方法，理解哪一位上的数相加满十就要向前一位进1的规律。能够正确处理连续进位的情况。",
+            "nextSystemPrompt": "",
+            "color": "#FF0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0351458e-d48a-4737-8e1f-4016ab6353ca"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "退位减法的处理",
+            "note": "掌握减法中的退位处理方法，理解当某一位不够减时要从前一位退1的方法。特别掌握被减数中有0的退位减法计算。",
+            "nextSystemPrompt": "",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1289936f-bac3-4531-9d1f-b29a8668d96c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "加减法的验算",
+            "note": "学会用交换加数位置、用减法验算加法、用加法验算减法等方法进行验算。养成验算的好习惯，提高计算的准确性。",
+            "nextSystemPrompt": "",
+            "color": "#FF4500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "36e99821-be8d-4336-b472-a28b30f3a357"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "估算与精确计算",
+            "note": "学会根据实际需要选择估算或精确计算。掌握估算的基本方法，理解什么情况下用估算，什么情况下需要精确计算。",
+            "nextSystemPrompt": "",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b533c158-7ff7-4402-8421-92c743c8fa69"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "倍数关系与应用",
+        "note": "理解倍数的概念，掌握求一个数是另一个数的几倍和求一个数的几倍是多少的计算方法。学会用除法求倍数关系，用乘法求几倍数。能够解决生活中的倍数问题，培养分析和解决问题的能力。",
+        "nextSystemPrompt": "基于倍数关系与应用知识点，总结出倍数概念理解、倍数计算方法、倍数问题解决等子知识点",
+        "color": "#800080",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "a602ae43-e76d-4234-b154-8b3c9ec2c201",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "倍数概念的理解",
+            "note": "理解倍数的含义，知道几倍就是几个相同的数。通过具体的实物操作和图示，建立倍数的直观概念，理解倍数关系的本质。",
+            "nextSystemPrompt": "",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5fe9994c-86ac-4a1a-8b0d-eb622565192a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求倍数关系的方法",
+            "note": "掌握求一个数是另一个数的几倍的方法，用除法计算。理解求倍数关系就是求一个数里面包含几个另一个数的过程。",
+            "nextSystemPrompt": "",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5f87282b-5e2c-416f-9369-0d924c422926"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求几倍数的方法",
+            "note": "掌握求一个数的几倍是多少的方法，用乘法计算。理解求几倍数就是求几个相同数的和的过程，建立乘法与倍数的联系。",
+            "nextSystemPrompt": "",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "357b7f09-3f2d-4c7b-adc3-d7fb3dae3538"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "倍数问题的分析",
+            "note": "学会分析倍数问题的结构，识别题目中的倍数关系。掌握画图分析的方法，能够用示意图帮助理解和解决倍数问题。",
+            "nextSystemPrompt": "",
+            "color": "#4B0082",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "45756e46-f1e7-4b99-9623-0067eb438c55"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "倍数关系的应用",
+            "note": "将倍数知识应用到实际生活中，解决购物、年龄、距离等各种实际问题。培养从实际情境中抽象出数学问题的能力。",
+            "nextSystemPrompt": "",
+            "color": "#663399",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bf5673a2-e577-441b-85bf-2b28d0507169"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "几何图形与测量",
+        "note": "认识长方形和正方形的特征，掌握它们的周长计算方法。学会测量和计算长方形、正方形的周长，理解周长的概念。能够解决与长方形、正方形周长相关的实际问题，培养几何直观和空间观念。",
+        "nextSystemPrompt": "基于几何图形与测量知识点，总结出图形特征认识、周长概念理解、周长计算方法等子知识点",
+        "color": "#008B8B",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "d49528e3-b0c4-43fc-ab70-7b83409ad37c",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "长方形和正方形的特征",
+            "note": "认识长方形和正方形的基本特征，理解长方形对边相等、四个角都是直角的性质，正方形四条边都相等、四个角都是直角的性质。",
+            "nextSystemPrompt": "",
+            "color": "#20B2AA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "dcf86c94-27ae-4cb4-9beb-48b6794fea57"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长概念的理解",
+            "note": "理解周长的概念，知道周长就是围成图形的所有边长的总和。通过实际测量和计算，建立周长的直观概念。",
+            "nextSystemPrompt": "",
+            "color": "#48D1CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ef87f2fa-9fc5-4efb-ace2-4da9e063fcbc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长方形周长计算",
+            "note": "掌握长方形周长的计算方法：周长=(长+宽)×2。理解这个公式的来源，能够灵活运用公式解决实际问题。",
+            "nextSystemPrompt": "",
+            "color": "#00CED1",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "43ac3628-de97-46ca-98a2-02c9991f6b3a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "正方形周长计算",
+            "note": "掌握正方形周长的计算方法：周长=边长×4。理解正方形是特殊的长方形，其周长计算的特殊性和简便性。",
+            "nextSystemPrompt": "",
+            "color": "#5F9EA0",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3dbf93d8-f140-44a9-8a0a-d551eb646d0a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长问题的应用",
+            "note": "运用周长知识解决实际问题，如计算围栏长度、装饰边框长度等。培养将数学知识应用到实际生活中的能力。",
+            "nextSystemPrompt": "",
+            "color": "#4682B4",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c5feb8ea-7d06-4587-bfe9-037f794cafd2"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "时、分、秒的认识与计算",
+        "note": "学习时间单位的基本概念，掌握时、分、秒之间的换算关系。1时=60分，1分=60秒。能够读懂钟表，认识秒针、分针、时针的作用，学会计算经过时间和时间间隔。培养时间观念，合理安排学习和生活时间。",
+        "nextSystemPrompt": "基于时间单位认识，总结出钟表读数、时间换算、时间计算等具体技能点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "6946059c-476b-4898-972d-0697e6440613",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "秒的认识",
+            "note": "认识秒针是钟面上最长最细的针，秒针走1小格是1秒。体验1秒的长短，了解秒在日常生活中的应用。",
+            "nextSystemPrompt": "基于秒的概念，细化秒针识别和秒的实际感受",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d0aa81ff-4155-49cd-b9de-10bbc0d959df"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间单位换算",
+            "note": "掌握1时=60分，1分=60秒的换算关系。能够进行不同时间单位之间的相互转换。",
+            "nextSystemPrompt": "基于时间换算，总结具体的换算方法和技巧",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "4d14df7a-279e-4478-9cb7-cd27dc68f2a8"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "钟表的认识",
+            "note": "认识钟面上的时针、分针、秒针，学会读取时间。理解电子表和指针表的不同显示方式。",
+            "nextSystemPrompt": "基于钟表认识，细化指针识别和时间读取方法",
+            "color": "#006400",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "491551b5-db31-4bfa-8bdb-f5898ee23145"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "经过时间计算",
+            "note": "学会计算从一个时刻到另一个时刻经过了多长时间，掌握时间的加减运算方法。",
+            "nextSystemPrompt": "基于时间计算，总结时间加减的具体步骤和方法",
+            "color": "#4682B4",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2e8ff146-0b75-4494-bb67-1b16e13353e4"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间估算",
+            "note": "培养时间感觉，能够估算完成某项活动大约需要多长时间，提高时间管理能力。",
+            "nextSystemPrompt": "基于时间估算，总结日常活动的时间预估方法",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a2591426-226f-4066-94d1-4ccfd4edfaba"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "万以内数的加法和减法",
+        "note": "学习万以内数的加减法运算，掌握竖式计算方法。理解进位和退位的概念，能够正确进行多位数的加减运算。学会验算方法，培养计算的准确性。掌握估算技巧，能够判断计算结果的合理性。",
+        "nextSystemPrompt": "基于万以内加减法，总结出竖式计算、进退位处理、验算方法等具体技能",
+        "color": "#8B0000",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "5ba56572-c83d-432e-9a86-80be31f72654",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "两位数加减法",
+            "note": "掌握两位数的口算和竖式计算方法，理解相同数位对齐的原则，学会处理进位和退位。",
+            "nextSystemPrompt": "基于两位数运算，细化口算技巧和竖式步骤",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "559e5dcc-6b3d-428c-8a27-c9c52bc1efd1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三位数加减法",
+            "note": "学习三位数的竖式计算，掌握百位、十位、个位的进位和退位处理方法。",
+            "nextSystemPrompt": "基于三位数运算，总结进退位的具体处理步骤",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "030669ee-c518-4b0e-ae7f-71517e93ee30"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "验算方法",
+            "note": "学会用交换加数位置、用减法验算加法、用加法验算减法等多种验算方法。",
+            "nextSystemPrompt": "基于验算概念，细化各种验算方法的具体操作",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "664f5fff-5102-4753-a9da-c548a614208d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "估算技巧",
+            "note": "学会把数看成整十、整百数进行估算，判断计算结果是否合理，提高计算效率。",
+            "nextSystemPrompt": "基于估算方法，总结取近似数和快速估算的技巧",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ce9d1330-ef7a-4e26-9d6a-6d556043ed56"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "解决实际问题",
+            "note": "运用加减法解决生活中的实际问题，学会分析题意，选择合适的计算方法。",
+            "nextSystemPrompt": "基于实际应用，总结问题分析和解题策略",
+            "color": "#FF4500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9c97a790-713b-4566-b2c8-f7bd74662be0"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "测量单位的认识与应用",
+        "note": "学习长度单位毫米、分米、千米和质量单位吨的概念。掌握各单位之间的换算关系，能够根据实际情况选择合适的测量单位。培养空间观念和量感，提高估测能力。学会使用测量工具进行实际测量。",
+        "nextSystemPrompt": "基于测量单位，总结出长度单位、质量单位、单位换算等具体知识点",
+        "color": "#4B0082",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "b5c1c0a1-f568-4978-b633-43c623bcbdaf",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "毫米的认识",
+            "note": "认识毫米是比厘米更小的长度单位，1厘米=10毫米。学会用毫米测量较短或要求精确的长度。",
+            "nextSystemPrompt": "基于毫米概念，细化毫米的实际应用和测量方法",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "30a82911-7874-49ca-b212-a7e295d7c7a3"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分米的认识",
+            "note": "认识分米作为长度单位，1分米=10厘米，1米=10分米。理解分米在测量中的作用。",
+            "nextSystemPrompt": "基于分米概念，总结分米与其他长度单位的关系",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d28edb6b-c3e5-4d41-8ddd-77f246465a9c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "千米的认识",
+            "note": "认识千米是测量较长距离的单位，1千米=1000米。体验1千米的实际长度，了解千米的应用。",
+            "nextSystemPrompt": "基于千米概念，细化长距离的估算和实际应用",
+            "color": "#6A5ACD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ddd6e7d4-9d4e-4e1a-b3f6-e9f9b6e2cfe2"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "吨的认识",
+            "note": "认识吨是测量较重物品的质量单位，1吨=1000千克。了解吨在日常生活中的应用。",
+            "nextSystemPrompt": "基于吨的概念，总结重量估算和实际应用场景",
+            "color": "#483D8B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ee6f87ef-739f-4e01-8644-0d041f9d139a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "单位换算",
+            "note": "掌握各测量单位之间的换算关系，能够熟练进行不同单位之间的转换计算。",
+            "nextSystemPrompt": "基于单位换算，细化换算方法和计算技巧",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "01692e2a-7cde-4aeb-a774-3eebb7df9e84"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "多位数乘一位数",
+        "note": "学习多位数乘以一位数的计算方法，掌握竖式乘法的书写格式和计算步骤。理解乘法的意义，能够解决相关的实际问题。学会估算乘法结果，培养数感和运算能力。掌握乘法验算的方法。",
+        "nextSystemPrompt": "基于多位数乘法，总结出竖式乘法、进位处理、估算验算等具体技能",
+        "color": "#8B4513",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "689153cb-e350-41b2-8b40-081a41db753e",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "两位数乘一位数",
+            "note": "掌握两位数乘一位数的口算和竖式计算方法，理解乘法的分配律在计算中的应用。",
+            "nextSystemPrompt": "基于两位数乘法，细化口算技巧和竖式步骤",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5c859a5e-5131-45de-949a-d5f912463a39"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三位数乘一位数",
+            "note": "学习三位数乘一位数的竖式计算，掌握连续进位的处理方法，提高计算准确性。",
+            "nextSystemPrompt": "基于三位数乘法，总结进位处理和计算步骤",
+            "color": "#D2691E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "14d8832c-e7eb-49c4-8845-28e8568960cc"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法估算",
+            "note": "学会把多位数看成整十、整百数进行估算，快速判断乘法结果的大致范围。",
+            "nextSystemPrompt": "基于乘法估算，细化估算方法和应用技巧",
+            "color": "#CD853F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0de9807f-4796-40dd-9248-814e00bb879f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "0的乘法",
+            "note": "理解0乘以任何数都得0，以及中间或末尾有0的多位数乘法的特殊处理方法。",
+            "nextSystemPrompt": "基于0的乘法，总结特殊情况的计算规则",
+            "color": "#F4A460",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a0b863fd-ae36-4ca6-86d9-c5f8a736e19b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法应用",
+            "note": "运用乘法解决生活中的实际问题，理解乘法在解决问题中的作用和意义。",
+            "nextSystemPrompt": "基于乘法应用，总结实际问题的分析和解决方法",
+            "color": "#DEB887",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0f3ee543-9a49-4211-97ef-24132a65a822"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "倍的认识与应用",
+        "note": "理解倍的概念，知道倍表示两个数量之间的关系。学会求一个数是另一个数的几倍，以及求一个数的几倍是多少。能够用除法和乘法解决有关倍的实际问题。培养分析和解决问题的能力。",
+        "nextSystemPrompt": "基于倍的概念，总结出倍数关系、求倍数、倍数应用等具体知识点",
+        "color": "#2F4F4F",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "a4501f67-0f41-474a-9dea-f8b2a3d97d0e",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "倍的意义",
+            "note": "理解倍表示一个数量是另一个数量的几个，建立倍的概念，能够用图形表示倍数关系。",
+            "nextSystemPrompt": "基于倍的意义，细化倍数关系的理解和表示方法",
+            "color": "#708090",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "60811dce-462f-4629-9842-0b5216bf7a80"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求倍数关系",
+            "note": "学会求一个数是另一个数的几倍，掌握用除法计算倍数关系的方法。",
+            "nextSystemPrompt": "基于倍数关系计算，总结除法求倍数的具体步骤",
+            "color": "#778899",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "46e3d885-27af-4843-8e2d-d526300e1b86"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求一个数的几倍",
+            "note": "学会求一个数的几倍是多少，掌握用乘法计算的方法，理解乘法和倍数的关系。",
+            "nextSystemPrompt": "基于求几倍，细化乘法计算倍数的方法",
+            "color": "#696969",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1325f75c-4df6-4db4-a2c0-46de1df92893"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "倍数问题解决",
+            "note": "运用倍的知识解决实际问题，学会分析题意，正确选择乘法或除法进行计算。",
+            "nextSystemPrompt": "基于倍数问题，总结问题分析和解题策略",
+            "color": "#808080",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1dd2a6cc-7b38-4b98-ba50-214dbb62ecfd"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "倍数关系图示",
+            "note": "学会用线段图、示意图等方式表示倍数关系，帮助理解和解决问题。",
+            "nextSystemPrompt": "基于图示方法，细化各种表示倍数关系的图形方法",
+            "color": "#A9A9A9",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "235649b8-6953-450a-8ac3-4ffc6985965d"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "长方形和正方形",
+        "note": "认识长方形和正方形的特征，理解它们的边和角的性质。学会测量长方形和正方形的边长，计算周长。了解长方形和正方形在生活中的应用。培养几何直观和空间观念。",
+        "nextSystemPrompt": "基于长方形正方形，总结出图形特征、周长计算、实际应用等知识点",
+        "color": "#800080",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "6c58d037-aebf-4b7c-8181-f63c944fb7b7",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "长方形的认识",
+            "note": "认识长方形有4条边、4个直角，对边相等的特征。学会识别和画长方形。",
+            "nextSystemPrompt": "基于长方形特征，细化边角性质和识别方法",
+            "color": "#9370DB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "13a87ab1-e808-430a-b9a9-b741e017c4c0"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "正方形的认识",
+            "note": "认识正方形有4条相等的边、4个直角的特征。理解正方形是特殊的长方形。",
+            "nextSystemPrompt": "基于正方形特征，总结与长方形的关系和区别",
+            "color": "#BA55D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "353e204c-d414-4a4a-8128-e683ab01827e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长的概念",
+            "note": "理解周长是图形一周的长度，学会测量和计算长方形、正方形的周长。",
+            "nextSystemPrompt": "基于周长概念，细化周长的测量和计算方法",
+            "color": "#DA70D6",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "17331913-2d9c-4353-88c8-83858af6110e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长计算公式",
+            "note": "掌握长方形周长=(长+宽)×2，正方形周长=边长×4的计算公式。",
+            "nextSystemPrompt": "基于周长公式，总结公式的推导和应用方法",
+            "color": "#EE82EE",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "79eb90fc-5d50-45aa-aecd-488c71e84897"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "图形的应用",
+            "note": "运用长方形和正方形的知识解决生活中的实际问题，如计算围栏长度等。",
+            "nextSystemPrompt": "基于图形应用，细化实际问题的解决方法",
+            "color": "#DDA0DD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d3a82f38-beb2-4e06-8d83-ebc60c26ec57"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "分数的初步认识",
+        "note": "初步认识分数的意义，理解分数表示把一个物体或图形平均分成若干份，取其中的一份或几份。学会读写简单的分数，比较分数的大小。了解分数在生活中的应用，培养数感。",
+        "nextSystemPrompt": "基于分数概念，总结出分数意义、分数读写、分数比较等基础知识",
+        "color": "#008B8B",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "f79deeb9-d47d-4c19-8f9c-c6c3d76e4c09",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "分数的意义",
+            "note": "理解分数表示平均分的结果，认识分子、分母的含义，建立分数的基本概念。",
+            "nextSystemPrompt": "基于分数意义，细化平均分和分数表示方法",
+            "color": "#20B2AA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2b15bac8-b03d-4a18-b462-919c0102f526"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的读写",
+            "note": "学会正确读写分数，掌握分数的书写格式，理解分子、分母的位置和作用。",
+            "nextSystemPrompt": "基于分数读写，总结读写规则和注意事项",
+            "color": "#48D1CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c5eb71fb-45be-4899-a4ba-88bca308fed6"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "几分之一",
+            "note": "重点认识几分之一的分数，理解把一个整体平均分成几份，每份是几分之一。",
+            "nextSystemPrompt": "基于几分之一，细化单位分数的概念和应用",
+            "color": "#00CED1",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2e64b31c-0de4-4064-aa73-47cbbd345ddd"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "几分之几",
+            "note": "认识几分之几的分数，理解取多份时分数的表示方法，建立分数的完整概念。",
+            "nextSystemPrompt": "基于几分之几，总结多份分数的理解和表示",
+            "color": "#40E0D0",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "309cf6d1-fe1a-40cc-9ce3-f158a7747d50"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数比较",
+            "note": "学会比较简单分数的大小，掌握同分母分数和同分子分数的比较方法。",
+            "nextSystemPrompt": "基于分数比较，细化不同类型分数的比较规则",
+            "color": "#AFEEEE",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "246328f8-cf8d-4d95-ae7d-dcf647363c35"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "数学广角-集合",
+        "note": "初步接触集合的思想，学会用韦恩图等方法整理和分析信息。理解重复和不重复的概念，学会解决简单的重叠问题。培养逻辑思维能力和分类整理的能力。",
+        "nextSystemPrompt": "基于集合思想，总结出韦恩图应用、重叠问题、分类方法等思维技能",
+        "color": "#556B2F",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "8d6260e0-b4a1-4969-9cc5-a00301507623",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "集合的概念",
+            "note": "初步理解集合是具有某种共同性质的对象的总体，学会用圈图表示集合。",
+            "nextSystemPrompt": "基于集合概念，细化集合的表示和理解方法",
+            "color": "#6B8E23",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "55f203a3-eca8-4b27-9ad5-407568a13c51"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "韦恩图的应用",
+            "note": "学会用韦恩图整理信息，直观地表示不同集合之间的关系，解决实际问题。",
+            "nextSystemPrompt": "基于韦恩图，总结图形表示和问题解决方法",
+            "color": "#808000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e8104569-5748-46e3-a2b2-aec389f02f2a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "重叠问题",
+            "note": "理解重叠的概念，学会解决简单的重叠计数问题，避免重复计算。",
+            "nextSystemPrompt": "基于重叠问题，细化重复计算的识别和处理方法",
+            "color": "#9ACD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "af649780-a548-4302-bed4-88d69e2f7747"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分类统计",
+            "note": "学会按不同标准对事物进行分类，统计各类的数量，培养分类思维。",
+            "nextSystemPrompt": "基于分类统计，总结分类标准和统计方法",
+            "color": "#ADFF2F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "053d3dc0-bd6c-4785-83b3-a3dc9960b449"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "逻辑推理",
+            "note": "通过集合问题培养简单的逻辑推理能力，学会有条理地思考和解决问题。",
+            "nextSystemPrompt": "基于逻辑推理，细化推理方法和思维训练",
+            "color": "#7FFF00",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "abd5f0ed-c6df-4db1-9075-b22a24b3d3f3"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "时、分、秒",
+        "note": "学习时间单位的认识和换算。认识秒针，理解1分=60秒，1时=60分的换算关系。掌握时间的读写方法，能够进行简单的时间计算，如求经过时间、到达时间等。培养学生的时间观念，学会合理安排时间。",
+        "nextSystemPrompt": "基于时间单位认识，总结出秒的认识、时间换算、时间计算等核心子知识点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "537e3385-5b49-4da8-a8c3-9b9cc2ef52c6",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "秒的认识",
+            "note": "认识秒针是钟面上最长最细的针，秒针走1小格的时间是1秒。通过观察秒针走一圈，分针走1小格，发现1分=60秒的关系。体验1秒的长短，了解1秒钟能做的事情。",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9a2f5808-fa65-4a2a-aa58-79e3af29002d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间单位换算",
+            "note": "掌握时间单位间的换算关系：1分=60秒，1时=60分。能够进行不同时间单位之间的换算，如3分=180秒，2时=120分等。理解时间单位从大到小的顺序。",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b73927d3-7832-4044-b649-3a1d3783d121"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间的计算",
+            "note": "学会计算经过时间，如从8:05到8:20经过了15分钟。能够根据起始时间和经过时间求到达时间。掌握时间的加减运算方法。",
+            "color": "#3CB371",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "24b505fc-2c33-4304-b506-3a1b76e01c89"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间估算",
+            "note": "培养时间感觉，能够估算完成某项活动需要的时间。如估算30秒、1分钟的长短，估算做某件事情所需的时间。提高时间管理能力。",
+            "color": "#20B2AA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ce728ed6-349e-4bfd-8263-4ab86215b74f"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "万以内的加法和减法",
+        "note": "学习万以内数的加减法计算。掌握竖式计算方法，理解相同数位对齐的原则。学会进位加法和退位减法的计算技巧。能够进行验算，养成良好的计算习惯。学会估算的方法和应用。",
+        "nextSystemPrompt": "基于万以内加减法运算，总结出口算方法、竖式计算、验算方法、估算应用等子知识点",
+        "color": "#4169E1",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "5adbef8a-06a6-4b99-b0af-437d67d60f5d",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "两位数加减法口算",
+            "note": "掌握两位数加减法的口算方法。如35+34，可以先算30+30=60，再算5+4=9，最后60+9=69。或者先算35+30=65，再算65+4=69。灵活运用不同的口算策略。",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5c1e9ef6-6da8-44ba-93a4-1606e0dae8e6"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三位数加法竖式",
+            "note": "学会三位数加法的竖式计算。相同数位对齐，从个位加起。哪一位上的数相加满十，就要向前一位进1。如271+122=393的计算过程。",
+            "color": "#0000CD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "66512384-1254-41cf-9a35-149e9586513c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三位数减法竖式",
+            "note": "掌握三位数减法的竖式计算。相同数位对齐，从个位减起。哪一位上的数不够减，要从前一位退1。特别注意被减数中间有0的情况。",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d8d5c4dd-2463-4220-aeb8-6f8558884f87"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "加减法验算",
+            "note": "学会加法和减法的验算方法。加法验算可以交换加数位置再算一遍；减法验算可以用被减数减去差看是否等于减数，或用减数加差看是否等于被减数。",
+            "color": "#483D8B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8d56aee2-0d32-40c4-a034-916d290935df"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "估算的应用",
+            "note": "学会在解决实际问题时选择合适的计算策略。有时需要精确计算，有时用估算就可以了。如判断座位是否够坐，购物时估算需要准备多少钱等。",
+            "color": "#6A5ACD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e989d48d-7e1d-497a-9b60-02bae1fd3859"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "测量",
+        "note": "学习长度单位毫米、分米、千米和质量单位吨的认识。掌握各单位间的换算关系，能够选择合适的单位进行测量。培养学生的空间观念和量感，学会估测物体的长度和质量。",
+        "nextSystemPrompt": "基于测量知识，总结出毫米分米认识、千米认识、吨的认识、单位换算等子知识点",
+        "color": "#8B008B",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "5b7df39c-acfc-4876-afc1-0ec4da26bd07",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "毫米的认识",
+            "note": "认识毫米是比厘米更小的长度单位，用mm表示。1厘米=10毫米。学会用毫米测量比较短的物体或要求测量比较精确时使用。如测量数学书的厚度。",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "86117b5e-27e1-40f6-8577-eb84aff4cb23"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分米的认识",
+            "note": "认识分米是长度单位，用dm表示。10厘米=1分米，1米=10分米。学会在合适的情况下选择分米作为测量单位，培养对分米长度的感觉。",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ec9a7cea-1978-4cdd-bca9-efae8d1bea36"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "千米的认识",
+            "note": "认识千米是计量比较长路程的单位，用km表示，也叫公里。1千米=1000米。通过实际体验感受1千米的长度，学会估算距离。",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "87d846bf-ec72-4955-9837-2fc37e51b55a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "吨的认识",
+            "note": "认识吨是计量较重物品质量的单位，用t表示。1吨=1000千克。通过实例理解吨的概念，如40名体重25千克的同学一共重1吨。",
+            "color": "#7B68EE",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "647e7e13-6e94-4fd4-8228-d7fd14ac6270"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长度单位换算",
+            "note": "掌握长度单位间的换算关系：1厘米=10毫米，1分米=10厘米，1米=10分米，1千米=1000米。能够进行不同长度单位之间的换算。",
+            "color": "#6495ED",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "96e192df-1a8a-4949-8d7f-df9f67001625"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "倍的认识",
+        "note": "理解倍的概念，学会用倍来描述两个量之间的关系。掌握求一个数是另一个数的几倍的方法，以及求一个数的几倍是多少的方法。能够解决与倍有关的实际问题。",
+        "nextSystemPrompt": "基于倍的概念，总结出倍的意义、求倍数关系、求几倍数、倍数应用等子知识点",
+        "color": "#DC143C",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "71e53895-4d10-45b0-a553-4bb868f0fe7b",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "倍的意义",
+            "note": "理解倍的含义，知道倍表示两个数量之间的关系。如3根小棒是1根小棒的3倍，就是3里面有3个1。通过圈一圈、画一画等方式理解倍的概念。",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7cd2d838-95b7-4679-b296-adadbc03087f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求倍数关系",
+            "note": "学会求一个数是另一个数的几倍。用除法计算，如12÷4=3，表示12是4的3倍。掌握求倍数关系的计算方法和解题步骤。",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c545acad-6aa3-4163-9646-17ec6bb1bd41"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "求几倍数",
+            "note": "学会求一个数的几倍是多少。用乘法计算，如8的4倍是8×4=32。理解求几倍数就是求几个几是多少的问题。",
+            "color": "#F08080",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ffc0ac43-c9f2-4f4e-9f18-12913eb27271"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "倍数问题应用",
+            "note": "能够解决生活中与倍有关的实际问题。如价格问题、数量问题等。学会分析题意，正确选择用乘法还是除法来解决问题。",
+            "color": "#FA8072",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f21f5f77-d135-4db3-8f32-d34f4d41c3ae"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "多位数乘一位数",
+        "note": "学习多位数乘一位数的计算方法。掌握口算和竖式计算的技巧，理解乘法的意义。学会估算乘法结果，能够解决相关的实际问题。培养学生的计算能力和数感。",
+        "nextSystemPrompt": "基于多位数乘一位数，总结出口算方法、竖式计算、进位处理、估算验算等子知识点",
+        "color": "#FF6347",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "19bb714b-949a-493e-a22b-fddaa843585f",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "整十整百数乘一位数",
+            "note": "掌握整十、整百数乘一位数的口算方法。如20×3=60，200×4=800。理解计算规律，先算基本乘法，再看有几个0就在积的末尾添几个0。",
+            "color": "#FF4500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d26c5bf3-81d7-42c0-9583-b9c5c167a72c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "两位数乘一位数口算",
+            "note": "学会两位数乘一位数的口算方法。可以把两位数分解成整十数和一位数，分别与一位数相乘，再把积相加。如23×3=(20+3)×3=60+9=69。",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "13c9357b-496d-4b0b-b711-9870f0dd6734"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "多位数乘一位数竖式",
+            "note": "掌握多位数乘一位数的竖式计算方法。从个位乘起，哪一位上乘得的积满十，就向前一位进几。注意进位的处理和0的乘法。",
+            "color": "#FF7F50",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1735e467-6ac2-44df-be21-7f8f6bc8f0e2"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法估算",
+            "note": "学会估算多位数乘一位数的积。把多位数看成与它接近的整十、整百数，再进行计算。如298×3≈300×3=900。培养数感和估算能力。",
+            "color": "#FFA500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5c2954df-d1d8-409d-8e19-5e7779f31bcf"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "长方形和正方形",
+        "note": "认识长方形和正方形的特征，理解它们的边和角的性质。学会计算长方形和正方形的周长，掌握周长公式。能够解决与长方形、正方形周长相关的实际问题。",
+        "nextSystemPrompt": "基于长方形正方形知识，总结出图形特征、周长概念、周长计算、实际应用等子知识点",
+        "color": "#228B22",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "e863de7c-8674-4cd4-b652-03cb68dd61fc",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "长方形的特征",
+            "note": "认识长方形有4条边、4个角。对边相等，4个角都是直角。能够识别长方形，了解长方形的长和宽。学会用直尺测量长方形的边长。",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "56bad57c-3509-4da6-85ea-b88fd537528f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "正方形的特征",
+            "note": "认识正方形有4条边、4个角。4条边都相等，4个角都是直角。理解正方形是特殊的长方形。能够识别正方形，了解正方形的边长概念。",
+            "color": "#00FF00",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "be705442-710f-4870-886e-93b42fc24689"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长的认识",
+            "note": "理解周长的概念，知道周长是围成一个图形所有边长的总和。通过测量、计算等方式体验周长的含义。学会用绳子测量不规则图形的周长。",
+            "color": "#7FFF00",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f208049d-2b3a-49a5-bba7-8e973d4b3ff6"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "周长的计算",
+            "note": "掌握长方形周长公式：(长+宽)×2。掌握正方形周长公式：边长×4。能够根据已知条件计算长方形和正方形的周长，解决实际问题。",
+            "color": "#ADFF2F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "10640679-f63d-430e-9905-c5b158118b2f"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "分数的初步认识",
+        "note": "初步认识分数，理解分数的意义。学会读写简单的分数，理解分数各部分的名称。能够用分数表示简单的部分与整体的关系，比较分数的大小。",
+        "nextSystemPrompt": "基于分数初步认识，总结出分数意义、分数读写、分数比较、分数应用等子知识点",
+        "color": "#8B0000",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "10bbe198-e42a-4f36-8720-28d666f5516b",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "分数的意义",
+            "note": "理解分数表示把一个物体或一些物体平均分成若干份，取其中的一份或几份。如把一个苹果平均分成2份，每份是1/2。通过实物操作理解分数概念。",
+            "color": "#A52A2A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "96dc4e38-7658-4140-9076-5a7d681fbf61"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的读写",
+            "note": "学会分数的读法和写法。认识分数线、分母、分子。如1/3读作三分之一，分母是3，分子是1。掌握分数的书写格式和要求。",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b76cf2ee-4352-41ec-b2dd-8c3a58f05361"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的比较",
+            "note": "学会比较简单分数的大小。分母相同的分数，分子大的分数大；分子相同的分数，分母小的分数大。通过图形直观比较分数大小。",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "38fada4d-ff2a-46dc-991e-739887a38bb1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "分数的应用",
+            "note": "能够用分数解决简单的实际问题。如把一些物品平均分成几份，用分数表示其中的几份。理解分数在生活中的应用。",
+            "color": "#FF0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "877ad4cd-a350-4741-93e2-550842e46514"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "数学广角-集合",
+        "note": "初步学习集合的思想方法，能够用集合的方法解决简单的实际问题。学会用韦恩图表示集合关系，理解交集的概念。培养学生的逻辑思维能力。",
+        "nextSystemPrompt": "基于集合思想，总结出集合概念、韦恩图、交集理解、问题解决等子知识点",
+        "color": "#4B0082",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "839dde4f-5e3c-4874-a6ad-d717776d4ff1",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "集合的概念",
+            "note": "初步理解集合的含义，知道集合是由一些确定的对象组成的整体。能够识别生活中的集合现象，如参加不同活动的学生群体。",
+            "color": "#6A0DAD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f49701a0-5eb9-4ba2-a00b-725f8a7f2563"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "韦恩图的使用",
+            "note": "学会用韦恩图（圆圈图）来表示集合关系。能够根据实际情况画出韦恩图，直观地表示不同集合之间的关系。",
+            "color": "#7B68EE",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f22045de-86e5-4037-9451-e3cc1c9b6834"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "交集的理解",
+            "note": "理解两个集合的交集概念，知道交集是既属于第一个集合又属于第二个集合的元素组成的集合。如既参加数学小组又参加语文小组的学生。",
+            "color": "#9370DB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "dab96959-9954-4f0d-877d-51aca5a41c74"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "集合问题解决",
+            "note": "能够用集合的方法解决实际问题。如统计参加不同兴趣小组的学生人数，计算总人数时要注意重复计算的问题。",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2e3653a0-007b-4658-98f8-ca70325b5d50"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>

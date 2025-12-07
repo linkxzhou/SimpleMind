@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "三年级数学下册总结",
+    "expand": true,
+    "uid": "50c16523-7c71-4bb3-ba36-a529fc8ae100",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "位置与方向（一）",
+        "note": "学习东、南、西、北四个基本方向，掌握相对位置关系，能够用方向词描述物体的位置。重点掌握：东与西相对，南与北相对；地图通常按上北下南、左西右东绘制；学会使用东北、东南、西北、西南等复合方向词描述位置关系。",
+        "nextSystemPrompt": "基于位置与方向知识点，总结出基本方向识别、相对位置描述、复合方向应用等子知识点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "e59db27e-8953-4b50-8c4c-ed6a0f2387cf",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "基本方向识别",
+            "note": "掌握东、南、西、北四个基本方向的识别方法。早晨太阳在东方，面向东时背对着西，左边是北方，右边是南方。东与西相对，南与北相对。",
+            "nextSystemPrompt": "基于基本方向识别，深入学习方向判断方法和实际应用",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "071b27d9-bdfc-42aa-bbeb-800dce2c6b0f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "地图方位规律",
+            "note": "地图通常按上北下南、左西右东的规律绘制。指南针指向北方，可以帮助我们辨别方向。学会看地图上的方位标识。",
+            "nextSystemPrompt": "基于地图方位规律，学习地图读取和方位标识应用",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2da835cd-0bfc-483b-b61c-2d5d9cf2b89e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "复合方向应用",
+            "note": "学习东北、东南、西北、西南四个复合方向。能够准确描述物体在某个位置的具体方向，如：教学楼在操场的东北角。",
+            "nextSystemPrompt": "基于复合方向应用，掌握八个方向的综合运用",
+            "color": "#006400",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d3923cb6-c39d-466d-85f5-7b8c3f2e9be0"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "除数是一位数的除法",
+        "note": "掌握口算除法和笔算除法的方法。口算除法：整十数、整百数除以一位数；笔算除法：两位数、三位数除以一位数的竖式计算。重点掌握商的位数判断、有余数除法的计算和验算方法。",
+        "nextSystemPrompt": "基于除数是一位数的除法，总结出口算除法、笔算除法、有余数除法等子知识点",
+        "color": "#B22222",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "82548bb8-cee1-4204-8d8a-15cddfdb6a43",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "口算除法",
+            "note": "掌握整十数、整百数除以一位数的口算方法。如：60÷3=20，先算6÷3=2，再在结果后面添0。掌握两位数除以一位数的口算技巧。",
+            "nextSystemPrompt": "基于口算除法，深入学习各种口算技巧和规律",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e8cafe96-4b11-4bcf-8844-50677f6df41b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "笔算除法",
+            "note": "掌握两位数、三位数除以一位数的竖式计算方法。先用除数试除被除数的最高位，除到哪一位就在那一位上面写商，每求出一位商，余下的数必须比除数小。",
+            "nextSystemPrompt": "基于笔算除法，学习竖式计算步骤和注意事项",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "87d3a0ba-d295-48d2-b1ee-60cc4facb4eb"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "有余数除法",
+            "note": "当被除数不能被除数整除时，会有余数。余数必须比除数小。验算方法：商×除数+余数=被除数。掌握有余数除法的实际应用。",
+            "nextSystemPrompt": "基于有余数除法，掌握余数性质和验算方法",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "52ba7974-9b73-48a1-892d-0ae7c4ecd930"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "商中有0的除法",
+            "note": "当被除数的某一位不够商1时，要在商的相应位置上写0占位。如：208÷2=104，十位上的0除以2商0。掌握0的占位作用。",
+            "nextSystemPrompt": "基于商中有0的除法，学习0的占位规律和计算方法",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2cd11f80-71d0-4298-9782-79eeaa46b058"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "除法验算",
+            "note": "无余数除法验算：商×除数=被除数；有余数除法验算：商×除数+余数=被除数。验算是检验计算正确性的重要方法。",
+            "nextSystemPrompt": "基于除法验算，掌握不同类型除法的验算方法",
+            "color": "#800000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "98058505-30f6-4249-bf6a-5356db49407a"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "复式统计表",
+        "note": "学会制作和分析复式统计表，能够将两个或多个相关的单式统计表合并成一个复式统计表。掌握复式统计表的结构特点，能够从表中获取信息，进行数据分析和比较。",
+        "nextSystemPrompt": "基于复式统计表知识点，总结出统计表制作、数据分析、信息提取等子知识点",
+        "color": "#4682B4",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "0ae122b3-331c-4afb-ad5c-71de0e091f10",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "复式统计表的制作",
+            "note": "学会将两个内容相关的单式统计表合并成一个复式统计表。掌握表格的基本结构：项目栏、数据栏，使表格更加简洁明了。",
+            "nextSystemPrompt": "基于复式统计表制作，学习表格设计和数据整理方法",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e3644000-bc03-4e4d-afd2-bd8ebc44dae9"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数据分析比较",
+            "note": "能够从复式统计表中获取有用信息，进行数据的横向和纵向比较。分析数据的变化趋势，得出合理的结论。",
+            "nextSystemPrompt": "基于数据分析比较，掌握统计数据的解读和应用",
+            "color": "#0000CD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c5cacdfb-f5a0-41a9-8ede-d90f86aafb85"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "信息提取应用",
+            "note": "根据复式统计表提出数学问题并解答。能够根据表中数据进行计算，解决实际问题，提出合理建议。",
+            "nextSystemPrompt": "基于信息提取应用，学习数据的实际运用和问题解决",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6da515f7-610a-4b57-bc37-a613f1879891"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "两位数乘两位数",
+        "note": "掌握两位数乘两位数的口算和笔算方法。口算：整十数乘整十数、两位数乘整十数；笔算：用竖式计算两位数乘两位数。重点掌握竖式计算的步骤和进位处理。",
+        "nextSystemPrompt": "基于两位数乘两位数知识点，总结出口算乘法、笔算乘法、估算应用等子知识点",
+        "color": "#8B4513",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "e4bf9a30-f8de-4588-8193-6d5a0c2eed38",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "口算乘法",
+            "note": "掌握两位数乘一位数、整十数乘整十数、两位数乘整十数的口算方法。如：16×3可以分解为10×3+6×3=30+18=48。",
+            "nextSystemPrompt": "基于口算乘法，学习各种口算技巧和分解方法",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f2947a90-8fac-4d5c-b111-7cdf744d2842"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "笔算乘法",
+            "note": "掌握两位数乘两位数的竖式计算方法。先用个位数乘，再用十位数乘，最后把两次乘得的数相加。注意对位和进位。",
+            "nextSystemPrompt": "基于笔算乘法，掌握竖式计算步骤和进位规则",
+            "color": "#D2691E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "91cdd3f0-1b00-4ed1-96be-6ff5e002857a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法估算",
+            "note": "学会用估算的方法检验乘法计算结果的合理性。将两位数看作与它接近的整十数进行估算。如：37×48≈40×50=2000。",
+            "nextSystemPrompt": "基于乘法估算，学习估算方法和结果检验",
+            "color": "#CD853F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e186f995-d593-46a8-80e5-b3443810a1ad"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "连乘问题",
+            "note": "掌握连续乘法的计算方法和实际应用。能够列出综合算式解决多步乘法问题。理解乘法的结合律和交换律在计算中的应用。",
+            "nextSystemPrompt": "基于连乘问题，学习多步计算和综合应用",
+            "color": "#B8860B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8b5d080a-019c-460d-a3f2-52d1352b4a90"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法验算",
+            "note": "学会用交换乘数位置的方法验算乘法。掌握用估算检验结果合理性的方法。培养验算的好习惯。",
+            "nextSystemPrompt": "基于乘法验算，掌握多种验算方法和技巧",
+            "color": "#DAA520",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "cd800354-5186-44dc-98e5-b934c74f3a5a"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "面积",
+        "note": "认识面积的概念，学会比较图形面积的大小。掌握面积单位：平方厘米、平方分米、平方米，了解它们之间的进率关系。掌握长方形和正方形面积的计算公式并能解决实际问题。",
+        "nextSystemPrompt": "基于面积知识点，总结出面积概念、面积单位、面积计算等子知识点",
+        "color": "#9932CC",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "690a0f0c-b856-4dad-a619-f9e2731b9c8f",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "面积的认识",
+            "note": "理解面积是指物体表面或封闭图形的大小。学会用观察、重叠、数格子等方法比较图形面积的大小。区分周长和面积的不同。",
+            "nextSystemPrompt": "基于面积的认识，深入理解面积概念和比较方法",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "33e916ef-ffe9-4de6-92ac-a22caead762f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "面积单位",
+            "note": "认识常用面积单位：平方厘米(cm²)、平方分米(dm²)、平方米(m²)。掌握相邻面积单位间的进率：1dm²=100cm²，1m²=100dm²。",
+            "nextSystemPrompt": "基于面积单位，学习单位换算和实际应用",
+            "color": "#9400D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "de9bb817-9b82-4891-a1fe-2905c75e4830"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "长方形面积计算",
+            "note": "掌握长方形面积计算公式：面积=长×宽。能够根据已知条件求长方形的面积，或根据面积和一边长求另一边长。",
+            "nextSystemPrompt": "基于长方形面积计算，掌握公式应用和逆向思维",
+            "color": "#4B0082",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ccbd8a32-3377-4a7d-b699-17ab5b762119"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "正方形面积计算",
+            "note": "掌握正方形面积计算公式：面积=边长×边长。理解正方形是特殊的长方形，能够灵活运用公式解决实际问题。",
+            "nextSystemPrompt": "基于正方形面积计算，学习公式推导和实际运用",
+            "color": "#6A0DAD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1de16bb1-1ddf-4862-b918-1af1436c9724"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "面积单位换算",
+            "note": "掌握面积单位间的换算方法。大单位化小单位要乘进率，小单位化大单位要除以进率。能够解决涉及单位换算的实际问题。",
+            "nextSystemPrompt": "基于面积单位换算，掌握换算规律和计算技巧",
+            "color": "#8B008B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e8881062-97c3-4cfb-8a91-5236002ea1b1"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "年、月、日",
+        "note": "认识年、月、日，掌握年、月、日之间的关系。了解平年、闰年的区别，掌握判断闰年的方法。学会看日历，能够计算经过的天数，解决与时间有关的实际问题。",
+        "nextSystemPrompt": "基于年月日知识点，总结出时间单位、平闰年判断、日历应用等子知识点",
+        "color": "#FF6347",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "4a26b4f0-75b0-4116-96ab-c75851148652",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "时间单位认识",
+            "note": "掌握年、月、日的关系：1年=12个月，大月31天，小月30天，2月平年28天、闰年29天。了解一年有365天或366天。",
+            "nextSystemPrompt": "基于时间单位认识，掌握各单位间的换算关系",
+            "color": "#FF4500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ff56e0ea-3342-40ab-940b-afcff99bef31"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平年闰年判断",
+            "note": "掌握平年、闰年的判断方法：公历年份是4的倍数的一般是闰年，但公历年份是整百数的必须是400的倍数才是闰年。",
+            "nextSystemPrompt": "基于平年闰年判断，学习判断规律和特殊情况",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "789a7241-82ae-4599-bcb2-141f5ae15e1a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "日历的应用",
+            "note": "学会看日历，能够找到指定的日期。掌握计算经过天数的方法，解决与日期相关的实际问题。了解星期的循环规律。",
+            "nextSystemPrompt": "基于日历应用，学习日期计算和问题解决方法",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f5cbdc63-701f-4f72-9672-1df3b0ea0eca"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "24时计时法",
+            "note": "了解24时计时法，能够进行普通计时法和24时计时法的互化。掌握时间的加减计算，解决有关时间的实际问题。",
+            "nextSystemPrompt": "基于24时计时法，掌握时间表示和计算方法",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "787a8b19-3611-4976-9bd6-0bfc3f903c90"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "小数的初步认识",
+        "note": "初步认识小数，理解小数的意义。掌握一位小数的读写方法，能够比较一位小数的大小。了解小数在日常生活中的应用，如价格、长度等的表示。",
+        "nextSystemPrompt": "基于小数的初步认识，总结出小数概念、小数读写、小数比较等子知识点",
+        "color": "#FF8C00",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "e6265c5a-8820-41d0-96c1-63a525fea5d2",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "小数的意义",
+            "note": "理解小数的产生：当测量物体长度时，往往不能得到整数结果，需要用小数来表示。认识小数点，理解小数点左边是整数部分，右边是小数部分。",
+            "nextSystemPrompt": "基于小数的意义，深入理解小数的实际意义和作用",
+            "color": "#FFA500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "fc0c9b37-cf00-48a5-916e-ae8d1d5d7446"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的读写",
+            "note": "掌握一位小数的读法：整数部分按整数读法读，小数点读作'点'，小数部分按数字依次读出。掌握小数的写法规则。",
+            "nextSystemPrompt": "基于小数的读写，掌握读写规则和注意事项",
+            "color": "#FF7F50",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "fde568b5-6a9b-4f24-91f4-3adcc08769af"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的比较",
+            "note": "掌握一位小数大小比较的方法：先比较整数部分，整数部分大的小数就大；整数部分相同时，再比较小数部分。",
+            "nextSystemPrompt": "基于小数的比较，学习比较方法和规律",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0a99354c-4596-4d5f-a5d4-c4233bbbcbea"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的应用",
+            "note": "了解小数在生活中的广泛应用：商品价格、身高体重、温度等。能够用小数解决简单的实际问题。",
+            "nextSystemPrompt": "基于小数的应用，学习小数在实际生活中的运用",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "c6a03cf5-ce89-4795-8483-d1cf800cd897"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "数学广角—搭配（二）",
+        "note": "学习有序搭配的思想和方法，掌握简单的排列组合问题。能够用列表法、连线法等方法系统地找出所有可能的搭配方案，培养有序思考的习惯。",
+        "nextSystemPrompt": "基于搭配问题知识点，总结出搭配方法、有序思维、问题解决等子知识点",
+        "color": "#20B2AA",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "a09e8af2-15dc-4857-be09-05f04277bc00",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "搭配的方法",
+            "note": "学会用列表法、连线法、树形图等方法系统地找出所有可能的搭配。掌握有序搭配的基本原理：固定一个条件，依次搭配其他条件。",
+            "nextSystemPrompt": "基于搭配的方法，掌握各种搭配技巧和策略",
+            "color": "#008B8B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "731f4bcd-9bbf-42f5-9da0-dcacd2b4652c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "有序思维培养",
+            "note": "培养有序思考的习惯，做到不重复、不遗漏。学会按一定的顺序进行搭配，提高思维的条理性和逻辑性。",
+            "nextSystemPrompt": "基于有序思维培养，发展逻辑思维和系统思考能力",
+            "color": "#2F4F4F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "77c55192-d297-4e2b-85d4-ed06c5cff89e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "搭配问题解决",
+            "note": "能够解决简单的搭配问题，如衣服搭配、路径选择、菜品搭配等。掌握乘法原理在搭配问题中的应用。",
+            "nextSystemPrompt": "基于搭配问题解决，学习实际问题的分析和解决",
+            "color": "#708090",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7a74380e-1cb3-48b1-8b4b-f00181e2f872"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>

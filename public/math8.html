@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "四年级数学下册总结",
+    "expand": true,
+    "uid": "29bac3ad-c1e5-4f83-a232-48299526b619",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "四则运算",
+        "note": "学习加法、减法、乘法、除法的意义和各部分间的关系。加法是把两个数合并成一个数的运算，减法是加法的逆运算。乘法是求几个相同加数的和的简便运算，除法是乘法的逆运算。掌握运算顺序和括号的使用，能够解决实际问题。",
+        "nextSystemPrompt": "基于四则运算知识点，总结出加减法意义、乘除法意义、运算顺序、括号运算等子知识点",
+        "color": "#8B0A50",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "8b1d872e-8a0f-4546-8fb0-f1f7bc6be114",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "加减法的意义和各部分间的关系",
+            "note": "加法：把两个数合并成一个数的运算。加数+加数=和，加数=和-另一个加数。减法：已知两个数的和与其中一个加数，求另一个加数的运算。被减数-减数=差，被减数=减数+差，减数=被减数-差。",
+            "nextSystemPrompt": "基于加减法意义，生成具体的计算练习和应用题",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6fe9c0c8-6a2b-4aa0-8e7b-730b3776f80b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘除法的意义和各部分间的关系",
+            "note": "乘法：求几个相同加数的和的简便运算。因数×因数=积，因数=积÷另一个因数。除法：已知两个因数的积与其中一个因数，求另一个因数的运算。被除数÷除数=商，被除数=商×除数，除数=被除数÷商。注意0不能作除数。",
+            "nextSystemPrompt": "基于乘除法意义，生成具体的计算练习和应用题",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e84d9cd9-afa5-4bda-9da0-aefd047da233"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "括号的使用",
+            "note": "小括号()：改变运算顺序，先算括号里面的。中括号[]：既有小括号又有中括号时，先算小括号里面的，再算中括号里面的。括号能够改变运算的先后顺序，使计算更加灵活。",
+            "nextSystemPrompt": "基于括号运算规则，生成含有括号的混合运算练习题",
+            "color": "#CD5C5C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "3a22d94f-ea66-4656-b3ce-743a117bc8ab"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "混合运算顺序",
+            "note": "四则混合运算的顺序：先算乘除，后算加减；同级运算从左到右依次计算；有括号的先算括号里面的。掌握运算顺序是正确计算的基础，能够避免计算错误。",
+            "nextSystemPrompt": "基于混合运算顺序，生成不同类型的混合运算练习题",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "cd43878e-35d8-4c0e-85c1-4d458666371c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "0的运算性质",
+            "note": "加法：一个数加上0，还得原数。减法：当被减数等于减数时，差是0。乘法：一个数和0相乘，仍得0。除法：0除以一个非0的数，还得0；0不能作除数。",
+            "nextSystemPrompt": "基于0的运算性质，生成相关的计算和判断练习题",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5aa9f437-5311-45c6-b68a-55968f74dee0"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "运算律",
+        "note": "学习加法交换律、加法结合律、乘法交换律、乘法结合律和乘法分配律。运用运算律可以使计算更加简便，提高计算效率。能够灵活运用运算律解决实际问题，是数学计算能力的重要体现。",
+        "nextSystemPrompt": "基于运算律知识点，总结出加法运算律、乘法运算律、简便计算等子知识点",
+        "color": "#4B0082",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "158fde1f-c5ab-45c5-906e-ccf624665a30",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "加法交换律",
+            "note": "两个数相加，交换两个加数的位置，和不变。用字母表示：a+b=b+a。这个规律可以帮助我们验算加法，也可以使某些计算更加简便。",
+            "nextSystemPrompt": "基于加法交换律，生成具体的计算验证和应用练习题",
+            "color": "#6A5ACD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f83b0e81-03ae-4d15-9a64-bf87b5391fd0"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "加法结合律",
+            "note": "三个数相加，先把前两个数相加，或者先把后两个数相加，和不变。用字母表示：(a+b)+c=a+(b+c)。可以选择更简便的计算方法。",
+            "nextSystemPrompt": "基于加法结合律，生成三个数相加的简便计算练习题",
+            "color": "#7B68EE",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d3041138-eab4-4364-9e05-9d12a9df01e7"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法交换律",
+            "note": "两个数相乘，交换两个因数的位置，积不变。用字母表示：a×b=b×a。这个规律在乘法验算和简便计算中经常使用。",
+            "nextSystemPrompt": "基于乘法交换律，生成具体的计算验证和应用练习题",
+            "color": "#9370DB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6c7c8fcd-bc57-41bc-968d-1d58d2d1f712"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法结合律",
+            "note": "三个数相乘，先乘前两个数，或者先乘后两个数，积不变。用字母表示：(a×b)×c=a×(b×c)。可以选择更简便的计算方法。",
+            "nextSystemPrompt": "基于乘法结合律，生成三个数相乘的简便计算练习题",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0de465dc-d7dd-45fb-a3e1-1822916acadd"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "乘法分配律",
+            "note": "两个数的和与一个数相乘，可以先把它们与这个数分别相乘，再相加。用字母表示：(a+b)×c=a×c+b×c。这是最重要的简便计算方法之一。",
+            "nextSystemPrompt": "基于乘法分配律，生成各种形式的简便计算练习题",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "eaf392af-9797-401e-8e90-e20259c3bd9f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "简便计算综合应用",
+            "note": "综合运用各种运算律进行简便计算，如凑整、拆分、组合等方法。能够根据数的特点选择合适的运算律，使计算过程更加简洁高效。",
+            "nextSystemPrompt": "基于运算律综合应用，生成复杂的简便计算练习题",
+            "color": "#8B008B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "778d51e5-eb58-4c0d-b7eb-6740f30c4376"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "观察物体",
+        "note": "学习从不同位置观察物体，能够识别从前面、上面、左面看到的图形。培养空间想象能力，理解同一个物体从不同角度看到的形状是不同的，不同的物体从某个角度看可能是相同的。",
+        "nextSystemPrompt": "基于观察物体知识点，总结出三视图识别、空间想象、图形对应等子知识点",
+        "color": "#006400",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "ab6268ee-9931-418f-a4a5-3ff600f52f1f",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "从前面观察",
+            "note": "站在物体的前面，观察物体的正面形状。能够准确识别从前面看到的图形，并与实际物体建立对应关系。这是培养空间观念的基础。",
+            "nextSystemPrompt": "基于前面观察，生成物体前视图的识别和绘制练习",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "db692a37-1e5c-4cf9-8695-9dae63a03d31"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "从上面观察",
+            "note": "站在物体的上方，观察物体的顶面形状。从上面看能够了解物体的平面布局和轮廓，是三视图中重要的一个视角。",
+            "nextSystemPrompt": "基于上面观察，生成物体俯视图的识别和绘制练习",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0a51eb1c-8896-497f-8e43-dd2930de02bb"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "从左面观察",
+            "note": "站在物体的左侧，观察物体的侧面形状。从左面看能够了解物体的侧面结构，与从前面看的图形可能相同也可能不同。",
+            "nextSystemPrompt": "基于左面观察，生成物体左视图的识别和绘制练习",
+            "color": "#00FF00",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9edf8b1c-afd0-4848-aa5f-a10c9fc7dd43"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三视图对应关系",
+            "note": "理解同一个物体从三个不同方向看到的图形之间的关系。有些视图可能相同，有些可能不同。能够根据三视图还原物体的立体形状。",
+            "nextSystemPrompt": "基于三视图关系，生成视图对应和物体还原练习题",
+            "color": "#7CFC00",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "498893fe-6371-4059-b02b-4fb062ac594b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "空间想象能力",
+            "note": "通过观察不同的视图，在头脑中构建物体的立体形状。能够想象物体的三维结构，这是几何学习的重要能力。",
+            "nextSystemPrompt": "基于空间想象，生成立体图形的构建和分析练习",
+            "color": "#ADFF2F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "712df48f-0f50-4bbe-a5cd-5e79c9dd69a0"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "小数的意义和性质",
+        "note": "学习小数的产生、意义、读写方法和性质。理解小数是分母为10、100、1000...的分数的另一种表示形式。掌握小数的计数单位、数位顺序表，以及小数的性质和大小比较方法。",
+        "nextSystemPrompt": "基于小数意义和性质，总结出小数意义、读写方法、性质应用、大小比较等子知识点",
+        "color": "#FF8C00",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "273fc42a-ea6b-4f16-8f32-5d727fa52f8d",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "小数的意义",
+            "note": "分母是10、100、1000...的分数可以用小数表示。小数的计数单位是十分之一、百分之一、千分之一...，分别写作0.1、0.01、0.001...每相邻两个计数单位间的进率是10。",
+            "nextSystemPrompt": "基于小数意义，生成小数与分数互化和意义理解练习",
+            "color": "#FF7F50",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2dd45320-b142-48b9-a80a-2b5e00e219c8"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的读写方法",
+            "note": "读小数时，整数部分按整数读法读，小数点读作'点'，小数部分依次读出每个数字。写小数时，整数部分按整数写法写，小数部分依次写出每个数字。",
+            "nextSystemPrompt": "基于小数读写，生成小数的读法和写法练习题",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "71b93c7f-c456-4314-9f4c-bc368be43ae5"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的数位顺序表",
+            "note": "小数由整数部分、小数点和小数部分组成。小数部分从左到右依次是十分位、百分位、千分位...对应的计数单位是十分之一、百分之一、千分之一...",
+            "nextSystemPrompt": "基于数位顺序表，生成数位识别和数的组成练习题",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d448b241-e579-4290-abbc-f67fff67d63f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的性质",
+            "note": "小数的末尾添上0或去掉0，小数的大小不变。这个性质可以用来化简小数或根据需要改写小数。注意只有末尾的0才能去掉。",
+            "nextSystemPrompt": "基于小数性质，生成小数化简和改写练习题",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ce041211-0a97-4e28-b8f1-7faa479e5c9a"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数的大小比较",
+            "note": "比较小数大小：先比较整数部分，整数部分大的数就大；整数部分相同时，依次比较十分位、百分位、千分位...直到比出大小为止。",
+            "nextSystemPrompt": "基于小数大小比较，生成各种小数比较练习题",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6e8daff8-4d68-4546-bea4-45fad24ae041"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "三角形",
+        "note": "学习三角形的特性、分类、内角和等知识。理解三角形的稳定性，掌握按角分类和按边分类的方法。学会画三角形的高，理解三角形内角和是180°的规律。",
+        "nextSystemPrompt": "基于三角形知识点，总结出三角形特性、分类方法、内角和、高的画法等子知识点",
+        "color": "#800080",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "062ea524-e301-48e7-ab21-bef96f7d76d2",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "三角形的特性",
+            "note": "三角形具有稳定性，这是三角形的重要特性。三角形的三边关系：任意两边之和大于第三边。三角形是最稳定的图形，在建筑和工程中广泛应用。",
+            "nextSystemPrompt": "基于三角形特性，生成稳定性应用和三边关系练习题",
+            "color": "#9370DB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bee3d978-8901-4d76-b8dc-be47713a533e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三角形按角分类",
+            "note": "按角分类：锐角三角形（三个角都是锐角）、直角三角形（有一个角是直角）、钝角三角形（有一个角是钝角）。每个三角形只能属于其中一类。",
+            "nextSystemPrompt": "基于按角分类，生成三角形角的分类识别练习题",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6343fce7-b65c-4666-9baa-933e938e38f5"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三角形按边分类",
+            "note": "按边分类：等腰三角形（有两条边相等）、等边三角形（三条边都相等）、一般三角形（三条边都不相等）。等边三角形是特殊的等腰三角形。",
+            "nextSystemPrompt": "基于按边分类，生成三角形边的分类识别练习题",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b1297e1d-9e60-4209-b9e0-2983ee4903d8"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三角形的内角和",
+            "note": "三角形的内角和是180°。这是三角形的重要性质，可以用来求三角形中未知角的度数。任何三角形的三个内角相加都等于180°。",
+            "nextSystemPrompt": "基于三角形内角和，生成角度计算和应用练习题",
+            "color": "#8B008B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "64d283e2-33b6-4a04-a1a7-09be6659b44d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "三角形的高",
+            "note": "从三角形的一个顶点向对边画垂线，顶点到垂足的线段叫做三角形的高。三角形有三条高。锐角三角形的三条高都在三角形内部，直角三角形有一条高在边上，钝角三角形有两条高在外部。",
+            "nextSystemPrompt": "基于三角形的高，生成高的画法和性质练习题",
+            "color": "#4B0082",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "86019e2c-ca42-4ea1-9511-43d726ecefe3"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "小数的加法和减法",
+        "note": "学习小数加减法的计算方法和应用。掌握小数点对齐的重要性，理解相同数位相加减的原理。能够解决生活中的小数加减法实际问题，提高计算的准确性和速度。",
+        "nextSystemPrompt": "基于小数加减法，总结出计算方法、对齐原则、实际应用等子知识点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "211a4c9c-75b0-437d-a543-010bf7f76c9d",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "小数加法计算方法",
+            "note": "小数加法：小数点对齐，相同数位对齐，从右向左依次相加，满十进一。计算结果的小数点要与加数的小数点对齐。可以根据需要化简结果。",
+            "nextSystemPrompt": "基于小数加法方法，生成各种小数加法计算练习题",
+            "color": "#3CB371",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "117d1263-b84b-49be-93e2-093dd7778065"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数减法计算方法",
+            "note": "小数减法：小数点对齐，相同数位对齐，从右向左依次相减，不够减时从前一位借1当10。计算结果的小数点要与被减数的小数点对齐。",
+            "nextSystemPrompt": "基于小数减法方法，生成各种小数减法计算练习题",
+            "color": "#20B2AA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "208c5ffb-664b-4d44-8c5c-887f4a72652d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数点对齐原则",
+            "note": "进行小数加减法运算时，必须做到小数点对齐，也就是相同数位对齐。这样才能保证计算的正确性。个位对个位，十分位对十分位，百分位对百分位。",
+            "nextSystemPrompt": "基于对齐原则，生成小数点对齐的练习和错误纠正题",
+            "color": "#008B8B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "eb71fd32-d143-4cd1-9758-f4ff36de5b0f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数加减混合运算",
+            "note": "含有小数加法和减法的混合运算，按照从左到右的顺序计算，有括号的先算括号里面的。运算顺序与整数混合运算相同。",
+            "nextSystemPrompt": "基于混合运算，生成小数加减混合计算练习题",
+            "color": "#008080",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "09512009-2d9a-4620-b245-3afab3de4f57"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "小数加减法应用",
+            "note": "运用小数加减法解决生活中的实际问题，如购物找钱、测量计算、统计分析等。能够从实际问题中提取数学信息，选择合适的运算方法。",
+            "nextSystemPrompt": "基于实际应用，生成小数加减法的应用题和实际问题",
+            "color": "#5F9EA0",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d553a26a-5805-4078-8110-870532a8ad03"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "图形的运动",
+        "note": "学习轴对称和平移两种图形运动方式。理解轴对称图形的特点，能够识别对称轴。掌握平移的性质，能够按要求画出平移后的图形。培养空间观念和几何直觉。",
+        "nextSystemPrompt": "基于图形运动，总结出轴对称性质、对称轴识别、平移特点、图形变换等子知识点",
+        "color": "#FF1493",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "d0cb7f74-aed0-4586-a87d-6a39d47ad11a",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "轴对称图形的识别",
+            "note": "轴对称图形：如果一个图形沿着一条直线折叠，直线两侧的部分能够完全重合，这个图形就是轴对称图形，这条直线叫做对称轴。",
+            "nextSystemPrompt": "基于轴对称识别，生成对称图形的判断和识别练习",
+            "color": "#FF69B4",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1fddc225-bc27-411f-9050-e79d7ea7f8e4"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "对称轴的画法",
+            "note": "对称轴是一条直线，可能是竖直的、水平的或倾斜的。有些图形有多条对称轴，如正方形有4条对称轴，圆有无数条对称轴。",
+            "nextSystemPrompt": "基于对称轴画法，生成对称轴的绘制和数量练习",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7b891925-e2de-4d49-8edc-ad5179bbbe75"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "轴对称图形的性质",
+            "note": "轴对称图形对应点到对称轴的距离相等，对应点的连线垂直于对称轴。利用这些性质可以画出轴对称图形的另一半。",
+            "nextSystemPrompt": "基于轴对称性质，生成对称图形补全和性质应用练习",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "65064ce2-b779-4b97-85a5-da1583ca7126"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平移的概念",
+            "note": "平移：在平面内，将一个图形沿某个方向移动一定的距离，这样的图形运动叫做平移。平移不改变图形的形状和大小，只改变位置。",
+            "nextSystemPrompt": "基于平移概念，生成平移现象识别和概念理解练习",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "81fba819-8e32-4518-bd08-f392255ddaaa"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平移的性质",
+            "note": "平移的性质：图形的形状、大小不变，只是位置发生变化；对应点移动的方向相同，距离相等；对应线段平行且相等。",
+            "nextSystemPrompt": "基于平移性质，生成平移图形的绘制和性质应用练习",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "10bef732-3de0-420d-9eea-54b99ab13698"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "平均数与条形统计图",
+        "note": "学习平均数的意义和求法，理解平均数在统计中的作用。学会制作和分析复式条形统计图，能够从统计图中获取信息并解决问题。培养数据分析和统计思维能力。",
+        "nextSystemPrompt": "基于平均数和统计图，总结出平均数计算、统计图制作、数据分析等子知识点",
+        "color": "#4169E1",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "2e9ed812-a6d5-4ef1-91a1-501dbe8c1941",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "平均数的意义",
+            "note": "平均数是表示一组数据集中趋势的量，等于这组数据的总和除以数据的个数。平均数可以反映一组数据的总体水平，但不能反映个体差异。",
+            "nextSystemPrompt": "基于平均数意义，生成平均数概念理解和意义解释练习",
+            "color": "#6495ED",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "29df2e5a-aa62-4edf-80de-60005aee13a0"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平均数的计算",
+            "note": "平均数=总数量÷总份数。计算时要注意数据的准确性，理解平均数与实际数据的关系。平均数可能不等于这组数据中的任何一个数。",
+            "nextSystemPrompt": "基于平均数计算，生成各种平均数的计算练习题",
+            "color": "#87CEEB",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2a054b91-9d39-40fc-bf9f-587c9e5af219"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "平均数的应用",
+            "note": "平均数在生活中有广泛应用，如平均成绩、平均身高、平均气温等。能够用平均数解决实际问题，比较不同组数据的平均水平。",
+            "nextSystemPrompt": "基于平均数应用，生成平均数的实际应用和问题解决练习",
+            "color": "#87CEFA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "6385571c-b633-4229-8077-507ccd298925"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "复式条形统计图",
+            "note": "复式条形统计图可以同时表示两组或多组相关的数据，便于比较分析。图中要有标题、图例、数据标注等要素，能够清晰地反映数据信息。",
+            "nextSystemPrompt": "基于复式统计图，生成统计图的制作和分析练习题",
+            "color": "#00BFFF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e66a4846-163d-4e71-97a4-7021501265a1"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "统计图的分析",
+            "note": "从统计图中可以获取各种信息：数据的大小、变化趋势、组间比较等。能够提出问题并用统计图中的信息回答问题，培养数据分析能力。",
+            "nextSystemPrompt": "基于统计图分析，生成数据读取和问题解答练习题",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1c724fbe-fb93-4aa6-b5e1-2b17e493fb4a"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "数学广角-鸡兔同笼",
+        "note": "学习古典数学问题鸡兔同笼，掌握多种解题方法。通过假设法、列表法、方程法等方式解决问题，培养逻辑推理能力和解决问题的策略意识。",
+        "nextSystemPrompt": "基于鸡兔同笼问题，总结出假设法、列表法、逻辑推理、问题解决策略等子知识点",
+        "color": "#FF4500",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "3d50429c-d211-4265-b51e-7bf5d0fb2056",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "问题理解与分析",
+            "note": "鸡兔同笼问题的特点：已知总数量和总个数，求各部分的数量。需要理解题意，找出已知条件和未知条件，明确数量关系。",
+            "nextSystemPrompt": "基于问题分析，生成鸡兔同笼类型问题的理解练习",
+            "color": "#FF6347",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7542645c-97a1-4da2-b893-8c130a46c0bf"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "假设法解题",
+            "note": "假设全是鸡或全是兔，计算出与实际的差异，然后调整。这种方法思路清晰，容易理解，是解决鸡兔同笼问题的经典方法。",
+            "nextSystemPrompt": "基于假设法，生成假设法解题的步骤和练习题",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ca3f92c7-d007-4c84-a4aa-63d891002928"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "列表法解题",
+            "note": "通过列表枚举各种可能的情况，找到符合条件的答案。这种方法直观明了，适合数据范围较小的问题，有助于理解问题的本质。",
+            "nextSystemPrompt": "基于列表法，生成列表枚举的解题练习和应用",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2825f611-735b-4b52-9e04-8bc2e97de90e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "逻辑推理",
+            "note": "运用逻辑推理分析数量关系，找出解题的关键信息。培养学生的推理能力，学会从不同角度思考问题，提高解决问题的灵活性。",
+            "nextSystemPrompt": "基于逻辑推理，生成推理思维和分析能力练习题",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a2048ef8-cec3-420e-aa21-0d94e3d18b3d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "问题拓展应用",
+            "note": "将鸡兔同笼的解题思路应用到其他类似问题中，如船只载重、停车收费等。学会举一反三，提高解决实际问题的能力。",
+            "nextSystemPrompt": "基于问题拓展，生成鸡兔同笼类型的变式和应用题",
+            "color": "#800000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "392264a4-fc52-40ae-9cb5-f1c410c65699"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>

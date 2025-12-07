@@ -18,6 +18,7 @@ import markdown from 'simple-mind-map/src/parse/markdown.js'
 import xmind from 'simple-mind-map/src/parse/xmind.js'
 import MindMapLayoutPro from 'simple-mind-map/src/plugins/MindMapLayoutPro.js'
 import Themes from 'simple-mind-map-plugin-themes'
+import cardTemplate from './templates/card.html?raw'
 import themeList from 'simple-mind-map-plugin-themes/themeList'
 import { messages } from './const.js'
 import { SETTINGS_KEY } from './storage.js'
@@ -115,8 +116,22 @@ export function exportMindMap(mindMap, type) {
             mindMap.export('smm', true, filename, true)
         } else if (type === 'json') {
             mindMap.export('json', true, filename, false)
+        } else if (type === 'cardhtml') {
+            const data = mindMap.getData(true)
+            const jsonStr = JSON.stringify(data?.root || {}, null, 2)
+            const content = cardTemplate.replace(
+                /\/\/ {{REPLACE:cardData BEGIN}}[\s\S]*?\/\/ {{REPLACE:cardData END}}/,
+                `// {{REPLACE:cardData BEGIN}}\n${jsonStr};\n// {{REPLACE:cardData END}}`
+            )
+            const blob = new Blob([content], { type: 'text/html' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `${filename}.html`
+            a.click()
+            URL.revokeObjectURL(url)
         } else {
-            mindMap.export(type, true, filename)
+            showError(t('unsupportedExportType'), t('selectSupportedExportType'))
         }
     } catch (e) {
         showError(t('exportFailed'), String(e?.message || e))

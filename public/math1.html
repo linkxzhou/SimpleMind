@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图卡片视图</title>
+    <style>
+        :root {
+            --indent-width: 40px;
+            --connector-color: #e8e8e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1f2d3d;
+        }
+
+        #app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 节点包装器 */
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* 子节点缩进容器 */
+        .children-wrapper {
+            padding-left: var(--indent-width);
+            border-left: 2px solid var(--connector-color);
+            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            min-width: 200px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .card-note {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.95;
+            white-space: pre-wrap; /* 保留换行符 */
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .children-wrapper {
+                padding-left: 10px;
+                margin-left: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2 id="topic-title">思维导图Card</h2>
+    <div id="app"></div>
+
+    <script>
+        // 模拟思维导图数据
+        const cardData = 
+        // {{REPLACE:cardData BEGIN}}
+{
+  "data": {
+    "text": "一年级数学上册总结",
+    "expand": true,
+    "uid": "2596b846-0706-49e6-8711-ec91e7a2dff6",
+    "isActive": false
+  },
+  "children": [
+    {
+      "data": {
+        "text": "准备课与位置认识",
+        "note": "数学学习的启蒙阶段，包括数一数、比多少、上下前后左右等基础概念。通过实物操作和游戏活动，培养学生的数感和空间方位意识，为后续数学学习奠定基础。重点培养观察能力、比较能力和语言表达能力。",
+        "nextSystemPrompt": "基于准备课与位置认识知识点，总结出数数方法、比较大小、方位词汇等具体技能点",
+        "color": "#2E8B57",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "ee09c7e7-76a5-497a-b251-dc71225feb93",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "数一数的方法与技巧",
+            "note": "学会按顺序数数，掌握1-10的数数方法。能够数出生活中常见物品的个数，如苹果、小鸟、花朵等。培养有序思维，避免重复数或漏数。代表题目：数一数图中有几只小鸟？",
+            "nextSystemPrompt": "",
+            "color": "#228B22",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a9c9fdbd-4ece-47a8-b64a-b4c81b81f03d"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "比多少的基本方法",
+            "note": "通过一一对应的方法比较两组物体的多少。学会用'多'、'少'、'同样多'等词语描述比较结果。掌握连线比较法和圈画比较法。代表题目：比一比哪种水果多，在多的后面画√。",
+            "nextSystemPrompt": "",
+            "color": "#32CD32",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "dcca2cfe-18d4-4d29-a6a8-e165084bc348"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "上下前后方位概念",
+            "note": "理解上下、前后等相对位置关系。能够准确描述物体的位置关系，如'小猫在桌子上面'、'小明在小红前面'等。通过实际操作加深理解。代表题目：说一说小兔在小鸟的什么位置？",
+            "nextSystemPrompt": "",
+            "color": "#3CB371",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "ec90dd25-09f8-4ebb-8473-654653561ed4"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "左右方位的判断",
+            "note": "学会区分左手和右手，掌握左右方位概念。能够根据自己的位置判断左右关系。理解左右的相对性，从不同角度观察时左右关系会发生变化。代表题目：举起你的右手，说说你的左边是谁？",
+            "nextSystemPrompt": "",
+            "color": "#20B2AA",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9743c16f-8084-4cb6-9b69-2ee027f82c7f"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "5以内数的认识和加减法",
+        "note": "学习1-5各数的认识、读写、大小比较，掌握5以内数的组成与分解。学会5以内的加减法计算，理解加法和减法的意义。通过实物操作理解数的概念，培养初步的运算能力和解决简单实际问题的能力。",
+        "nextSystemPrompt": "基于5以内数的认识，总结出数的读写、大小比较、加减运算、实际应用等核心技能",
+        "color": "#4169E1",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "0dc7f8cc-a9ca-44f3-9a4b-9eac72f3c695",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "1-5各数的认识与书写",
+            "note": "认识1、2、3、4、5各数，理解每个数所表示的意义。掌握各数的正确书写方法，注意笔顺和字形。能够用实物、图形等多种方式表示这些数。代表题目：用你喜欢的方式表示数字3。",
+            "nextSystemPrompt": "",
+            "color": "#1E90FF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "18f48f83-4f25-4cac-8c4d-e0b53972168c"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的大小比较",
+            "note": "学会使用>、<、=符号比较数的大小。理解'大于'、'小于'、'等于'的含义。能够比较5以内任意两个数的大小关系。代表题目：在○里填上>、<或=：3○2，4○4。",
+            "nextSystemPrompt": "",
+            "color": "#0000CD",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "9d60c50d-6622-43b2-9624-74df8add8a03"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数的组成与分解",
+            "note": "掌握2-5各数的组成，如4可以分成1和3、2和2等。理解数的分与合的关系，为学习加减法做准备。能够用实物演示数的分解过程。代表题目：5可以分成几和几？写出所有的分法。",
+            "nextSystemPrompt": "",
+            "color": "#191970",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "e7cc9e57-bf5e-406c-9ba5-6e233457533b"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "5以内的加法运算",
+            "note": "理解加法的意义，掌握5以内的加法计算。学会加法算式的读法和写法。能够根据实际情况列出加法算式并计算。代表题目：草地上有2只小兔，又来了3只，一共有几只？",
+            "nextSystemPrompt": "",
+            "color": "#4B0082",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "69cf2187-b9bf-489a-a4e3-bbcf00e95293"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "5以内的减法运算",
+            "note": "理解减法的意义，掌握5以内的减法计算。学会减法算式的读法和写法。能够根据实际情况列出减法算式并计算。代表题目：树上有5只小鸟，飞走了2只，还剩几只？",
+            "nextSystemPrompt": "",
+            "color": "#8B008B",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "4a33fc07-87a6-4bba-b434-3bfb5fca9fd3"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "0的认识与运算",
+            "note": "认识数字0，理解0表示'没有'的含义。掌握有关0的加减法运算规律，如a+0=a，a-0=a，a-a=0等。能够在实际生活中应用0的概念。代表题目：计算3+0=？，5-5=？",
+            "nextSystemPrompt": "",
+            "color": "#800080",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2b071ab9-49e3-4599-9bd5-d560db30a1d2"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "立体图形的初步认识",
+        "note": "认识长方体、正方体、圆柱、球等常见立体图形。通过观察、触摸、操作等方式感知立体图形的特征。能够在生活中找到这些图形的实例，培养空间观念和几何直觉。学会简单的图形分类和拼搭活动。",
+        "nextSystemPrompt": "基于立体图形认识，总结出图形特征识别、生活应用、分类整理、拼搭操作等技能点",
+        "color": "#DC143C",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "9efaa0ee-b015-4bc6-8f71-0b33aff3bf33",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "长方体和正方体的认识",
+            "note": "认识长方体和正方体的基本特征。能够区分长方体和正方体的不同。在生活中寻找长方体和正方体形状的物品，如书本、魔方等。代表题目：下面哪些物品是长方体？哪些是正方体？",
+            "nextSystemPrompt": "",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "a6b224f6-aea3-45c6-ab12-590f087af776"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "圆柱和球的认识",
+            "note": "认识圆柱和球的基本特征。了解圆柱可以滚动也可以立起来，球可以向各个方向滚动。在生活中寻找圆柱和球形状的物品。代表题目：圆柱和球都能滚动，它们有什么不同？",
+            "nextSystemPrompt": "",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "95768c93-86d6-49c3-966a-858a88d2f3ea"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "图形的分类与整理",
+            "note": "学会按照图形的形状进行分类。能够将混合的立体图形按照长方体、正方体、圆柱、球进行分组。培养观察能力和分类思维。代表题目：把下面的图形按形状分一分。",
+            "nextSystemPrompt": "",
+            "color": "#A0522D",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "bc96367d-0bfe-4b15-a2aa-b97e2abcd361"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "立体图形的拼搭活动",
+            "note": "用立体图形进行拼搭活动，如搭房子、搭塔等。探索不同图形的组合方式，培养空间想象能力。学会合作完成拼搭任务。代表题目：用这些积木搭一个又稳又高的建筑。",
+            "nextSystemPrompt": "",
+            "color": "#D2691E",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "07a128ee-50df-4253-aee3-1dd70712e9ff"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "6-10的认识和加减法",
+        "note": "学习6、7、8、9、10各数的认识、读写和大小比较。掌握6-10各数的组成与分解，学会10以内的加减法计算。理解连加、连减和加减混合运算。能够解决简单的实际问题，培养数学应用意识。",
+        "nextSystemPrompt": "基于6-10数的认识，总结出数位概念、进位思想、运算技巧、问题解决等关键能力",
+        "color": "#FF8C00",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "1ee089de-f761-4e13-9c67-05a0a4741682",
+        "dir": "right"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "6和7的认识与运算",
+            "note": "认识数字6和7，掌握它们的书写方法。理解6和7的组成，如6=1+5=2+4=3+3。学会6、7的加减法运算。代表题目：7可以分成几和几？列出所有可能的分法。",
+            "nextSystemPrompt": "",
+            "color": "#FF7F50",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "f1345156-c34c-49a5-b2a1-52a08eae1d7e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "8和9的认识与运算",
+            "note": "认识数字8和9，掌握它们的书写方法和组成。学会8、9的加减法运算，能够熟练计算相关算式。理解8和9在数轴上的位置。代表题目：8-3=？，2+7=？",
+            "nextSystemPrompt": "",
+            "color": "#CD853F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "b045b447-2f00-4660-8331-a5bc74fa8aea"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "10的认识与特殊性",
+            "note": "认识数字10，理解10是两位数，由1个十和0个一组成。掌握10的组成和分解，学会10的加减法运算。理解10在计数中的重要作用。代表题目：10可以分成几和几？",
+            "nextSystemPrompt": "",
+            "color": "#D2B48C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "246e6044-36ea-46fe-aed6-4f43f1ad23af"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "10以内加减法的熟练计算",
+            "note": "熟练掌握10以内所有加减法算式的计算。能够快速准确地进行口算。掌握加减法的互逆关系，如3+4=7，7-3=4。代表题目：快速计算：5+3=？，9-6=？",
+            "nextSystemPrompt": "",
+            "color": "#BC8F8F",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d8b5f915-02ed-4eb2-828c-5c15ce80c1bb"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "连加连减与加减混合",
+            "note": "学会连加、连减和加减混合运算。掌握从左到右的运算顺序。能够解决涉及多步运算的实际问题。代表题目：计算2+3+4=？，10-2-3=？",
+            "nextSystemPrompt": "",
+            "color": "#F4A460",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "054bc64b-2896-4511-9b47-31e00d7d3c2f"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "解决简单实际问题",
+            "note": "能够从图画或文字中获取数学信息，选择合适的运算方法解决问题。学会表达解题思路，检验答案的合理性。培养数学建模的初步意识。代表题目：池塘里有8只鸭子，游走了3只，还剩几只？",
+            "nextSystemPrompt": "",
+            "color": "#DEB887",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "620e01a0-ec3a-4bc6-a6c8-bebb6fc9e3fb"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "11-20各数的认识",
+        "note": "学习11-20各数的认识、读写和数位概念。理解十位和个位的意义，掌握两位数的组成。学会11-20各数的大小比较和简单的加减运算。培养数位概念和位值思想，为进一步学习多位数奠定基础。",
+        "nextSystemPrompt": "基于11-20数的认识，总结出数位概念、位值思想、数的组成、大小比较等核心概念",
+        "color": "#9370DB",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "f3d291ad-9777-4291-8fb4-3c193c97f9c8",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "11-20各数的读写",
+            "note": "学会11-20各数的正确读法和写法。理解十一、十二...二十的读音规律。掌握两位数的书写方法，注意数位的对齐。代表题目：写出下面各数：十五、十八、二十。",
+            "nextSystemPrompt": "",
+            "color": "#8A2BE2",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "57b77e1b-61c1-450a-b193-c72730fbd148"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "十位和个位的认识",
+            "note": "理解十位和个位的概念，知道从右边起第一位是个位，第二位是十位。掌握两位数的组成，如15由1个十和5个一组成。代表题目：18是由几个十和几个一组成的？",
+            "nextSystemPrompt": "",
+            "color": "#9932CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "7d26bfcf-68a0-4c0e-b166-d7700a27513e"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "11-20数的大小比较",
+            "note": "学会比较11-20各数的大小。掌握两位数比较的方法：先比十位，十位相同再比个位。能够将这些数按从小到大或从大到小的顺序排列。代表题目：比较大小：17○15，19○20。",
+            "nextSystemPrompt": "",
+            "color": "#BA55D3",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "1964eeb4-25ad-4a00-ad8f-7723746e0681"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "数数与数序",
+            "note": "能够从1数到20，也能够从任意数开始接着数或倒着数。理解数的顺序，知道相邻两数的关系。掌握数轴上数的排列规律。代表题目：从13开始，接着数5个数。",
+            "nextSystemPrompt": "",
+            "color": "#DA70D6",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "080d91c6-8520-4994-934d-94f6b1d741f9"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "11-20的简单加减法",
+            "note": "学会11-20范围内的简单加减法，如10+3=13，15-5=10等。理解十位数加减的规律。能够解决相关的实际问题。代表题目：计算10+7=？，18-8=？",
+            "nextSystemPrompt": "",
+            "color": "#FF1493",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2c29f912-4950-402e-9061-0629eab45ef0"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "认识钟表",
+        "note": "认识钟表，学会看整时。了解时针和分针的作用，掌握看钟表的方法。能够拨钟表表示指定的时间，建立初步的时间概念。了解时间在日常生活中的重要作用，培养珍惜时间的意识。",
+        "nextSystemPrompt": "基于钟表认识，总结出时针分针识别、整时读法、时间应用、生活作息等实用技能",
+        "color": "#00CED1",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "451b3b0d-1594-49c9-81a1-d58db22ff8fc",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "时针和分针的认识",
+            "note": "认识钟表上的时针和分针，了解它们的长短和粗细特点。知道时针短而粗，分针长而细。理解时针和分针的不同作用。代表题目：指出钟表上哪根是时针，哪根是分针。",
+            "nextSystemPrompt": "",
+            "color": "#48D1CC",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "5ab2c9c4-0136-4de1-ad1e-65ef4966a9fe"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "整时的认读",
+            "note": "学会认读整时，如1时、2时等。掌握整时的特点：分针指向12，时针指向几就是几时。能够正确读出钟表显示的整时。代表题目：这个钟表显示的是几时？",
+            "nextSystemPrompt": "",
+            "color": "#40E0D0",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "d9fe4eba-293e-4021-8de8-92d18f553f14"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "拨钟表表示时间",
+            "note": "学会根据要求拨钟表，表示指定的时间。掌握拨钟表的方法：先拨分针指向12，再拨时针指向相应的数字。代表题目：请拨出8时的钟表。",
+            "nextSystemPrompt": "",
+            "color": "#00FFFF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "381bf48e-50a7-409a-98b2-b2d0dd277edd"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "时间与日常生活",
+            "note": "了解时间在日常生活中的应用，如起床时间、上学时间、睡觉时间等。建立合理的作息时间概念。培养按时作息的好习惯。代表题目：你通常几时起床？几时睡觉？",
+            "nextSystemPrompt": "",
+            "color": "#E0FFFF",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "cc8e72b1-e6fa-4a54-9dd3-4641f12afc48"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "data": {
+        "text": "20以内的进位加法",
+        "note": "学习20以内的进位加法，掌握'凑十法'的计算方法。理解进位加法的算理，能够熟练计算9加几、8加几、7加几等类型的题目。培养灵活的计算能力和数学思维，为后续学习多位数加法奠定基础。",
+        "nextSystemPrompt": "基于20以内进位加法，总结出凑十法、进位思想、计算技巧、实际应用等核心方法",
+        "color": "#FF6347",
+        "expand": true,
+        "richText": false,
+        "isActive": false,
+        "uid": "56ed89b0-83ae-4368-b892-21393558ce80",
+        "dir": "left"
+      },
+      "children": [
+        {
+          "data": {
+            "text": "9加几的进位加法",
+            "note": "掌握9加几的计算方法，重点学习'凑十法'：把较小的数分解，先和9凑成10，再加剩余的数。如9+4=9+1+3=10+3=13。代表题目：计算9+7=？用凑十法说说你的想法。",
+            "nextSystemPrompt": "",
+            "color": "#FF4500",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "143afa2b-1378-431a-8697-c5532c6360e7"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "8加几的进位加法",
+            "note": "掌握8加几的计算方法，同样使用凑十法：把另一个加数分解，先和8凑成10，再加剩余的数。如8+5=8+2+3=10+3=13。代表题目：计算8+6=？",
+            "nextSystemPrompt": "",
+            "color": "#FF0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "2ea2b1b8-8c92-43be-8d85-d39a2f0f4137"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "7加几和6加几的进位加法",
+            "note": "掌握7加几和6加几的计算方法，继续运用凑十法。理解凑十法的一般规律，能够灵活运用。如7+5=7+3+2=10+2=12。代表题目：计算7+8=？6+9=？",
+            "nextSystemPrompt": "",
+            "color": "#DC143C",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "145f3e51-ec63-4ca5-9365-ea1a642d6113"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "5加几到2加几的进位加法",
+            "note": "掌握5加几、4加几、3加几、2加几的进位加法计算。熟练运用凑十法，也可以用其他方法如'数数法'。培养计算的灵活性。代表题目：计算5+8=？4+9=？",
+            "nextSystemPrompt": "",
+            "color": "#B22222",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "581ca48e-2c09-470f-a190-7b612b76d491"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "进位加法的综合练习",
+            "note": "综合练习20以内的进位加法，提高计算的准确性和速度。能够根据题目特点选择合适的计算方法。培养良好的计算习惯。代表题目：快速计算下列各题：6+7、8+9、5+6。",
+            "nextSystemPrompt": "",
+            "color": "#8B0000",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "8e2d7450-3124-4a37-88c2-add62d5b3ab5"
+          },
+          "children": []
+        },
+        {
+          "data": {
+            "text": "进位加法解决实际问题",
+            "note": "运用20以内的进位加法解决生活中的实际问题。能够从问题中提取数学信息，选择合适的运算方法。培养数学应用能力。代表题目：小明有8本书，小红给了他5本，小明现在有几本书？",
+            "nextSystemPrompt": "",
+            "color": "#A52A2A",
+            "expand": true,
+            "richText": false,
+            "isActive": false,
+            "uid": "0c2d2725-e343-45e7-926c-22ad9bdc06a8"
+          },
+          "children": []
+        }
+      ]
+    }
+  ],
+  "smmVersion": "0.14.0-fix.1"
+};
+// {{REPLACE:cardData END}}
+        // {{REPLACE:cardData END}}
+        
+        // 多风格背景颜色库（科技、教育、儿童、可爱）
+        const colors = [
+            // --- 科技感 (Tech/Sci-Fi) ---
+            // 冷色调、青色、电光蓝、金属灰
+            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
+            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
+            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
+            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
+
+            // --- 教育风格 (Education/Academic) ---
+            // 稳重、护眼、纸张色、柔和的高亮色
+            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
+            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
+            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
+            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+
+            // --- 儿童风格 (Kids/Playful) ---
+            // 明亮、高饱和度、原色系变体、活泼
+            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
+            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
+            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
+            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
+
+            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
+            // 马卡龙色、粉嫩、奶油色、梦幻
+            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
+            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
+            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
+            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
+        ];
+        /**
+         * 创建卡片 DOM 元素
+         */
+        function createCardElement(nodeData) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+            let hash = 0;
+            const str = (nodeData.text || '') + (nodeData.uid || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % colors.length;
+            const fixedColor = colors[index];
+            card.style.backgroundColor = fixedColor;
+            
+            // 统一文字和边框样式
+            card.style.color = '#333333';
+            card.style.border = '1px solid rgba(0,0,0,0.05)';
+
+            // 标题 (text)
+            const textEl = document.createElement('div');
+            textEl.className = 'card-text';
+            textEl.textContent = nodeData.text || '无标题节点';
+
+            // 备注 (note)
+            const noteEl = document.createElement('div');
+            noteEl.className = 'card-note';
+            noteEl.textContent = nodeData.note || '';
+
+            card.appendChild(textEl);
+            card.appendChild(noteEl);
+
+            return card;
+        }
+
+        /**
+         * 递归渲染节点
+         */
+        function renderNodes(nodes, container) {
+            if (!nodes || nodes.length === 0) return;
+
+            nodes.forEach(node => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'node-wrapper';
+
+                // 1. 渲染当前节点卡片
+                if (node.data) {
+                    const card = createCardElement(node.data);
+                    nodeWrapper.appendChild(card);
+                }
+
+                // 2. 递归渲染子节点
+                if (node.children && node.children.length > 0) {
+                    const childrenWrapper = document.createElement('div');
+                    childrenWrapper.className = 'children-wrapper';
+                    renderNodes(node.children, childrenWrapper);
+                    nodeWrapper.appendChild(childrenWrapper);
+                }
+
+                container.appendChild(nodeWrapper);
+            });
+        }
+
+        // 初始化
+        const appContainer = document.getElementById('app');
+        
+        // 设置标题
+        if (cardData.data && cardData.data.text) {
+            document.getElementById('topic-title').textContent = cardData.data.text;
+        }
+
+        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
+        // 如果根节点是对象，先把它包装成数组
+        const rootNodes = cardData.children ? cardData.children : [cardData];
+        renderNodes(rootNodes, appContainer);
+    </script>
+</body>
+</html>
