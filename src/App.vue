@@ -2,7 +2,7 @@
   <a-config-provider
     :theme="{
       token: {
-        colorPrimary: settings.themeRootFillColor || '#549688',
+        colorPrimary: settings.themeRootFillColor || '#00c0b8',
       },
     }"
   >
@@ -20,7 +20,6 @@
             <a-button :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
             <a-button :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
             <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')+t('import')"></a-button>
-            <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
             <a-button
                 :icon="h(SisternodeOutlined)"
                 @click="toggleMindMapMode"
@@ -28,6 +27,7 @@
                 :type="isDetailMode ? 'primary' : 'default'"
             ></a-button>
             <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
+            <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
             <a-button
                 :icon="h(BulbOutlined)"
                 type="primary"
@@ -344,7 +344,7 @@ const settings = ref({
     lineWidth: 2,
     lineStyle: 'curve',
     fontFamily: '微软雅黑, Microsoft YaHei',
-    themeRootFillColor: '#549688',
+    themeRootFillColor: '#00c0b8',
     theme: 'mint',
 })
 
@@ -430,9 +430,9 @@ watch(
                     settings.value.backgroundColor = targetTheme.theme.backgroundColor
                     settings.value.lineColor = targetTheme.theme.lineColor
                     settings.value.lineWidth = targetTheme.theme.lineWidth
-                    settings.value.themeRootFillColor = (targetTheme.theme?.root?.fillColor == '#fff' || 
-                        targetTheme.theme?.root?.fillColor == 'rgb(255, 255, 255)'
-                        ? '#549688' : targetTheme.theme?.root?.fillColor) || '#549688'
+                    const fillColor = targetTheme.theme?.root?.fillColor
+                    settings.value.themeRootFillColor = (fillColor == '#fff' || 
+                        fillColor == 'rgb(255, 255, 255)' ? '#00c0b8' : fillColor)
                     return
                 }
             }
