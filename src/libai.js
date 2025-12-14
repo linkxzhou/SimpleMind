@@ -177,3 +177,30 @@ export async function requestCompletions({
         throw err
     }
 }
+
+export async function expandPrompt({ currentPrompt, api, secret, model, language = '中文' }) {
+    const prompt = `
+## Role Definition   
+You are an encyclopedic knowledge expert. Based on "${currentPrompt}", please optimize and expand the detailed content.
+
+## Task
+- Optimize and expand the detailed content, ensuring it is rich, structured, and meets the requirements for generating a mind map.
+- Output Language: ${language} 
+`
+
+    const { data } = await requestCompletions({
+        api,
+        secret,
+        model,
+        prompt
+    })
+
+    let content = ''
+    if (typeof data === 'string') {
+        content = data
+    } else {
+        content = data?.choices?.[0]?.message?.content || data?.output_text || data?.text || ''
+    }
+
+    return content.trim()
+}

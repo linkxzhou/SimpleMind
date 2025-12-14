@@ -52,6 +52,7 @@
   "fontFamily": "Font Family",
   "reset": "Reset Default",
   "uploadHint": "Upload file, supports .md, .txt, .csv, .pdf",
+  "aiExpand": "AI Expand",
   "githubFollow": "Follow open source project:",
   "createMapFirst": "Please create a mind map first",
   "templateImportFailed": "Failed to import template",

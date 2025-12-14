@@ -52,6 +52,7 @@
   "fontFamily": "字体",
   "reset": "恢复默认",
   "uploadHint": "上传文件，支持解析.md,.txt,.csv,.pdf",
+  "aiExpand": "AI 扩写",
   "githubFollow": "关注开源项目：",
   "createMapFirst": "请先创建一个思维导图",
   "templateImportFailed": "导入模板失败",

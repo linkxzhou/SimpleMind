@@ -34,6 +34,7 @@ yarn build
 - **Thinking Models**: Built-in thinking templates (e.g., First Principles, Critical Thinking), supporting principle viewing and examples.
 - **Intelligent Generation**: Automatically generates child nodes based on selected nodes and system prompts. Supports custom API, model (default gpt-5), and generation depth.
 - **System Prompts**: Supports uploading .md/.txt/.pdf files to automatically populate the knowledge base, assisting AI generation.
+- **Prompt Expansion**: Automatically expands system prompts to optimize AI generation effects.
 
 ### 2. Personalization Settings
 - **Basic Settings**: API Base, Secret Key, Model Selection, Language Switching (Chinese/English).

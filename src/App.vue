@@ -194,7 +194,7 @@
                         :placeholder="t('systemPromptPlaceholder')"
                         :auto-size="{ minRows: 8, maxRows: 20 }"
                     />
-                    <div style="margin-top: 8px;">
+                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
                         <a-upload
                             :show-upload-list="false"
                             :before-upload="handleParsePromptUpload"
@@ -203,6 +203,13 @@
                         >
                             <a-button size="small" type="primary">{{ t('uploadHint') }}</a-button>
                         </a-upload>
+                        <a-button 
+                            size="small" 
+                            :loading="isExpanding" 
+                            @click="expandSystemPrompt"
+                        >
+                            {{ t('aiExpand') }}
+                        </a-button>
                     </div>
                 </label>
             </a-tab-pane>
@@ -293,12 +300,12 @@ import {
     CloudDownloadOutlined,
     UnorderedListOutlined,
     SisternodeOutlined,
-    UndoOutlined
+    UndoOutlined,
 } from '@ant-design/icons-vue'
 import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList } from './utils.js'
-import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions } from './libai.js'
+import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions, expandPrompt } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
@@ -462,6 +469,32 @@ const onClose = () => {
 
 const toggleSettings = () => {
     settingsOpen.value = !settingsOpen.value
+}
+
+const isExpanding = ref(false)
+
+const expandSystemPrompt = async () => {
+    if (isExpanding.value) return
+    
+    isExpanding.value = true
+    try {
+        const content = await expandPrompt({
+            currentPrompt: settings.value.systemPrompt,
+            api: settings.value.api,
+            secret: settings.value.secret,
+            model: settings.value.model,
+            language: settings.value.language
+        })
+
+        if (content) {
+            settings.value.systemPrompt = content
+        }
+    } catch (e) {
+        console.error(e)
+        showError('AI 请求失败: ' + (e.message || e))
+    } finally {
+        isExpanding.value = false
+    }
 }
 
 const openExportPanel = () => {
