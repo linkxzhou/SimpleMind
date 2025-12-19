@@ -110,12 +110,51 @@ export function exportMindMap(mindMap, type) {
     
     const ts = new Date()
     const pad = (n) => String(n).padStart(2, '0')
-    const filename = `mindmap-${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}`
+    const filename = `mindmap-${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}`
     try {
         if (type === 'smm') {
             mindMap.export('smm', true, filename, true)
         } else if (type === 'json') {
             mindMap.export('json', true, filename, false)
+        } else if (type === 'png') {
+            mindMap.export('png', true, filename)
+        } else if (type === 'pdf') {
+            mindMap.export('pdf', true, filename)
+        } else if (type === 'xmind') {
+            mindMap.export('xmind', true, filename)
+        } else if (type === 'svg') {
+            mindMap.export('svg', true, filename)
+        } else if (type === 'md') {
+            const data = mindMap.getData(true)
+            const content = markdown.transformToMarkdown(data)
+            const blob = new Blob([content], { type: 'text/markdown' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `${filename}.md`
+            a.click()
+            URL.revokeObjectURL(url)
+        } else if (type === 'txt') {
+            const data = mindMap.getData(true)
+            const walk = (node, depth = 0) => {
+                const text = node.data.text || ''
+                const indent = '\t'.repeat(depth)
+                let str = `${indent}${text}\n`
+                if (node.children && node.children.length > 0) {
+                    node.children.forEach(child => {
+                        str += walk(child, depth + 1)
+                    })
+                }
+                return str
+            }
+            const content = walk(data.root)
+            const blob = new Blob([content], { type: 'text/plain' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `${filename}.txt`
+            a.click()
+            URL.revokeObjectURL(url)
         } else if (type === 'cardhtml') {
             const data = mindMap.getData(true)
             const jsonStr = JSON.stringify(data?.root || {}, null, 2)
