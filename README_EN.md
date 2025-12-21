@@ -31,7 +31,7 @@ yarn build
 ### Environment Variables
 
 ```
-VITE_API= # Your OpenAI API URL, e.g., https://api.openai.com/v1/chat/completions
+VITE_API= # Your OpenAI API URL Prefix, e.g., https://api.openai.com/v1
 VITE_SECRET= # Your OpenAI API Secret Key
 VITE_MODEL= # Your OpenAI Model, e.g., gpt-5-turbo
 ```
