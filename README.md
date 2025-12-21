@@ -28,6 +28,14 @@ yarn dev
 yarn build
 ```
 
+### 环境变量
+
+```
+VITE_API= # 您的 OpenAI API URL，例如：https://api.openai.com/v1/chat/completions
+VITE_SECRET= # 您的 OpenAI API 密钥
+VITE_MODEL= # 您的 OpenAI 模型，例如：gpt-5-turbo
+```
+
 ## 功能详解
 
 ### 1. AI 智能生成

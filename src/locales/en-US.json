@@ -71,5 +71,7 @@
   "detailDescription": "Detail Description:",
   "unsupportedFileType": "Unsupported file type",
   "selectSupportedFile": "Please select .smm/.json/.xmind/.xlsx/.md",
-  "xlsxNotIntegrated": "XLSX parsing not integrated yet, please install xlsx library"
+  "xlsxNotIntegrated": "XLSX parsing not integrated yet, please install xlsx library",
+  "cardView": "Card View",
+  "cardViewFailed": "Card View Generation Failed"
 }

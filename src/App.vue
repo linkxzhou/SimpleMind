@@ -27,6 +27,7 @@
                 :type="isDetailMode ? 'primary' : 'default'"
             ></a-button>
             <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
+            <a-button :icon="h(AppstoreOutlined)" @click="showCardModal" :title="t('cardView')"></a-button>
             <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
             <a-button
                 :icon="h(BulbOutlined)"
@@ -268,6 +269,25 @@
             </a-tab-pane>
         </a-tabs>
     </a-modal>
+
+    <a-modal
+        v-model:open="cardModalOpen"
+        :title="t('cardView')"
+        :width="1000"
+        :footer="null"
+        :body-style="{ padding: '0px' }"
+    >
+        <div v-if="isCardLoading" style="text-align: center; padding: 8px;">
+            <LoadingOutlined spin style="font-size: 24px;" />
+            <p style="margin-top: 10px;">{{ t('loading') }}</p>
+        </div>
+        <iframe
+            v-else-if="cardHtmlUrl"
+            :src="cardHtmlUrl"
+            style="width: 100%; height: 600px; border: none;"
+            title="card-view"
+        ></iframe>
+    </a-modal>
   </a-config-provider>
 </template>
 
@@ -301,7 +321,10 @@ import {
     UnorderedListOutlined,
     SisternodeOutlined,
     UndoOutlined,
+    AppstoreOutlined,
+    LoadingOutlined,
 } from '@ant-design/icons-vue'
+import cardTemplate from './templates/card.html?raw'
 import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList } from './utils.js'
@@ -326,6 +349,10 @@ const activeKey = ref('settings')
 const isDetailMode = ref(false)
 const isGenerating = ref(false)
 const zoom = ref(1)
+
+const cardModalOpen = ref(false)
+const cardHtmlUrl = ref('')
+const isCardLoading = ref(false)
 
 // 右键菜单状态
 const type = ref('')                 // 当前右键类型
@@ -377,6 +404,36 @@ const cloneNodeData = (node) => {
     stripUid(copy)
     return copy
 }
+
+const showCardModal = async () => {
+    if (!mindMapRef.value) {
+        showError(t('createMapFirst'))
+        return
+    }
+    isCardLoading.value = true
+    try {
+        const data = mindMapRef.value.getData(true)
+        const jsonStr = JSON.stringify(data?.root || {}, null, 2)
+        const content = cardTemplate.replace(
+            /\/\/ {{REPLACE:cardData BEGIN}}[\s\S]*?\/\/ {{REPLACE:cardData END}}/,
+            `// {{REPLACE:cardData BEGIN}}\n${jsonStr};\n// {{REPLACE:cardData END}}`
+        )
+        const blob = new Blob([content], { type: 'text/html' })
+        cardHtmlUrl.value = URL.createObjectURL(blob)
+        cardModalOpen.value = true
+    } catch (e) {
+        showError(t('cardViewFailed') || 'Card View Failed', String(e?.message || e))
+    } finally {
+        isCardLoading.value = false
+    }
+}
+
+watch(cardModalOpen, (val) => {
+    if (!val && cardHtmlUrl.value) {
+        URL.revokeObjectURL(cardHtmlUrl.value)
+        cardHtmlUrl.value = ''
+    }
+})
 
 // 校验是否选中节点
 const validateTargetNode = () => {
