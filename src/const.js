@@ -297,6 +297,30 @@ export const thinkingModels = [
             },
         ]
     },
+    {
+        label: '代码生成',
+        value: 'code-generation',
+        description: '根据需求生成代码实现方案，按照模块拆分、技术选型、架构设计、核心实现、测试部署等维度，生成完整的代码开发思维导图',
+        prompt: `
+- 先明确：要实现什么功能？用什么技术栈？（中心）
+- 再拆分：项目初始化、数据模型、核心模块、接口设计、测试部署等（第一层）
+- 然后：对每个模块给出具体的代码实现思路、关键代码片段、最佳实践（深度）
+- 最后：检查模块间依赖、接口一致性、安全性、可扩展性（校正）`,
+        example: [
+            {
+                name: "简洁版本浏览器开发",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/code-generation1.json', import.meta.url).href,
+            },
+            {
+                name: "简洁版本 Nginx 实现",
+                description: "",
+                layout: 'mindMap',
+                content: new URL('./templates/code-generation2.json', import.meta.url).href,
+            }
+        ]
+    },
 ]
 
 export const fontFamilyOptions = [

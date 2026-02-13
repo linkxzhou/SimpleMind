@@ -128,10 +128,16 @@
                     <a-input name="secret" v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" style="flex: 1; min-width: 0;" />
                 </label>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('model') }}：</span>
-                    <a-input name="model" v-model:value="settings.model" :placeholder="t('modelPlaceholder')" style="flex: 1; min-width: 0;" />
-                </label>
+                    <a-select
+                        v-model:value="settings.model"
+                        :options="modelOptions"
+                        :placeholder="t('modelPlaceholder')"
+                        style="flex: 1; min-width: 0;"
+                        show-search
+                    />
+                </div>
 
                 <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
                     <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
@@ -366,7 +372,7 @@ const clipboardData = ref(null)      // 剪贴板数据
 const settings = ref({
     api: ENV_API || '',
     secret: ENV_SECRET || '',
-    model: ENV_MODEL || '',
+    model: ENV_MODEL || 'Pro/moonshotai/Kimi-K2.5',
     temperature: 0.6,
     systemPrompt: '',
     depth: 5,
@@ -381,6 +387,13 @@ const settings = ref({
     themeRootFillColor: '#00c0b8',
     theme: 'mint',
 })
+
+// 模型选项列表
+const modelOptions = [
+    { label: 'Kimi-K2.5', value: 'Pro/moonshotai/Kimi-K2.5' },
+    { label: 'DeepSeek-V3.2', value: 'deepseek-ai/DeepSeek-V3.2' },
+    { label: 'GLM-4.7', value: 'Pro/zai-org/GLM-4.7' },
+]
 
 // -----------------------------------------------------------------------------
 // 2. 工具函数 (Helper Functions)
