@@ -291,6 +291,29 @@ describe('App.vue lifecycle', () => {
 })
 
 describe('toolbar', () => {
+  it('keeps the frozen toolbar control order', async () => {
+    const { wrapper } = await mountApp()
+    const titles = [...document.querySelectorAll('.toolbar-inner button')]
+      .map((button) => button.getAttribute('title'))
+      .filter(Boolean)
+    expect(titles).toEqual([
+      '返回',
+      '前进',
+      '新建',
+      '新增子节点',
+      '仅删除当前节点',
+      '导出导入',
+      '详细/简单模式切换',
+      '设置思考模版',
+      '卡片视图',
+      '设置',
+      'AI生成',
+    ])
+    const groups = [...document.querySelectorAll('.toolbar-inner > .toolbar-group')]
+    expect(groups[0].classList.contains('zoom-control')).toBe(true)
+    wrapper.unmount()
+  })
+
   it('clamps zoom and uses setScale / scale() / CSS fallbacks', async () => {
     const { wrapper, state, mm } = await mountApp()
     state.zoomIn()
@@ -561,7 +584,7 @@ describe('settings / prompt / export / import', () => {
     undos[1].click()
     undos[2].click()
     await nextTick()
-    expect(state.settings.backgroundColor).toBe('#ffffff')
+    expect(state.settings.backgroundColor).toBe('#f5f5f5')
     expect(state.settings.lineColor).toBe('#549688')
     expect(state.settings.lineWidth).toBe(2)
     wrapper.unmount()
