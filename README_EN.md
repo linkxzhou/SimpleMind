@@ -1,90 +1,121 @@
-## Project Introduction
-This project is a free mind mapping tool that uses AI to think according to summary, induction, first principles, and other thinking methods to generate mind maps.
+# SimpleMind
+
+English | [中文](./README.md)
+
+A free, in-browser mind mapping tool. Select a node, pick a thinking template, and generate child nodes through an **OpenAI-compatible** Chat Completions API.
+
+- Live demo: https://simple-mind-five.vercel.app
+- Repository: https://github.com/linkxzhou/SimpleMind
+
+Stack: Vue 3, Vite 7, Ant Design Vue 4, [simple-mind-map](https://github.com/wanglin2/mind-map).
 
 ## Screenshots
 
-### 1. PC
+### Desktop
+
 ![Screenshot 1](./ScreenShot1.png)
+
+### Card view
+
 ![Screenshot 2](./ScreenShot2.png)
 
-### 2. Mobile
+### Mobile
+
 ![Screenshot 3](./ScreenShot3.png)
 
-## Project Setup
+## Features
+
+### AI generation
+
+- **Thinking templates**: Default (general summary), note-taking, course learning, first principles, Feynman technique, Bayesian thinking, critical thinking, and code generation. Each template has rules and built-in example maps.
+- **Generate children**: Select a node and click **AI Generate**. Child nodes are inserted from the node text, current template, and knowledge base (default two-level structure: first level + `children`). “Min nodes per generation” is 1–20 (default 5).
+- **Knowledge base**: Enter system context in Settings, or upload `.md` / `.txt` / `.csv` / `.pdf` (parsed to text, truncated at about 20,000 characters).
+- **AI expand**: Send the current knowledge base to the model to expand it before generation.
+- **Models**: Settings includes `Kimi-K2.5`, `DeepSeek-V3.2`, and `GLM-4.7`. If no env var is set, the default is `Pro/moonshotai/Kimi-K2.5`. Other model IDs can be supplied via environment variables.
+
+### Editing and views
+
+- **Toolbar**: zoom (desktop), undo/redo, new map, add/remove nodes, import/export, detailed/simple mode, thinking templates, card view, settings, AI generate.
+- **Layouts**: mind map, logical structure, organization chart, catalog organization, timeline, fishbone.
+- **Detailed / simple mode**: detailed mode appends the node note to the text; simple mode keeps the title only.
+- **Card view**: renders the map as layered cards; can also be exported as a standalone `card.html`.
+- **Node actions**: context menu supports add child, remove current node, remove node with children, copy / cut / paste, mark / unmark.
+- **Theme and style**: built-in themes (default `mint`); custom canvas background, line color and width (1–10px), line style (curve / straight / direct), and font (Microsoft YaHei, SimSun, KaiTi, SimHei, LiSu, Arial, and others). Each style can be reset independently.
+- **Language**: Simplified Chinese and English. Mouse-wheel zoom and node drag are enabled.
+
+### Import, export, and storage
+
+- **Export**: `.smm`, `.json`, `.svg`, `.png`, `.pdf`, `.md`, `.xmind`, `.txt`, `card.html`.
+- **Import**: `.smm`, `.json`, `.xmind`, `.md`. The UI also lists `.xlsx`, but parsing is not implemented.
+- **Persistence**: settings and map data are stored in the current tab’s `sessionStorage` and are lost when the tab is closed.
+
+## Requirements
+
+- Node.js `^20.19.0` or `>=22.12.0`
+- Yarn (the repo includes `yarn.lock`)
+
+## Setup
 
 ```sh
 yarn
 ```
 
-### Development Environment
+Development:
 
 ```sh
 yarn dev
 ```
 
-### Production Build
+Production build:
 
 ```sh
 yarn build
 ```
 
-### Environment Variables
+Preview the production build:
 
-```
-VITE_API= # Your OpenAI API URL Prefix, e.g., https://api.openai.com/v1
-VITE_SECRET= # Your OpenAI API Secret Key
-VITE_MODEL= # Your OpenAI Model, e.g., gpt-5-turbo
+```sh
+yarn preview
 ```
 
-## Features
+## Environment variables
 
-### 1. AI Intelligent Generation
-- **Thinking Models**: Built-in thinking templates (e.g., First Principles, Critical Thinking), supporting principle viewing and examples.
-- **Intelligent Generation**: Automatically generates child nodes based on selected nodes and system prompts. Supports custom API, model (default gpt-5), and generation depth.
-- **System Prompts**: Supports uploading .md/.txt/.pdf files to automatically populate the knowledge base, assisting AI generation.
-- **Prompt Expansion**: Automatically expands system prompts to optimize AI generation effects.
+Create `.env` or `.env.local` in the project root (`.env.local` is gitignored). These values are only **initial defaults** for the settings panel; they can still be changed in the UI.
 
-### 2. Personalization Settings
-- **Basic Settings**: API Base, Secret Key, Model Selection, Language Switching (Chinese/English).
-- **Theme Customization** (New):
-  - **Canvas**: Custom background color.
-  - **Lines**: Adjust color, width (1-10px), style (curve/straight/direct).
-  - **Font**: Supports switching multiple fonts (e.g., Microsoft YaHei, SimSun, Arial, etc.).
-  - **One-click Reset**: Each style supports independent reset to default values.
+The app appends `/chat/completions` to `VITE_API`, so the Base URL must **not** include that path, and should not have a trailing slash.
 
-### 3. Mind Map Operations & Management
-- **Layout Switching**: Supports Mind Map, Logical Structure, Fishbone Diagram, and other layouts.
-- **Mode Switching**: Supports one-click switching between "Simple Mode" (text only) and "Detailed Mode" (text + notes).
-- **Import/Export**: Supports .smm, .json, .xmind, .md, .png, .svg, and other formats.
-- **Node Operations**: Supports context menu for add, delete, modify, copy, paste, etc.
+| Variable | Description | Example |
+| --- | --- | --- |
+| `VITE_API` | Base URL of an OpenAI-compatible API | `https://api.openai.com/v1` or `https://api.siliconflow.cn/v1` |
+| `VITE_SECRET` | API key, sent as `Authorization: Bearer ...` | `sk-xxxxxxxx` |
+| `VITE_MODEL` | Default model ID | `Pro/moonshotai/Kimi-K2.5` |
 
-### 4. Other Features
-- **Persistent Storage**: Automatically saves settings and mind map data locally.
-- **Internationalization**: Full support for Simplified Chinese and English interfaces.
+Example:
 
-## Experience
-(1) The JSON output by large models may contain invalid characters and needs to be repaired using `jsonrepair`.
-- Import `jsonrepair` library: `yarn add jsonrepair`
-- Usage example:
-  ```js
-  import jsonrepair from 'jsonrepair'
-  const repaired = jsonrepair(rawJsonString)
-  ```
+```
+VITE_API=https://api.openai.com/v1
+VITE_SECRET=sk-xxxxxxxx
+VITE_MODEL=Pro/moonshotai/Kimi-K2.5
+```
 
-(2) The `TouchEvent` plugin of `simple-mind-map` intercepts all touch events on mobile devices, causing UI components (such as Ant Design Vue's Select) to become unusable.
-- Cause: The official `TouchEvent` plugin binds `touchstart` and other events to `window` without checking if the event target is within the canvas.
-- Solution: Copy the official plugin code to the local project (e.g., `src/plugins/TouchEvent.js`) and add a check at the beginning of the event handler:
-  ```js
-  // If the touch target is not within the mind map container, ignore it to avoid affecting other UI components
-  if (!this.mindMap.el.contains(e.target)) {
-      return
-  }
-  ```
-- Import the locally modified version when registering the plugin.
+You can skip env files and fill in API Base, secret, and model in Settings before clicking **AI Generate**. Generation prompts you to configure API Base if it is empty.
+
+## Usage
+
+1. Configure the API via env vars or the settings panel.
+2. Select the root node or any node and set its text to the topic you want to expand.
+3. Optionally open **Set Thinking Template** to pick a method and load an example, and add material in **Knowledge Base**.
+4. Click **AI Generate**. Child nodes are inserted under the selected node.
+
+## Implementation notes
+
+- Model JSON is often invalid; the app already repairs it with [`jsonrepair`](https://www.npmjs.com/package/jsonrepair) before parsing.
+- The official `simple-mind-map` `TouchEvent` plugin binds touch handlers on `window` and blocks Ant Design Vue controls on mobile. This repo uses `src/plugins/TouchEvent.js`, which ignores touches whose target is outside the mind-map container.
 
 ## References
-(1) https://wanglin2.github.io/mind-map-docs/api/constructor/constructor-methods.html#on-event-fn    
-(2) https://ant.design/    
-(3) https://medium.com/vincent-chen/  %E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97-%E6%80%9D%E8%80%83%E7%9A%84%E6%A1%86%E6%9E%B6-%E4%BA%8C-%E4%B9%9D%E5%A4%A7%E6%80%9D%E7%B6%AD%E6%A8%A1%E5%9E%8B-e6e6d5ad568    
-(4) https://www.processon.com/template/mind_free    
-(5) https://www.processon.com/knowledge/mindmaptemplate
+
+- [simple-mind-map constructor methods](https://wanglin2.github.io/mind-map-docs/api/constructor/constructor-methods.html#on-event-fn)
+- [Ant Design Vue](https://ant.design/)
+- [Thinking frameworks: nine models](https://medium.com/vincent-chen/%E8%AE%80%E6%9B%B8%E5%BF%83%E5%BE%97-%E6%80%9D%E8%80%83%E7%9A%84%E6%A1%86%E6%9E%B6-%E4%BA%8C-%E4%B9%9D%E5%A4%A7%E6%80%9D%E7%B6%AD%E6%A8%A1%E5%9E%8B-e6e6d5ad568)
+- [ProcessOn mind map templates](https://www.processon.com/template/mind_free)
+- [ProcessOn mind map knowledge](https://www.processon.com/knowledge/mindmaptemplate)
