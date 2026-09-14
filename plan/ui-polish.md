@@ -1,7 +1,9 @@
 # UI 美化与间距规划
 
-> **范围声明：先不写代码 / plan only。**  
-> 本文件只根据 **当前 `main` 源码与截图** 记录界面结构、间距/颜色问题与落地顺序。本 PR **不改** `src/`、`public/app.css`、Vue 模板、Ant Design 主题实现或任何功能代码。
+> **落地状态（本实现 PR）：P0–P2 已落地；P3 按计划不阻塞（`index.html` lang、`card.html`、全局 `componentSize`、暗色 `darkAlgorithm` 推迟）。**  
+> 工具栏顺序冻结仍有效：`[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]`。未回退 `100vh` 画布与抽屉 `v-if`。
+
+下文保留原规划（结构、诊断、token、线框）。原「先不写代码 / plan only」声明仅适用于规划 PR（#22）；本文件现在同时记录实现结果。
 
 配套文档：[performance-analysis.md](./performance-analysis.md)（画布已改为 `100vh`、抽屉按需渲染；美化时不要回退这些布局相关优化）。
 
@@ -425,7 +427,7 @@ API Base           [                    ]
 
 ---
 
-## 7. 优先落地步骤（后续实现 PR，本仓库本 PR 不执行）
+## 7. 优先落地步骤
 
 只动 `public/app.css` + `App.vue` 模板 class / 少量 `a-config-provider` token；能 CSS 解决的不改 JS 逻辑。  
 **每一步都不得改工具栏控件顺序或锚点**（§0）：
@@ -434,37 +436,35 @@ API Base           [                    ]
 [- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]
 ```
 
-### P0 — 间距与工具栏密度（对用户目标 1 最直接）
+### P0 — 间距与工具栏密度（对用户目标 1 最直接） — **已落地**
 
-1. 在 `public/app.css` 建 `:root` 间距变量；`.toolbar-inner` 的 `gap` 从 4px 调到 8px（部分相邻间隙可用 12px）；padding 改为 `8px 12px`。**只改数字，不改 flex 子项顺序。**
-2. 可选：用 class 包**连续**已有按钮为 `.toolbar-group`，或在相邻项之间加竖线。拼接顺序必须仍是 §0；**不增删按钮、不改 `@click`、不重排。**
-3. 工具栏 `a-button` 统一 `size="small"`；删除 AI 按钮 inline padding。按钮仍停在原序列位。
-4. `.chart-list` gap 4→8；`.field` 抽 `.field-row`，消灭重复 inline flex。（设置面板，与工具栏顺序无关。）
-5. 抽屉卡片间距 14→12，inline 改 class。
+1. 在 `public/app.css` 建 `:root` 间距变量；`.toolbar-inner` 的组内 `gap` 8px、组间 12px；padding `8px 12px`。**只改数字，不改 flex 子项顺序。**
+2. 用 `.toolbar-group` 包**连续**已有按钮，组间 1px 竖线。拼接顺序仍是 §0；**不增删按钮、不改 `@click`、不重排。**
+3. 工具栏 `a-button` 统一 `size="small"`；删除 AI 按钮 inline padding，改 `.toolbar-ai-btn`。按钮仍停在原序列位。
+4. `.chart-list` gap 4→8；`.field` 抽 `.field-row`，消灭重复 inline flex。
+5. 抽屉卡片间距 14→12，inline 改 `.thinking-item` class。
 
-验收：对照 `ScreenShot1.png`，从左到右仍是 `[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]`，仅间距更大；桌面操作路径不变。
+验收：从左到右仍是 `[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]`，仅间距更大；`tests/App.spec.js` 增加顺序冻结断言。
 
-### P1 — 浮层宽度与窄屏密度（用户目标 2 的布局部分）
+### P1 — 浮层宽度与窄屏密度（用户目标 2 的布局部分） — **已落地**
 
-1. ≤600px：**保持左上竖排与同一顺序**；只加大竖向 gap。禁止改成底栏、右侧轨或顶通栏。继续 `mobile-hide` 缩放与 AI 文案。
-2. 抽屉 / 两个 Modal 的宽度与卡片 iframe 高度随视口限制（改浮层，不改工具栏）。
-3. 设置表单标签列对齐；tab 内容 `padding` 用 `--space-4`。
-4. 工具栏半透明 + 可选 blur，让彩色画布透出来一点（仍 overlay 在原位置）。
+1. ≤600px：**保持左上竖排与同一顺序**；竖向 gap 8px。禁止改成底栏、右侧轨或顶通栏。继续 `mobile-hide` 缩放与 AI 文案。左轨按钮 `min-height/min-width: 32px`。
+2. 抽屉 / 两个 Modal 宽度为 `min(设计宽, calc(100vw - 32px))`；卡片 iframe 高度 `min(600px, 70vh)`。
+3. 设置表单标签列 `.field-label`（约 8em）对齐；tab body padding `--space-4`。设置 tab 内接口/画布用 `.settings-section` 间距分组（无新 tab）。
+4. 工具栏半透明 `--chrome-bg` + `backdrop-filter: blur(8px)`。中间宽度 `max-width: calc(100vw - 32px)` + `overflow-x: auto`。
 
-验收：对照 `ScreenShot3.png`，左轨控件顺序不变；设置/抽屉在窄屏可完整操作。
+### P2 — 颜色 token 与轻量主题对齐（用户目标 2 的颜色部分） — **已落地（暗色可选未做）**
 
-### P2 — 颜色 token 与轻量主题对齐（用户目标 2 的颜色部分）
+1. chrome 颜色进 CSS 变量；`colorPrimary` 继续跟 `themeRootFillColor`（并同步 `--color-primary`）。
+2. 右键菜单改用同一套 `--chrome-*`。
+3. 对齐 `lineColor` / 背景默认值与 `getThemeList()`：`#549688` / `#f5f5f5`（初始值与「恢复默认」一致）。
+4. **未做**：`theme.dark` 时 `darkAlgorithm` + chrome 深色变量（计划允许独立小 PR）。
 
-1. chrome 颜色进 CSS 变量；`colorPrimary` 继续跟 `themeRootFillColor`。
-2. 右键菜单改用同一套 `--chrome-*`，去掉另一套灰阶。
-3. 对齐 `lineColor` / 背景「默认值」与 `getThemeList()`（`#549688` / `#f5f5f5` 或统一文档化）。
-4. **可选**：`theme.dark` 时给 ConfigProvider `darkAlgorithm` + chrome 深色变量。独立小 PR，需目视过设置/抽屉/右键。
+### P3 — 收尾（不阻塞 P0/P1） — **未做**
 
-### P3 — 收尾（不阻塞 P0/P1）
-
-1. `index.html` `lang` 随 `settings.language`（偏 i18n，严格说不是美化；可另开）。
+1. `index.html` `lang` 随 `settings.language`（偏 i18n；可另开）。
 2. `card.html` 间距/页边：独立，见 §9。
-3. 若采用 `componentSize: 'small'`，回归所有 Modal 内按钮。
+3. 未采用全局 `componentSize: 'small'`（仅工具栏按钮 `size="small"`，避免回归所有 Modal 内按钮）。
 
 每步落地后跑现有 `yarn test`（`tests/App.spec.js` 会点 `.chart-list button`、测工具栏命令；**不要改 class 名到测不到**，或同步测试选择器）。无视觉回归套件，需用桌面 + 600px 人工对照 README 三张截图场景。
 
@@ -500,14 +500,12 @@ API Base           [                    ]
 - 为 chrome 做独立「浅色/深色」用户开关（仅可选跟随 `item.dark`）
 - 大改 `src/templates/card.html` 配色引擎（卡片视图是独立 HTML；最多 P3 调 padding，且单独 PR）
 - 改 `public/math*.html` 等静态页
-- 本 PR 写任何 CSS/Vue/功能代码
 
 ---
 
-## 10. 建议的后续 PR 切分
+## 10. PR 切分与本实现
 
-1. **polish-spacing**：P0（css 变量 + 工具栏 **仅 gap** + field/chart-list/drawer 间距；顺序不变）
-2. **polish-responsive**：P1（浮层宽度 + 窄屏竖轨 gap；**不搬家工具栏**）
-3. **polish-tokens**（可选）：P2 颜色变量与默认色对齐；暗色 chrome 再视情况拆第 4 个 PR
+规划曾建议拆成 spacing / responsive / tokens 三个 PR。本实现 PR 按产品请求一次落地 **P0 + P1 + P2**（间距、浮层宽度、chrome token），工具栏顺序与锚点不变。仍独立的后续项：
 
-切分理由：间距可单独目视验收；浮层宽度与工具栏顺序解耦；颜色/暗色独立回滚。
+1. **polish-dark-chrome**（可选）：P2-4 `darkAlgorithm`
+2. **polish-i18n-lang**（P3-1）与 **card.html padding**（P3-2）

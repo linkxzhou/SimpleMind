@@ -1,10 +1,30 @@
+:root {
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --color-primary: #00c0b8;
+    --chrome-bg: rgba(255, 255, 255, 0.92);
+    --chrome-border: rgba(0, 0, 0, 0.06);
+    --chrome-border-strong: #d9d9d9;
+    --chrome-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --chrome-text: #374151;
+    --chrome-hover: #f3f4f6;
+    --chrome-divider: #f0f0f0;
+}
+
 body {
     margin: 0;
 }
 
+.app-shell {
+    min-height: 100vh;
+}
+
 .toolbar {
     position: fixed;
-    top: 16px;
+    top: var(--space-4);
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -13,23 +33,55 @@ body {
     padding: 0;
 }
 
+/*
+ * Toolbar control order is frozen:
+ * [- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]
+ * Groups wrap consecutive existing controls only; do not reorder.
+ */
 .toolbar-inner {
     pointer-events: auto;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 8px;
-    border: 1px solid #eee;
+    gap: 0;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--chrome-border);
     border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--chrome-shadow);
     position: relative;
-    background: #ffffff;
+    background: var(--chrome-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    max-width: calc(100vw - var(--space-4) * 2);
+    overflow-x: auto;
+    color: var(--chrome-text);
+    scrollbar-width: thin;
+}
+
+.toolbar-group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.toolbar-group:not(:first-child) {
+    margin-left: var(--space-3);
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--chrome-divider);
+}
+
+.toolbar-inner .ant-btn {
+    flex-shrink: 0;
+}
+
+.toolbar-ai-btn {
+    padding-inline: var(--space-3);
 }
 
 .chart-list {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+    gap: var(--space-2);
 }
 
 #mindMapContainer {
@@ -46,19 +98,68 @@ body {
 .field {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: 4px 0;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
 }
 
-.field > span {
+.field > span,
+.field-label {
     font-size: 14px;
+    line-height: 32px;
+}
+
+.field-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
+}
+
+.field-row-top {
+    align-items: flex-start;
+}
+
+.field-row-top .field-label {
+    line-height: 24px;
+    padding-top: 4px;
+}
+
+.field-row:last-child,
+.field:last-child {
+    margin-bottom: 0;
+}
+
+.field-label {
+    flex: 0 0 8em;
+    max-width: 9em;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.field-control {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.field-control-narrow {
+    flex: 0 0 auto;
+    width: 120px;
+}
+
+.field-control-group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
 }
 
 .zoom-control {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    margin-left: 2px;
+    gap: var(--space-2);
+    margin-left: 0;
 }
 
 .zoom-percent {
@@ -66,30 +167,32 @@ body {
     text-align: center;
     font-weight: 400;
     font-size: 14px;
+    color: var(--chrome-text);
 }
 
-/* 右键菜单样式：使用 fixed 便于基于 clientX/clientY 定位 */
 .context-menu {
     position: fixed;
     z-index: 1000;
     min-width: 180px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+    box-shadow: var(--chrome-shadow);
     border-radius: 6px;
-    padding: 6px 0;
+    padding: var(--space-1) 0;
     user-select: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .menu-item {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-size: 13px;
     cursor: pointer;
-    color: #374151;
+    color: var(--chrome-text);
 }
 
 .menu-item:hover {
-    background: #f3f4f6;
+    background: var(--chrome-hover);
 }
 
 .menu-item.disabled {
@@ -97,27 +200,199 @@ body {
     cursor: not-allowed;
 }
 
-/* 移动端：小于 600px 竖排显示并靠左 */
+.thinking-item {
+    margin-bottom: var(--space-3);
+}
+
+.thinking-item-title {
+    font-weight: 600;
+}
+
+.thinking-item-body {
+    margin-top: var(--space-2);
+}
+
+.thinking-item-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.settings-section + .settings-section {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--chrome-divider);
+}
+
+.settings-modal-wrap .ant-modal {
+    top: 48px;
+    padding-bottom: 24px;
+}
+
+.settings-modal-wrap .ant-modal-content {
+    padding: 0;
+}
+
+.settings-modal-wrap .ant-modal-header {
+    display: none;
+}
+
+.settings-modal-wrap .ant-modal-body {
+    padding: var(--space-3) var(--space-4) var(--space-3);
+}
+
+.settings-modal-wrap .ant-modal-close {
+    top: 10px;
+    inset-inline-end: 12px;
+}
+
+.settings-modal-wrap .ant-tabs-nav {
+    margin: 0 0 var(--space-2);
+}
+
+.settings-modal-wrap .ant-tabs-content,
+.settings-modal-wrap .ant-tabs-tabpane {
+    padding-top: 0;
+}
+
+.settings-modal-wrap .ant-tabs-top > .ant-tabs-nav::before {
+    border-bottom-color: var(--chrome-divider);
+}
+
+.layout-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.layout-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    margin-right: var(--space-1);
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.layout-btn-icon svg {
+    display: block;
+    vertical-align: middle;
+}
+
+.field-row .anticon,
+.field-control-group .anticon,
+.thinking-item .ant-radio,
+.thinking-item .anticon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.thinking-item .ant-radio-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.thinking-item-title {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+.prompt-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.color-input {
+    cursor: pointer;
+    height: 32px;
+    width: 80px;
+    padding: 0;
+    border: 1px solid var(--chrome-border-strong);
+    border-radius: 6px;
+    background: transparent;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.ai-prompt-modal-wrap .ant-modal-body {
+    padding: var(--space-3) var(--space-4);
+}
+
+.ai-prompt-modal-wrap .ai-prompt-hint {
+    margin: 0 0 var(--space-2);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--chrome-text);
+}
+
+.ai-prompt-modal-wrap .ai-prompt-textarea {
+    width: 100%;
+}
+
+.card-modal-wrap .ant-modal {
+    top: 48px;
+    padding-bottom: 24px;
+}
+
+.card-loading {
+    text-align: center;
+    padding: var(--space-4);
+}
+
+.card-loading-text {
+    margin-top: var(--space-2);
+}
+
+.card-view-frame {
+    width: 100%;
+    height: min(600px, 70vh);
+    border: none;
+    display: block;
+}
+
 @media (max-width: 600px) {
     .toolbar {
-        top: 8px;
-        left: 8px;
+        top: var(--space-2);
+        left: var(--space-2);
         transform: none;
     }
 
     .toolbar-inner {
         flex-direction: column;
         align-items: stretch;
-        gap: 4px;
-        padding: 8px;
+        gap: var(--space-2);
+        padding: var(--space-2);
         border-radius: 10px;
-        max-width: 96vw;
+        max-width: calc(100vw - var(--space-4));
+        overflow-x: visible;
     }
 
-    /* 缩放控件仍保持横向居中 */
+    .toolbar-group {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--space-2);
+    }
+
+    .toolbar-group:not(:first-child) {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+    }
+
     .zoom-control {
         justify-content: center;
-        gap: 4px;
+        gap: var(--space-2);
         margin-left: 0;
         width: 100%;
     }
@@ -127,13 +402,13 @@ body {
         text-align: center;
     }
 
-    /* 其他按钮在移动端可设置为全宽居中 */
     .toolbar-inner .ant-btn {
         width: 100%;
+        min-width: 32px;
+        min-height: 32px;
         justify-content: center;
     }
 
-    /* 缩放圆形按钮保持自适应宽度 */
     .zoom-control .ant-btn {
         width: auto;
     }
@@ -142,11 +417,19 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    /* 新增：移动端隐藏的元素 */
+    .field-label {
+        flex: 0 0 auto;
+        max-width: none;
+    }
+
+    .field-row {
+        flex-wrap: wrap;
+    }
+
     .mobile-hide {
         display: none !important;
     }
-    
+
     .mobile-hide-text {
         display: none !important;
     }
