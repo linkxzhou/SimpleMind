@@ -355,7 +355,6 @@ body {
 }
 
 .card-modal-wrap .ant-modal-header {
-    background: #ffffff;
     border-bottom: 1px solid var(--chrome-border);
     margin-bottom: 0;
     padding: var(--space-3) var(--space-4);
