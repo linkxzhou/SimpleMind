@@ -12,7 +12,7 @@
   "secret": "Secret",
   "secretPlaceholder": "e.g., sk-...",
   "model": "Model",
-  "modelPlaceholder": "e.g., gpt-5",
+  "modelPlaceholder": "e.g., Qwen/Qwen3.8-27B",
   "language": "Language",
   "childCountRange": "Min Nodes per Generation",
   "thinkingMethod": "Set Thinking Template",

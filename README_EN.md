@@ -31,7 +31,7 @@ Stack: Vue 3, Vite 7, Ant Design Vue 4, [simple-mind-map](https://github.com/wan
 - **Generate children**: Select a node and click **AI Generate**. Child nodes are inserted from the node text, current template, and knowledge base (default two-level structure: first level + `children`). “Min nodes per generation” is 1–20 (default 5).
 - **Knowledge base**: Enter system context in Settings, or upload `.md` / `.txt` / `.csv` / `.pdf` (parsed to text, truncated at about 20,000 characters).
 - **AI expand**: Send the current knowledge base to the model to expand it before generation.
-- **Models**: Settings includes `Kimi-K2.5`, `DeepSeek-V3.2`, and `GLM-4.7`. If no env var is set, the default is `Pro/moonshotai/Kimi-K2.5`. Other model IDs can be supplied via environment variables.
+- **Models**: Settings includes `GLM-5.3`, `Qwen3.8-27B`, and `DeepSeek-V4-Flash`. If no env var is set, the default is `Qwen/Qwen3.8-27B`. Other model IDs can be supplied via environment variables.
 
 ### Editing and views
 
@@ -88,14 +88,14 @@ The app appends `/chat/completions` to `VITE_API`, so the Base URL must **not** 
 | --- | --- | --- |
 | `VITE_API` | Base URL of an OpenAI-compatible API | `https://api.openai.com/v1` or `https://api.siliconflow.cn/v1` |
 | `VITE_SECRET` | API key, sent as `Authorization: Bearer ...` | `sk-xxxxxxxx` |
-| `VITE_MODEL` | Default model ID | `Pro/moonshotai/Kimi-K2.5` |
+| `VITE_MODEL` | Default model ID | `Qwen/Qwen3.8-27B` |
 
 Example:
 
 ```
 VITE_API=https://api.openai.com/v1
 VITE_SECRET=sk-xxxxxxxx
-VITE_MODEL=Pro/moonshotai/Kimi-K2.5
+VITE_MODEL=Qwen/Qwen3.8-27B
 ```
 
 You can skip env files and fill in API Base, secret, and model in Settings before clicking **AI Generate**. Generation prompts you to configure API Base if it is empty.

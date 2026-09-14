@@ -7,6 +7,15 @@ export const messages = {
     'en-US': enUS,
 }
 
+export const DEFAULT_MODEL = 'Qwen/Qwen3.8-27B'
+
+// LLM 模型选项（设置面板）
+export const modelOptions = [
+    { label: 'GLM-5.3', value: 'zai-org/GLM-5.3' },
+    { label: 'Qwen3.8-27B', value: 'Qwen/Qwen3.8-27B' },
+    { label: 'DeepSeek-V4-Flash', value: 'deepseek-ai/DeepSeek-V4-Flash' },
+]
+
 // 语言选择项（用于设置面板）
 export const languageOptions = [
     { label: '简体中文', value: 'zh-CN' },

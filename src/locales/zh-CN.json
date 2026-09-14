@@ -12,7 +12,7 @@
   "secret": "秘钥",
   "secretPlaceholder": "例如：sk-...",
   "model": "模型",
-  "modelPlaceholder": "例如：gpt-5",
+  "modelPlaceholder": "例如：Qwen/Qwen3.8-27B",
   "language": "语言",
   "childCountRange": "生成最少节点数",
   "thinkingMethod": "设置思考模版",
