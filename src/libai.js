@@ -1,4 +1,4 @@
-import { thinkingModels } from './const.js'
+import { thinkingModels, DEFAULT_MODEL } from './const.js'
 import { jsonrepair } from 'jsonrepair'
 
 export function buildPrompt(topic, count, nextSystemPrompt, systemPrompt, settings = {}) {
@@ -144,7 +144,7 @@ function normalizeSecret(secret) {
 export async function requestCompletions({
     api,
     secret,
-    model = 'gpt-5',
+    model = DEFAULT_MODEL,
     temperature = 0.7,
     prompt,
 }) {

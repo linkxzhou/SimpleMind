@@ -336,7 +336,7 @@ import MindMap from "simple-mind-map"
 import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions, expandPrompt } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList } from './const.js'
+import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList, DEFAULT_MODEL, modelOptions } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
 
 // -----------------------------------------------------------------------------
@@ -372,7 +372,7 @@ const clipboardData = ref(null)      // 剪贴板数据
 const settings = ref({
     api: ENV_API || '',
     secret: ENV_SECRET || '',
-    model: ENV_MODEL || 'Pro/moonshotai/Kimi-K2.5',
+    model: ENV_MODEL || DEFAULT_MODEL,
     temperature: 0.6,
     systemPrompt: '',
     depth: 5,
@@ -387,13 +387,6 @@ const settings = ref({
     themeRootFillColor: '#00c0b8',
     theme: 'mint',
 })
-
-// 模型选项列表
-const modelOptions = [
-    { label: 'Kimi-K2.5', value: 'Pro/moonshotai/Kimi-K2.5' },
-    { label: 'DeepSeek-V3.2', value: 'deepseek-ai/DeepSeek-V3.2' },
-    { label: 'GLM-4.7', value: 'Pro/zai-org/GLM-4.7' },
-]
 
 // -----------------------------------------------------------------------------
 // 2. 工具函数 (Helper Functions)
@@ -470,6 +463,11 @@ const validateTargetNode = () => {
 const loadSettings = () => {
     try {
         settings.value = loadSettingsFromStorage(settings.value)
+        const allowed = new Set(modelOptions.map((option) => option.value))
+        if (ENV_MODEL) allowed.add(ENV_MODEL)
+        if (!allowed.has(settings.value.model)) {
+            settings.value.model = ENV_MODEL || DEFAULT_MODEL
+        }
     } catch (e) {
         console.warn('加载设置失败：', e)
     }
@@ -787,7 +785,7 @@ const aiGenerate = async () => {
         const { data } = await requestCompletions({
             api: settings.value.api,
             secret: settings.value.secret,
-            model: settings.value.model || 'gpt-5',
+            model: settings.value.model || DEFAULT_MODEL,
             temperature: settings.value.temperature,
             prompt,
         })

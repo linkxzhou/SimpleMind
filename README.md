@@ -31,7 +31,7 @@
 - **智能生成**：选中节点后点「AI生成」，根据节点文本、当前模版和知识库插入子节点（默认两层：第一层 + `children`）。「生成最少节点数」范围 1–20，默认 5。
 - **知识库**：在设置中填写系统知识库，或上传 `.md` / `.txt` / `.csv` / `.pdf` 解析为文本（截断约 2 万字）。
 - **AI 扩写**：把当前知识库交给模型扩写后再用于生成。
-- **模型**：设置面板内置 `Kimi-K2.5`、`DeepSeek-V3.2`、`GLM-4.7`。未配置环境变量时默认 `Pro/moonshotai/Kimi-K2.5`。也可通过环境变量指定其它模型 ID。
+- **模型**：设置面板内置 `GLM-5.3`、`Qwen3.8-27B`、`DeepSeek-V4-Flash`。未配置环境变量时默认 `Qwen/Qwen3.8-27B`。也可通过环境变量指定其它模型 ID。
 
 ### 编辑与视图
 
@@ -88,14 +88,14 @@ yarn preview
 | --- | --- | --- |
 | `VITE_API` | OpenAI 兼容接口的 Base URL | `https://api.openai.com/v1` 或 `https://api.siliconflow.cn/v1` |
 | `VITE_SECRET` | API 密钥，请求头为 `Authorization: Bearer ...` | `sk-xxxxxxxx` |
-| `VITE_MODEL` | 默认模型 ID | `Pro/moonshotai/Kimi-K2.5` |
+| `VITE_MODEL` | 默认模型 ID | `Qwen/Qwen3.8-27B` |
 
 示例：
 
 ```
 VITE_API=https://api.openai.com/v1
 VITE_SECRET=sk-xxxxxxxx
-VITE_MODEL=Pro/moonshotai/Kimi-K2.5
+VITE_MODEL=Qwen/Qwen3.8-27B
 ```
 
 不配环境变量也可以：打开设置，填写 API Base、密钥和模型后再点「AI生成」。未填写 API Base 时会提示先配置。
