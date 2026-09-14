@@ -23,24 +23,15 @@
             --connector-color: #e5e7eb;
 
             --accent-mint: #f3faf8;
-            --accent-mint-edge: #9dcdc2;
             --accent-sky: #f3f7fb;
-            --accent-sky-edge: #a9c4dc;
             --accent-sand: #fbf7f2;
-            --accent-sand-edge: #d4c2a8;
             --accent-lilac: #f7f5fb;
-            --accent-lilac-edge: #c4b7d8;
             --accent-sage: #f4f8f4;
-            --accent-sage-edge: #b4cbb4;
             --accent-rose: #fbf5f6;
-            --accent-rose-edge: #d7b4bc;
             --accent-slate: #f5f7f9;
-            --accent-slate-edge: #b7c2ce;
             --accent-cream: #fbf8f2;
-            --accent-cream-edge: #d8c9a8;
 
             --card-tint: var(--card-bg);
-            --card-accent: var(--accent-slate-edge);
         }
 
         body {
@@ -85,14 +76,13 @@
         .card {
             background-color: var(--card-tint);
             border-radius: var(--card-radius);
-            padding: 14px 16px 14px 18px;
+            padding: 14px 16px;
             box-shadow: var(--card-shadow);
             transition: transform 0.18s ease, box-shadow 0.18s ease;
             position: relative;
             color: var(--card-text);
             min-width: 200px;
             border: 1px solid var(--card-border);
-            border-left: 3px solid var(--card-accent);
         }
 
         .card:hover {
@@ -100,14 +90,14 @@
             box-shadow: var(--card-shadow-hover);
         }
 
-        .card.tint-mint { --card-tint: var(--accent-mint); --card-accent: var(--accent-mint-edge); }
-        .card.tint-sky { --card-tint: var(--accent-sky); --card-accent: var(--accent-sky-edge); }
-        .card.tint-sand { --card-tint: var(--accent-sand); --card-accent: var(--accent-sand-edge); }
-        .card.tint-lilac { --card-tint: var(--accent-lilac); --card-accent: var(--accent-lilac-edge); }
-        .card.tint-sage { --card-tint: var(--accent-sage); --card-accent: var(--accent-sage-edge); }
-        .card.tint-rose { --card-tint: var(--accent-rose); --card-accent: var(--accent-rose-edge); }
-        .card.tint-slate { --card-tint: var(--accent-slate); --card-accent: var(--accent-slate-edge); }
-        .card.tint-cream { --card-tint: var(--accent-cream); --card-accent: var(--accent-cream-edge); }
+        .card.tint-mint { --card-tint: var(--accent-mint); }
+        .card.tint-sky { --card-tint: var(--accent-sky); }
+        .card.tint-sand { --card-tint: var(--accent-sand); }
+        .card.tint-lilac { --card-tint: var(--accent-lilac); }
+        .card.tint-sage { --card-tint: var(--accent-sage); }
+        .card.tint-rose { --card-tint: var(--accent-rose); }
+        .card.tint-slate { --card-tint: var(--accent-slate); }
+        .card.tint-cream { --card-tint: var(--accent-cream); }
 
         .children-wrapper > .node-wrapper > .card {
             box-shadow: var(--card-shadow-nested);
