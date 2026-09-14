@@ -6,30 +6,65 @@
     <title>思维导图卡片视图</title>
     <style>
         :root {
-            --indent-width: 40px;
-            --connector-color: #e8e8e8;
+            --indent-width: 28px;
+            --page-bg: #f4f6f8;
+            --page-text: #1f2937;
+            --title-color: #111827;
+            --card-bg: #ffffff;
+            --card-bg-nested: #fbfcfd;
+            --card-bg-deep: #f7f8fa;
+            --card-text: #1f2937;
+            --card-text-muted: #6b7280;
+            --card-border: rgba(15, 23, 42, 0.08);
+            --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px rgba(15, 23, 42, 0.05);
+            --card-shadow-nested: 0 1px 2px rgba(15, 23, 42, 0.04);
+            --card-shadow-hover: 0 4px 14px rgba(15, 23, 42, 0.08);
+            --card-radius: 12px;
+            --connector-color: #e5e7eb;
+
+            --accent-mint: #f3faf8;
+            --accent-mint-edge: #9dcdc2;
+            --accent-sky: #f3f7fb;
+            --accent-sky-edge: #a9c4dc;
+            --accent-sand: #fbf7f2;
+            --accent-sand-edge: #d4c2a8;
+            --accent-lilac: #f7f5fb;
+            --accent-lilac-edge: #c4b7d8;
+            --accent-sage: #f4f8f4;
+            --accent-sage-edge: #b4cbb4;
+            --accent-rose: #fbf5f6;
+            --accent-rose-edge: #d7b4bc;
+            --accent-slate: #f5f7f9;
+            --accent-slate-edge: #b7c2ce;
+            --accent-cream: #fbf8f2;
+            --accent-cream-edge: #d8c9a8;
+
+            --card-tint: var(--card-bg);
+            --card-accent: var(--accent-slate-edge);
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f5f7fa;
+            background-color: var(--page-bg);
             margin: 0;
-            padding: 10px;
-            color: #333;
+            padding: 20px 16px 32px;
+            color: var(--page-text);
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 10px;
-            color: #1f2d3d;
+            margin: 4px 0 20px;
+            color: var(--title-color);
+            font-size: 1.35rem;
+            font-weight: 650;
+            letter-spacing: -0.02em;
         }
 
         #app {
-            max-width: 1000px;
+            max-width: 920px;
             margin: 0 auto;
         }
 
-        /* 节点包装器 */
         .node-wrapper {
             position: relative;
             display: flex;
@@ -38,55 +73,85 @@
             margin-bottom: 10px;
         }
 
-        /* 子节点缩进容器 */
         .children-wrapper {
             padding-left: var(--indent-width);
             border-left: 2px solid var(--connector-color);
-            margin-left: 10px; /* 让线条对齐父节点的大致中心或左侧 */
+            margin-left: 12px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
-        /* 卡片样式 */
         .card {
-            background-color: #fff;
-            border-radius: 12px;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background-color: var(--card-tint);
+            border-radius: var(--card-radius);
+            padding: 14px 16px 14px 18px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
             position: relative;
-            color: #fff; /* 默认文字颜色为白色，适应深色背景 */
+            color: var(--card-text);
             min-width: 200px;
+            border: 1px solid var(--card-border);
+            border-left: 3px solid var(--card-accent);
         }
 
         .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .card.tint-mint { --card-tint: var(--accent-mint); --card-accent: var(--accent-mint-edge); }
+        .card.tint-sky { --card-tint: var(--accent-sky); --card-accent: var(--accent-sky-edge); }
+        .card.tint-sand { --card-tint: var(--accent-sand); --card-accent: var(--accent-sand-edge); }
+        .card.tint-lilac { --card-tint: var(--accent-lilac); --card-accent: var(--accent-lilac-edge); }
+        .card.tint-sage { --card-tint: var(--accent-sage); --card-accent: var(--accent-sage-edge); }
+        .card.tint-rose { --card-tint: var(--accent-rose); --card-accent: var(--accent-rose-edge); }
+        .card.tint-slate { --card-tint: var(--accent-slate); --card-accent: var(--accent-slate-edge); }
+        .card.tint-cream { --card-tint: var(--accent-cream); --card-accent: var(--accent-cream-edge); }
+
+        .children-wrapper > .node-wrapper > .card {
+            box-shadow: var(--card-shadow-nested);
+            background-color: color-mix(in srgb, var(--card-tint) 55%, var(--card-bg-nested));
+        }
+
+        .children-wrapper .children-wrapper > .node-wrapper > .card {
+            background-color: color-mix(in srgb, var(--card-tint) 30%, var(--card-bg-deep));
         }
 
         .card-text {
-            font-size: 1.25rem;
-            font-weight: 600;
-            line-height: 1.4;
-            margin-bottom: 4px;
+            font-size: 1.05rem;
+            font-weight: 650;
+            line-height: 1.45;
+            margin-bottom: 0;
+            color: var(--title-color);
         }
 
         .card-note {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            font-weight: 400;
             line-height: 1.6;
-            opacity: 0.95;
-            white-space: pre-wrap; /* 保留换行符 */
+            margin-top: 6px;
+            color: var(--card-text-muted);
+            white-space: pre-wrap;
         }
 
-        /* 响应式调整 */
+        .children-wrapper .card-text {
+            font-size: 0.98rem;
+            font-weight: 600;
+        }
+
+        .children-wrapper .children-wrapper .card-text {
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
         @media (max-width: 600px) {
             body {
-                padding: 10px;
+                padding: 12px 10px 24px;
             }
             .children-wrapper {
-                padding-left: 10px;
-                margin-left: 5px;
+                padding-left: 14px;
+                margin-left: 6px;
             }
         }
     </style>
@@ -97,82 +162,40 @@
     <div id="app"></div>
 
     <script>
-        // 模拟思维导图数据
-        const cardData = 
+        const cardData =
         // {{REPLACE:cardData BEGIN}}
         {}
         // {{REPLACE:cardData END}}
-        
-        // 多风格背景颜色库（科技、教育、儿童、可爱）
-        const colors = [
-            // --- 科技感 (Tech/Sci-Fi) ---
-            // 冷色调、青色、电光蓝、金属灰
-            '#e0f7fa', '#b2ebf2', '#80deea', '#84ffff', '#18ffff', // Cyan / Electric Blue
-            '#e1f5fe', '#b3e5fc', '#81d4fa', '#80d8ff', '#40c4ff', // Light Blue / Sky
-            '#eceff1', '#cfd8dc', '#b0bec5', '#90a4ae', '#f5f5f5', // Blue Grey / Metallic
-            '#a7ffeb', '#64ffda', '#1de9b6', '#d7effe', '#e2efff', // Mint / Subtle Tech
 
-            // --- 教育风格 (Education/Academic) ---
-            // 稳重、护眼、纸张色、柔和的高亮色
-            '#fff8e1', '#ffecb3', '#ffe082', '#ffd54f', '#fff3e0', // Paper / Warm Light
-            '#e8f5e9', '#c8e6c9', '#a5d6a7', '#81c784', '#f1f8e9', // Calm Green / Growth
-            '#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#e8eaf6', // Trustworthy Blue
-            '#f3e5f5', '#e1bee7', '#ce93d8', '#fff9c4', '#fff59d', // Soft Purple / Highlight Yellow
+        const tints = ['mint', 'sky', 'sand', 'lilac', 'sage', 'rose', 'slate', 'cream'];
 
-            // --- 儿童风格 (Kids/Playful) ---
-            // 明亮、高饱和度、原色系变体、活泼
-            '#ff8a80', '#ff5252', '#ff9e80', '#ff6e40', '#ffd180', // Playful Red / Orange
-            '#ffff8d', '#ffff00', '#f4ff81', '#eeff41', '#ccff90', // Bright Yellow / Lime
-            '#82b1ff', '#448aff', '#80d8ff', '#00b0ff', '#84ffff', // Vivid Blue / Cyan
-            '#b9f6ca', '#69f0ae', '#00e676', '#a7ffeb', '#18ffff', // Bright Green
-
-            // --- 可爱风格 (Cute/Kawaii/Pastel) ---
-            // 马卡龙色、粉嫩、奶油色、梦幻
-            '#ffcdd2', '#ef9a9a', '#f8bbd0', '#f48fb1', '#fce4ec', // Soft Pink / Rose
-            '#e1bee7', '#d1c4e9', '#c5cae9', '#ede7f6', '#d7ccc8', // Lavender / Soft Cocoa
-            '#b2dfdb', '#80cbc4', '#b2ebf2', '#e0f7fa', '#c8e6c9', // Mint / Baby Blue
-            '#fff9c4', '#fff59d', '#ffe082', '#ffebee', '#f3e5f5'  // Cream / Pudding / Dreamy
-        ];
-        /**
-         * 创建卡片 DOM 元素
-         */
         function createCardElement(nodeData) {
             const card = document.createElement('div');
             card.className = 'card';
-            
-            // 根据内容生成确定性的颜色索引，确保每次刷新颜色一致
+
             let hash = 0;
             const str = (nodeData.text || '') + (nodeData.uid || '');
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
             }
-            const index = Math.abs(hash) % colors.length;
-            const fixedColor = colors[index];
-            card.style.backgroundColor = fixedColor;
-            
-            // 统一文字和边框样式
-            card.style.color = '#333333';
-            card.style.border = '1px solid rgba(0,0,0,0.05)';
+            const tint = tints[Math.abs(hash) % tints.length];
+            card.classList.add('tint-' + tint);
 
-            // 标题 (text)
             const textEl = document.createElement('div');
             textEl.className = 'card-text';
             textEl.textContent = nodeData.text || '无标题节点';
-
-            // 备注 (note)
-            const noteEl = document.createElement('div');
-            noteEl.className = 'card-note';
-            noteEl.textContent = nodeData.note || '';
-
             card.appendChild(textEl);
-            card.appendChild(noteEl);
+
+            if (nodeData.note) {
+                const noteEl = document.createElement('div');
+                noteEl.className = 'card-note';
+                noteEl.textContent = nodeData.note;
+                card.appendChild(noteEl);
+            }
 
             return card;
         }
 
-        /**
-         * 递归渲染节点
-         */
         function renderNodes(nodes, container) {
             if (!nodes || nodes.length === 0) return;
 
@@ -180,13 +203,10 @@
                 const nodeWrapper = document.createElement('div');
                 nodeWrapper.className = 'node-wrapper';
 
-                // 1. 渲染当前节点卡片
                 if (node.data) {
-                    const card = createCardElement(node.data);
-                    nodeWrapper.appendChild(card);
+                    nodeWrapper.appendChild(createCardElement(node.data));
                 }
 
-                // 2. 递归渲染子节点
                 if (node.children && node.children.length > 0) {
                     const childrenWrapper = document.createElement('div');
                     childrenWrapper.className = 'children-wrapper';
@@ -198,16 +218,12 @@
             });
         }
 
-        // 初始化
         const appContainer = document.getElementById('app');
-        
-        // 设置标题
+
         if (cardData.data && cardData.data.text) {
             document.getElementById('topic-title').textContent = cardData.data.text;
         }
 
-        // 渲染根节点（将根节点作为数组传入以复用 renderNodes 逻辑）
-        // 如果根节点是对象，先把它包装成数组
         const rootNodes = cardData.children ? cardData.children : [cardData];
         renderNodes(rootNodes, appContainer);
     </script>
