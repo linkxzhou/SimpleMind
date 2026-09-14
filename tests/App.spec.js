@@ -60,6 +60,8 @@ const storageMocks = vi.hoisted(() => ({
   saveSettingsToStorage: vi.fn(),
   loadMindMapData: vi.fn((defaults) => defaults),
   saveMindMapData: vi.fn(),
+  scheduleMindMapSave: vi.fn(),
+  flushMindMapSave: vi.fn(),
 }))
 
 const libaiMocks = vi.hoisted(() => ({
@@ -124,6 +126,8 @@ vi.mock('../src/utils.js', () => ({
   ENV_MODEL: '',
   switchTextNoteMode: utilsMocks.switchTextNoteMode,
   getThemeList: utilsMocks.getThemeList,
+  buildCardHtml: (root) => `<html>${JSON.stringify(root || {})}</html>`,
+  debugLog: vi.fn(),
 }))
 
 vi.mock('../src/storage.js', () => ({
@@ -131,6 +135,8 @@ vi.mock('../src/storage.js', () => ({
   saveSettings: storageMocks.saveSettingsToStorage,
   loadMindMapData: storageMocks.loadMindMapData,
   saveMindMapData: storageMocks.saveMindMapData,
+  scheduleMindMapSave: storageMocks.scheduleMindMapSave,
+  flushMindMapSave: storageMocks.flushMindMapSave,
   SETTINGS_KEY: 'mindlessSettings',
   MINDMAP_KEY: 'mindMapData',
 }))
@@ -167,6 +173,8 @@ beforeEach(() => {
   storageMocks.saveSettingsToStorage.mockReset()
   storageMocks.loadMindMapData.mockImplementation((defaults) => defaults)
   storageMocks.saveMindMapData.mockReset()
+  storageMocks.scheduleMindMapSave.mockReset()
+  storageMocks.flushMindMapSave.mockReset()
   utilsMocks.showError.mockReset()
   utilsMocks.showLoading.mockReset()
   utilsMocks.hideLoading.mockReset()
@@ -237,16 +245,34 @@ describe('App.vue lifecycle', () => {
     wrapper.unmount()
   })
 
-  it('persists data_change and warns when save throws', async () => {
+  it('persists data_change via debounce and warns when schedule throws', async () => {
     const { wrapper } = await mountApp()
     mindMapState.handlers.data_change({ data: { text: 'x' } })
-    expect(storageMocks.saveMindMapData).toHaveBeenCalled()
-    storageMocks.saveMindMapData.mockImplementation(() => {
+    expect(storageMocks.scheduleMindMapSave).toHaveBeenCalledWith({ data: { text: 'x' } })
+    storageMocks.scheduleMindMapSave.mockImplementation(() => {
       throw new Error('quota')
     })
     mindMapState.handlers.data_change({ data: { text: 'y' } })
     expect(console.warn).toHaveBeenCalled()
     wrapper.unmount()
+  })
+
+  it('flushes pending saves when the tab is hidden and on unmount', async () => {
+    const { wrapper } = await mountApp()
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'hidden',
+    })
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(storageMocks.flushMindMapSave).toHaveBeenCalled()
+    storageMocks.flushMindMapSave.mockImplementationOnce(() => {
+      throw new Error('quota')
+    })
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(console.warn).toHaveBeenCalled()
+    window.dispatchEvent(new Event('pagehide'))
+    wrapper.unmount()
+    expect(storageMocks.flushMindMapSave).toHaveBeenCalled()
   })
 
   it('uses applyZoom fallback when reading view throws', async () => {
@@ -356,6 +382,9 @@ describe('toolbar', () => {
     await state.newMap({ data: { text: 'obj' }, children: [] })
     expect(mm.setData).toHaveBeenCalledWith({ text: 'obj' })
 
+    await state.newMap('default1.json')
+    expect(mm.setData).toHaveBeenCalled()
+
     await state.newMap({ foo: 1 })
     expect(mm.setData).toHaveBeenCalledWith({ data: { text: '主题' }, children: [] })
 
@@ -434,6 +463,27 @@ describe('context menu', () => {
 
     state.clipboardData = null
     state.pasteNode()
+    wrapper.unmount()
+  })
+
+  it('falls back to JSON when structuredClone is missing or throws', async () => {
+    const { wrapper, state } = await mountApp()
+    const original = globalThis.structuredClone
+    const node = {
+      getData: () => ({ data: { text: 'n', uid: 'u1' }, children: [] }),
+    }
+    state.currentNode = node
+    globalThis.structuredClone = () => {
+      throw new Error('clone fail')
+    }
+    state.copyNode()
+    expect(state.clipboardData.data.uid).toBeUndefined()
+    expect(state.clipboardData.data.text).toBe('n')
+
+    globalThis.structuredClone = undefined
+    state.copyNode()
+    expect(state.clipboardData.data.text).toBe('n')
+    globalThis.structuredClone = original
     wrapper.unmount()
   })
 })
@@ -534,14 +584,16 @@ describe('theme watch', () => {
     await nextTick()
     expect(state.settings.themeRootFillColor).toBe('#00c0b8')
 
+    vi.useFakeTimers()
     state.settings.lineWidth = 8
     await nextTick()
+    vi.advanceTimersByTime(120)
+    await nextTick()
     expect(mm.setThemeConfig).toHaveBeenCalled()
+    vi.useRealTimers()
 
-    await expect(async () => {
-      state.settings.theme = 'missing-theme'
-      await nextTick()
-    }).rejects.toThrow()
+    state.settings.theme = 'missing-theme'
+    await nextTick()
     expect(mm.setTheme).toHaveBeenCalledWith('missing-theme')
 
     state.mindMapRef = null
@@ -622,6 +674,7 @@ describe('aiGenerate', () => {
     )
     expect(mm.execCommand).toHaveBeenCalledWith('INSERT_MULTI_CHILD_NODE', [], expect.any(Array))
     expect(utilsMocks.showLoading).toHaveBeenCalled()
+    expect(String(utilsMocks.showLoading.mock.calls.at(-1)?.[1] || '')).not.toContain('PROMPT')
     expect(utilsMocks.hideLoading).toHaveBeenCalled()
 
     libaiMocks.extractIdeas.mockReturnValueOnce([])

@@ -10,6 +10,10 @@ vi.mock('pdfjs-dist/legacy/build/pdf.js', () => ({
   getDocument: pdfMocks.getDocument,
 }))
 
+vi.mock('pdfjs-dist/legacy/build/pdf.worker.min.js?url', () => ({
+  default: '/mocked-pdf.worker.min.js',
+}))
+
 import { extractTextFromPDF, parseFileAsPrompt } from '../src/parser.js'
 
 const duckFile = (name, text, extra = {}) => ({
@@ -73,8 +77,26 @@ describe('parseFileAsPrompt', () => {
       duckFile('doc.pdf', '', { arrayBuffer: async () => new ArrayBuffer(8) }),
     )
     expect(text).toBe('p1-a p1-b\np2-a p2-b')
-    expect(pdfMocks.GlobalWorkerOptions.workerSrc).toContain('pdf.worker.min.js')
-    expect(pdfMocks.GlobalWorkerOptions.workerSrc).toContain('cdn.jsdelivr.net')
+    expect(pdfMocks.GlobalWorkerOptions.workerSrc).toContain('pdf.worker')
+    expect(pdfMocks.GlobalWorkerOptions.workerSrc).not.toContain('cdn.jsdelivr.net')
+  })
+
+  it('stops parsing PDF pages once the 20k cap is reached', async () => {
+    const getPage = vi.fn(async () => ({
+      getTextContent: async () => ({
+        items: [{ str: 'x'.repeat(12000) }],
+      }),
+    }))
+    pdfMocks.getDocument.mockReturnValue({
+      promise: Promise.resolve({
+        numPages: 5,
+        getPage,
+      }),
+    })
+    const text = await extractTextFromPDF(duckFile('big.pdf', ''))
+    expect(text.length).toBeLessThanOrEqual(20000)
+    expect(getPage.mock.calls.length).toBe(2)
+    expect(getPage.mock.calls.length).toBeLessThan(5)
   })
 
   it('exposes extractTextFromPDF for the same mocked document flow', async () => {

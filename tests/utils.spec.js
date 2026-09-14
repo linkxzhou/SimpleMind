@@ -51,6 +51,8 @@ vi.mock('ant-design-vue', () => ({
 
 import { SETTINGS_KEY } from '../src/storage.js'
 import {
+  buildCardHtml,
+  combineText,
   exportMindMap,
   getThemeList,
   hideLoading,
@@ -59,6 +61,8 @@ import {
   showLoading,
   showSuccess,
   switchTextNoteMode,
+  debugLog,
+  IS_DEV,
 } from '../src/utils.js'
 
 const makeMindMap = (overrides = {}) => ({
@@ -94,9 +98,13 @@ afterEach(() => {
 })
 
 describe('module load', () => {
-  it('registers plugins via usePlugin', () => {
+  it('registers interaction plugins and not export plugins', () => {
     expect(mindMapMocks.usePlugin).toHaveBeenCalled()
     expect(mindMapMocks.themeInit).toHaveBeenCalled()
+    const names = mindMapMocks.usePlugin.mock.calls.map((c) => c[0]?.name)
+    expect(names).not.toContain('Export')
+    expect(names).not.toContain('ExportPDF')
+    expect(names).not.toContain('ExportXMind')
   })
 })
 
@@ -142,8 +150,8 @@ describe('modals / t()', () => {
 })
 
 describe('exportMindMap', () => {
-  it('errors when mindMap is missing', () => {
-    exportMindMap(null, 'json')
+  it('errors when mindMap is missing', async () => {
+    await exportMindMap(null, 'json')
     expect(modalMocks.error).toHaveBeenCalled()
   })
 
@@ -154,13 +162,31 @@ describe('exportMindMap', () => {
     ['pdf', ['pdf', true, expect.any(String)]],
     ['xmind', ['xmind', true, expect.any(String)]],
     ['svg', ['svg', true, expect.any(String)]],
-  ])('exports %s via mindMap.export', (type, args) => {
+  ])('exports %s via mindMap.export', async (type, args) => {
     const mm = makeMindMap()
-    exportMindMap(mm, type)
+    await exportMindMap(mm, type)
     expect(mm.export).toHaveBeenCalledWith(...args)
   })
 
-  it('exports md/txt/cardhtml via Blob download', () => {
+  it('registers export plugins via addPlugin when available', async () => {
+    const mm = makeMindMap({ addPlugin: vi.fn() })
+    await exportMindMap(mm, 'json')
+    await exportMindMap(mm, 'png')
+    expect(mm.addPlugin).toHaveBeenCalledTimes(3)
+    expect(mm.export).toHaveBeenCalled()
+  })
+
+  it('shows exportFailed when addPlugin throws', async () => {
+    const mm = makeMindMap({
+      addPlugin: vi.fn(() => {
+        throw new Error('add fail')
+      }),
+    })
+    await exportMindMap(mm, 'json')
+    expect(modalMocks.error).toHaveBeenCalled()
+  })
+
+  it('exports md/txt/cardhtml via Blob download', async () => {
     const click = vi.fn()
     const originalCreate = document.createElement.bind(document)
     vi.spyOn(document, 'createElement').mockImplementation((tag) => {
@@ -169,17 +195,17 @@ describe('exportMindMap', () => {
       return el
     })
     const mm = makeMindMap()
-    exportMindMap(mm, 'md')
+    await exportMindMap(mm, 'md')
     expect(mindMapMocks.transformToMarkdown).toHaveBeenCalled()
     expect(click).toHaveBeenCalled()
 
-    exportMindMap(mm, 'txt')
-    exportMindMap(mm, 'cardhtml')
+    await exportMindMap(mm, 'txt')
+    await exportMindMap(mm, 'cardhtml')
     expect(URL.createObjectURL).toHaveBeenCalled()
     expect(click).toHaveBeenCalledTimes(3)
   })
 
-  it('walks nested txt nodes and errors on unknown types', () => {
+  it('walks nested txt nodes and errors on unknown types', async () => {
     const mm = makeMindMap({
       getData: vi.fn(() => ({
         root: {
@@ -191,18 +217,18 @@ describe('exportMindMap', () => {
         },
       })),
     })
-    exportMindMap(mm, 'txt')
-    exportMindMap(mm, 'unknown')
+    await exportMindMap(mm, 'txt')
+    await exportMindMap(mm, 'unknown')
     expect(modalMocks.error).toHaveBeenCalled()
   })
 
-  it('shows exportFailed when export throws', () => {
+  it('shows exportFailed when export throws', async () => {
     const mm = makeMindMap({
       export: vi.fn(() => {
         throw new Error('boom')
       }),
     })
-    exportMindMap(mm, 'json')
+    await exportMindMap(mm, 'json')
     expect(modalMocks.error.mock.calls.at(-1)[0].title).toMatch(/导出失败|exportFailed/)
   })
 })
@@ -304,6 +330,42 @@ describe('switchTextNoteMode', () => {
     expect(out.data.text).toBe('')
     expect(out.children[0].data.text).toBe('only')
   })
+
+  it('prefers updateData and does not reset the camera', () => {
+    const mm = makeMindMap({
+      updateData: vi.fn(),
+      getData: vi.fn(() => ({ data: { text: 'T', note: 'N' }, children: [] })),
+    })
+    switchTextNoteMode(mm, 'detail')
+    expect(mm.updateData).toHaveBeenCalled()
+    expect(mm.setData).not.toHaveBeenCalled()
+    expect(mm.view.reset).not.toHaveBeenCalled()
+  })
+})
+
+describe('combineText / buildCardHtml / debugLog', () => {
+  it('combines and strips notes without duplicating the suffix', () => {
+    const br = '\n注：'
+    expect(combineText({ text: 'T', note: 'N' }, 'detail', br)).toBe(`T${br}N`)
+    expect(combineText({ text: `T${br}N`, note: 'N' }, 'detail', br)).toBe(`T${br}N`)
+    expect(combineText({ text: `T${br}N`, note: 'N' }, 'simple', br)).toBe('T')
+    expect(combineText({ text: 'plain' }, 'simple', br)).toBe('plain')
+    expect(combineText({}, 'detail', br)).toBe('')
+  })
+
+  it('injects compact JSON into the card template placeholders', () => {
+    const html = buildCardHtml({ data: { text: 'root' }, children: [{ data: { text: 'c' } }] })
+    expect(html).toContain('{{REPLACE:cardData BEGIN}}')
+    expect(html).toContain('"text":"root"')
+    expect(html).not.toMatch(/"text": "root"/)
+    expect(buildCardHtml(null)).toContain('{}')
+    expect(buildCardHtml()).toContain('{}')
+  })
+
+  it('debugLog is callable', () => {
+    expect(typeof IS_DEV).toBe('boolean')
+    expect(() => debugLog('perf-test')).not.toThrow()
+  })
 })
 
 describe('export/import fallbacks', () => {
@@ -321,8 +383,8 @@ describe('export/import fallbacks', () => {
         throw 'export-string'
       }),
     })
-    exportMindMap(mm, 'cardhtml')
-    exportMindMap(mm, 'json')
+    await exportMindMap(mm, 'cardhtml')
+    await exportMindMap(mm, 'json')
     await importFileToMindMap({ text: async () => { throw 'no-msg' } }, mm)
     await importFileToMindMap({ name: 'a.json', text: async () => { throw 'json-string' } }, mm)
 

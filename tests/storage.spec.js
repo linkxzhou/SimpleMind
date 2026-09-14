@@ -2,13 +2,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   SETTINGS_KEY,
   MINDMAP_KEY,
+  MINDMAP_SAVE_DEBOUNCE_MS,
   loadSettings,
   saveSettings,
   loadMindMapData,
   saveMindMapData,
+  scheduleMindMapSave,
+  flushMindMapSave,
+  resetMindMapSaveState,
 } from '../src/storage.js'
 
 afterEach(() => {
+  resetMindMapSaveState()
   sessionStorage.clear()
   vi.restoreAllMocks()
   vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -146,5 +151,36 @@ describe('loadMindMapData / saveMindMapData', () => {
     })
     expect(() => saveMindMapData({ data: { text: 'x' } })).toThrow(quota)
     expect(console.error).toHaveBeenCalled()
+  })
+
+  it('skips a write when the serialized payload is unchanged', () => {
+    const map = { data: { text: 'same' }, children: [] }
+    saveMindMapData(map)
+    const spy = vi.spyOn(Storage.prototype, 'setItem')
+    saveMindMapData(map)
+    expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('scheduleMindMapSave / flushMindMapSave', () => {
+  it('debounces writes and flushes the latest payload', () => {
+    vi.useFakeTimers()
+    const a = { data: { text: 'a' }, children: [] }
+    const b = { data: { text: 'b' }, children: [] }
+    scheduleMindMapSave(a)
+    scheduleMindMapSave(b)
+    expect(sessionStorage.getItem(MINDMAP_KEY)).toBeNull()
+    vi.advanceTimersByTime(MINDMAP_SAVE_DEBOUNCE_MS)
+    expect(JSON.parse(sessionStorage.getItem(MINDMAP_KEY))).toEqual(b)
+    vi.useRealTimers()
+  })
+
+  it('flushMindMapSave writes immediately and is a no-op without pending data', () => {
+    vi.useFakeTimers()
+    scheduleMindMapSave({ data: { text: 'pending' }, children: [] })
+    flushMindMapSave()
+    expect(JSON.parse(sessionStorage.getItem(MINDMAP_KEY)).data.text).toBe('pending')
+    flushMindMapSave()
+    vi.useRealTimers()
   })
 })

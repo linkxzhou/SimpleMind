@@ -1,7 +1,60 @@
 # 应用性能问题分析
 
-> **范围声明：先不写代码 / plan only。**  
-> 本文只根据现有源码做瓶颈假设、测量方法和优化优先级；本 PR 不改运行时代码、不改构建配置、不加 benchmark 文件。
+> **落地状态（本实现 PR）：P0 已落地；P1 已落地（卡片 iframe 虚拟滚动除外）；P2 已落地实用项。**  
+> 配套测试网见 [test-coverage-95.md](./test-coverage-95.md)。本文件保留原分析，并在第 0 节记录测量与实现结果。
+
+## 0. 本 PR 落地结果
+
+实现顺序与第 5 节一致：先基线，再 P0（debounce 写入 → 模式切换 → DEV 日志 / Loading → 导出插件代码分割），再 P1（卡片模板、PDF worker/提前 break、TouchEvent、主题 debounce），再 P2（模板 glob、死文件、`min-height`、抽屉按需渲染）。
+
+回归：`yarn test` 128 条全绿；`yarn coverage` 语句/行/函数 **100%**，分支 **97.7%**（阈值 95）。未改覆盖率分母排除规则，未抽大段新架构。
+
+### 0.1 包体（`yarn build`，Vite 报告）
+
+| 资产 | 优化前 | 优化后 | 说明 |
+| --- | --- | --- | --- |
+| 入口 `index-*.js` | **1832.11 KB / gzip 604.05 KB** | **1130.45 KB / gzip 342.86 KB** | −38% raw / −43% gzip |
+| `ExportPDF-*.js` | （打在入口） | 428.96 KB / gzip 177.82 KB | 首次导出 PDF 才加载 |
+| `xmind-*.js` | （打在入口） | 174.60 KB / gzip 54.23 KB | 导入/导出 XMind 才加载 |
+| `markdown-*.js` | （打在入口） | 57.35 KB / gzip 16.65 KB | md 导入导出才加载 |
+| `Export-*.js` | （打在入口） | 7.53 KB / gzip 3.22 KB | 光栅/通用导出才加载 |
+| `pdf-*.js`（pdfjs 知识库） | 371.78 KB / gzip 112.38 KB（已动态） | 371.85 KB / gzip 112.42 KB | 仍仅上传 PDF 时加载 |
+| `pdf.worker.min-*.js` | jsDelivr CDN，版本未钉 | 本地 **1133.66 KB** 异步块 | 与 `pdfjs-dist@3.11.174` 同版本 |
+| `src/templates/card.html` | 27.6 KB（内嵌整份示例 JSON） | **7.6 KB**（占位 `{}`） | P1-1 |
+| `bayesian-thinking1..json` | 22 KB 未引用 | **已删除** | P2-1 |
+
+入口 chunk 中 **不再出现** ExportPDF / XMind / markdown 解析器。模板改为 `import.meta.glob('./templates/*.json')` 按需 chunk，抽屉点「打开」才加载。
+
+### 0.2 运行时（本环境 Node 测量 + 代码路径）
+
+本 CI 机器上 `JSON.stringify` 单次很便宜（Heavy `default3.json` 中位约 **0.06 ms**，远低于计划 5–8 ms 判据）。P0-1 仍按计划落地 debounce：编辑路径每 400 ms 最多一次 `sessionStorage` 写入，并在 `visibilitychange=hidden` / `pagehide` / 卸载时 flush。Heavy 上 pretty-print 卡片 JSON 比 compact 大约 **1.48×**（54.8 KB vs 37.1 KB），已取消 `null, 2`。
+
+| 项 | 证据 |
+| --- | --- |
+| P0-1 `data_change` debounce | `scheduleMindMapSave` 400 ms；相同 JSON 跳过 `setItem`；隐藏标签 flush |
+| P0-2 模式切换 | 去掉额外 `JSON.parse(JSON.stringify)` 与 `view.reset`；优先 `updateData`（内部 `render`）；抽出 `combineText` |
+| P0-3 代码分割 | 见上表；`ensureExportPlugins` + `mindMap.addPlugin` |
+| P0-4 Loading / 日志 | Loading 只展示 `pleaseWait`，宽 480；`console.log` 走 `import.meta.env.DEV` / `debugLog` |
+| P1-1 卡片 | `buildCardHtml` compact stringify；模板去内嵌数据 |
+| P1-2 PDF | 累计 ≥ 20k 即 `break`；本地 worker；单测 5 页只解析 2 页 |
+| P1-3 TouchEvent | 监听绑在 `mindMap.el`，`{ passive: true }`；容器外不再进入 window 回调 |
+| P1-4 主题 / 复制 | 颜色等 `setThemeConfig` debounce 120 ms；`structuredClone` + JSON 回落 |
+| P2-1 模板 | glob 按需；删除死文件 |
+| P2-2 布局 / 抽屉 | `#mindMapContainer` `min-height: 100vh`；抽屉内容 `v-if="drawerOpen"` |
+
+### 0.3 未做 / 明确推迟
+
+| 项 | 原因 |
+| --- | --- |
+| `jsonrepair` / AI 解析进 Worker | 计划后续方向；改动面大，且无 1 MB fixture 基线超时证据 |
+| 降低 `max_tokens: 32000` | 影响生成质量，属产品决策 |
+| 卡片 iframe 内虚拟滚动 | 计划「后续方向」；模板已去内嵌数据 + compact JSON，虚拟列表要改 iframe 运行时 |
+| 超配额改 IndexedDB | 计划可选；现有 catch + warn 保留 |
+| 移出 `public/math*.html` + `amc801.html` | 无源码引用，但可能是有意静态副本；未证实无外链 |
+| 主题包 / Ant Design 换库、重写 mind-map | 计划明确不要先做 |
+| Lighthouse TBT / 真机 Performance | 本环境无浏览器 Lighthouse 基线；包体与单测路径已记录 |
+
+---
 
 配套文档：[test-coverage-95.md](./test-coverage-95.md)（先有测试再改热路径，避免无回归网）。
 
@@ -68,7 +121,7 @@ AI 接口时延（数秒到 README 所说约 3 分钟）**不在前端可控范�
 
 **验证通过的判据：** 单次按键/拖拽若 stringify > 5–8 ms，或 1 秒内 > 10 次写入，则确认。
 
-**后续优化方向（仅规划）：** `requestIdleCallback` / `setTimeout` debounce 300–500 ms；写前浅比较；超配额改 IndexedDB。测试网见覆盖率文档 §7。
+**后续优化方向（本 PR 已落地 debounce 400 ms + 写前 JSON 相等则跳过 + `visibilitychange`/`pagehide` flush）。** `requestIdleCallback` 未叠加以避免与 debounce 竞态；超配额仍 catch，未切 IndexedDB。测试网见覆盖率文档 §7。
 
 ---
 
@@ -88,7 +141,7 @@ AI 接口时延（数秒到 README 所说约 3 分钟）**不在前端可控范�
 
 **判据：** 切换引起 > 50 ms 长任务即成立。
 
-**后续方向：** 原地改 `node.data.text` 或官方批量 API；避免 `view.reset`（改为 `render`）；抽纯函数 `combineText` 便于测。
+**后续方向（本 PR 已落地）：** 抽出纯函数 `combineText`；不再二次深拷贝；优先 `updateData`（库内 `render`），否则 `setData`；**不再** `view.reset`。
 
 ---
 
@@ -114,11 +167,7 @@ Network：冷加载（disable cache）DOMContentLoaded、主 JS 耗时。
 
 **判据：** 主 chunk gzip > 300–400 KB，或 PDF/XMind 出现在入口 chunk。
 
-**后续方向：**
-
-- 导出/导入插件改为 `exportMap` / `importFileToMindMap` 时再 `import()`。
-- Ant Design 确认 tree-shaking（看 visualizer 是否含未用组件）。
-- `pdfjs-dist` 仅知识库上传路径加载（已动态 import，确认未被静态导入图连上）。
+**后续方向（本 PR 已落地动态 `import()`）：** 导出/导入插件在 `exportMindMap` / XMind·Markdown 导入时再加载；入口 gzip 从 604 KB 降到 343 KB，PDF/XMind 不在入口。Ant Design 未换库。`pdfjs-dist` 仍仅知识库路径动态 import，worker 改为本地打包。
 
 ---
 
@@ -142,7 +191,7 @@ Network：冷加载（disable cache）DOMContentLoaded、主 JS 耗时。
 
 **判据：** `jsonrepair` > 50 ms，或 Loading Modal 打开 > 16 ms 输入延迟。
 
-**后续方向：** Worker 里 parse/repair；Loading 不展示全文 prompt（可折叠）；去掉或降级生产日志；按模型降低 `max_tokens`；插入节点分批。
+**后续方向（本 PR 已落地 Loading 去全文 + DEV 门控 `console.log`）。** `jsonrepair` Worker、降低 `max_tokens`、插入分批未做（见 §0.3）。
 
 ---
 
@@ -158,7 +207,7 @@ Network：冷加载（disable cache）DOMContentLoaded、主 JS 耗时。
 
 **判据：** 打开卡片 > 100 ms 或卡片数 > 200 时滚动掉帧。
 
-**后续方向：** 模板去掉内嵌示例，只留占位符；`stringify` 不 pretty；抽 `buildCardHtml(root)`；iframe 内折叠/虚拟滚动。
+**后续方向（本 PR 已落地模板去内嵌 + 非 pretty + `buildCardHtml`）。** iframe 内虚拟滚动未做。
 
 ---
 
@@ -183,7 +232,7 @@ normalize + clampLength(20000)
 
 **判据：** 50 页中「超过 20k 之后的页」仍被解析；或 worker 下载 > 200 ms。
 
-**后续方向：** 本地打包 worker；累计长度 ≥ max 时 break；小并发（注意 pdf.js worker 限制）。
+**后续方向（本 PR 已落地）：** 本地打包 worker；累计长度 ≥ 20k 时 break。未做页级并发。
 
 ---
 
@@ -199,7 +248,7 @@ normalize + clampLength(20000)
 
 **判据：** 容器外 `touchmove` 仍进入 JS，或滚动出现明显 jank。
 
-**后续方向：** 监听绑到 `el`；容器外不 `preventDefault`；passive 能开则开。**回归测试必须覆盖「容器外触摸不拦截 Select」**（覆盖率计划 P1 TouchEvent）。
+**后续方向（本 PR 已落地）：** 监听绑到 `el`；全部 `{ passive: true }`（本插件不 `preventDefault`）。容器外触摸单测保留。
 
 ---
 
@@ -214,7 +263,7 @@ normalize + clampLength(20000)
 
 **如何测量：** 切换主题、复制大子树、导出 PNG，看长任务。注意 watch：改 `theme` 时会写回 `backgroundColor` 等，可能二次触发（代码在 theme 分支 `return`，但仍要确认无抖动）。
 
-**后续方向：** 主题配置 debounce；导出放 Web Worker/提示等待（库若支持）；复制改结构化 clone。
+**后续方向（本 PR 已落地主题 debounce 120 ms + `structuredClone`）。** 导出放 Worker 未做（库 API 同步）。
 
 ---
 
@@ -226,7 +275,7 @@ Vite 会把这些 JSON 当静态资产发出。抽屉里「打开: 示例」才 
 
 **如何测量：** `yarn build` 后 `dist/assets` 是否出现全部模板；抽屉点开 Network 是否按需加载（预期按需，好的）以及构建时间。
 
-**后续方向：** 不要在 `const.js` 静态枚举全部 URL，改为按 model 动态 `import()`；删除未引用模板；JSON 压缩（去 note 空白——产品决策）。
+**后续方向（本 PR 已落地）：** `import.meta.glob` 按需；删除未引用 `bayesian-thinking1..json`。未做「去 note 空白」产品决策。
 
 ---
 
@@ -235,8 +284,8 @@ Vite 会把这些 JSON 当静态资产发出。抽屉里「打开: 示例」才 
 | 点 | 位置 | 假设 | 测量 |
 | --- | --- | --- | --- |
 | `public/math*.html` + `amc801.html` | `public/` | ~557 KB 永远可下载，可能是卡片/课程静态副本 | 是否仍被链接；无引用则可移出发布物 |
-| `#mindMapContainer { min-height: 1000px }` | `public/app.css` | 移动端多余滚动高度 | 布局检查 |
-| 抽屉一次渲染全部 thinking model + 全部示例按钮 | `App.vue` 模板 | 8 个 model × 最多 12 个示例，初次打开 Drawer 的 VNode 成本 | 打开抽屉的长任务 |
+| `#mindMapContainer { min-height: 1000px }` | `public/app.css` | 移动端多余滚动高度 | **已改为 `min-height/height: 100vh`** |
+| 抽屉一次渲染全部 thinking model + 全部示例按钮 | `App.vue` 模板 | 8 个 model × 最多 12 个示例，初次打开 Drawer 的 VNode 成本 | **内容包在 `v-if="drawerOpen"` 内** |
 | `iconList` 内联巨大 base64 SVG | `src/const.js` | 进主包 | bundle 分析 |
 | `card.html` 内 `colors` 大数组 + 哈希循环 | 每张卡片 | 可忽略，除非节点极多 | 与 P1-1 一起测 |
 | `importFileToMindMap` 对 json 一次 `file.text()` + `JSON.parse` | `utils.js` | 数 MB 的 .smm 会卡 | 用 2 MB fixture |
@@ -281,22 +330,22 @@ Vite 会把这些 JSON 当静态资产发出。抽屉里「打开: 示例」才 
 
 ---
 
-## 5. 建议优化顺序（实现阶段，非本 PR）
+## 5. 建议优化顺序（实现阶段）
 
-与覆盖率工作交错，避免无测试改热路径。
+与覆盖率工作交错。本 PR 按此表 1–9 落地（第 0 步基线见 §0.1）。
 
-| 顺序 | 项 | 依赖测试 | 预期收益 | 风险 |
+| 顺序 | 项 | 依赖测试 | 预期收益 | 本 PR |
 | --- | --- | --- | --- | --- |
-| 0 | 建立 §4 基线数字 | 无 | 决策依据 | — |
-| 1 | `data_change` debounce / idle 写入 | storage + App `data_change` 用例 | 编辑流畅 | 关页前最后一次可能丢失 → `visibilitychange` flush |
-| 2 | `switchTextNoteMode` 避免整树 reset | utils 单测锁行为 | 大图模式切换 | 与库数据约定 |
-| 3 | 去掉生产路径大 `console.log`；Loading 不再塞满 prompt | libai / App AI 用例 | AI 完成瞬间不卡 DevTools | 调试变难 → `import.meta.env.DEV` |
-| 4 | 导出插件与 pdfjs 确认代码分割 | 导入导出单测仍 mock 动态模块 | 首屏 JS 下降 | 第一次导出略慢 |
-| 5 | 卡片模板去内嵌数据 + 非 pretty stringify | 卡片/导出单测 | 打开卡片更快 | 正则占位符要锁住 |
-| 6 | PDF 提前 break + 本地 worker | parser mock + 一次手工大 PDF | 上传知识库 | worker 打包路径 |
-| 7 | TouchEvent 缩小监听范围 | TouchEvent 容器内外用例 | 移动端滚动 | 回归官方插件原 bug |
-| 8 | 模板 URL 按需、删死文件 `bayesian-thinking1..json` | const/templates 解析测试 | 构建与仓库卫生 | 确认无外链 |
-| 9 | 主题 watch debounce | App 主题用例 | 拖动颜色选择器不抖 | 时序 |
+| 0 | 建立 §4 基线数字 | 无 | 决策依据 | `yarn build` 入口 gzip 604 KB |
+| 1 | `data_change` debounce / idle 写入 | storage + App `data_change` 用例 | 编辑流畅 | **已做**（400 ms + flush；未叠 idle） |
+| 2 | `switchTextNoteMode` 避免整树 reset | utils 单测锁行为 | 大图模式切换 | **已做** |
+| 3 | 去掉生产路径大 `console.log`；Loading 不再塞满 prompt | libai / App AI 用例 | AI 完成瞬间不卡 DevTools | **已做** |
+| 4 | 导出插件与 pdfjs 确认代码分割 | 导入导出单测仍 mock 动态模块 | 首屏 JS 下降 | **已做**（入口 gzip 343 KB） |
+| 5 | 卡片模板去内嵌数据 + 非 pretty stringify | 卡片/导出单测 | 打开卡片更快 | **已做**（虚拟滚动未做） |
+| 6 | PDF 提前 break + 本地 worker | parser mock + 一次手工大 PDF | 上传知识库 | **已做**（单测 5 页→2 页） |
+| 7 | TouchEvent 缩小监听范围 | TouchEvent 容器内外用例 | 移动端滚动 | **已做** |
+| 8 | 模板 URL 按需、删死文件 `bayesian-thinking1..json` | const/templates 解析测试 | 构建与仓库卫生 | **已做** |
+| 9 | 主题 watch debounce | App 主题用例 | 拖动颜色选择器不抖 | **已做**（120 ms） |
 
 **不要先做：** 重写 mind-map 引擎、上 WebGL、为 Ant Design 换库。库内部布局/绘制若仍是 Heavy 数据集上的主导成本，应向 `simple-mind-map` 查 `enableFreeDrag`、节点数量、折叠策略，而不是先改业务代码。
 
@@ -308,22 +357,22 @@ Vite 会把这些 JSON 当静态资产发出。抽屉里「打开: 示例」才 
 
 | 指标 | 建议门槛（需基线后微调） |
 | --- | --- |
-| 主 JS gzip | 记录现状；代码分割后入口 chunk 下降，PDF/XMind 不在入口 |
-| 编辑时 `saveMindMapData` | Heavy 数据集下每秒 ≤ 2 次，单次 stringify 中位 < 5 ms（视机器校准） |
-| 简单/详细切换 | Heavy 上无连续多帧 > 50 ms，或总时长比现状降 50%+ |
-| 卡片打开 | Heavy 上 < 100 ms 到 iframe `src` 赋值（不含 iframe 内部绘制） |
-| PDF 20k 截断 | 不再解析截断点之后的页 |
-| Lighthouse TBT（预览、模拟 Moto G） | 记录基线，优化后不回退 |
-| 回归 | `yarn test`（待覆盖率落地）全绿；容器外触摸不拦截 Select |
+| 主 JS gzip | **已记录：** 604 → **343 KB**；PDF/XMind 不在入口 |
+| 编辑时 `saveMindMapData` | debounce 400 ms ⇒ ≤ ~2.5 次/秒；相同 payload 跳过写入 |
+| 简单/详细切换 | 无二次深拷贝、无 `view.reset` |
+| 卡片打开 | compact JSON + 模板 27.6→7.6 KB；未测 iframe 内绘制 |
+| PDF 20k 截断 | **单测确认**超过 20k 后的页不再 `getPage` |
+| Lighthouse TBT（预览、模拟 Moto G） | 本环境未跑；未作为回归门槛 |
+| 回归 | `yarn test` 128 全绿；容器外触摸仍忽略 |
 
 ---
 
 ## 7. 风险与非目标
 
-- **先不写代码 / plan only。** 未测量就改 debounce/动态 import 可能引入：设置未保存、第一次导出失败、iOS 触摸回退。
-- 性能优化与 95% 覆盖率争抢同一批文件（`App.vue`、`utils.js`、`libai.js`）。建议：**先 P0 单测，再动对应热路径**。
+- 性能优化已按第 5 节顺序落地；未测量的 Lighthouse TBT / 真机长任务见 §0.3。
+- 性能优化与 95% 覆盖率争抢同一批文件。本 PR **在覆盖率网之上改热路径**，并保持阈值。
 - `sessionStorage` 在部分 WebView 配额更小，大图失败是功能+性能双重问题。
-- 依赖 CDN worker 有隐私/可用性风险，不单是速度。
+- PDF worker 已改为本地打包，不再默认请求 jsDelivr。
 - 不把「AI 模型慢」算前端 bug；前端只保证请求期间 UI 可取消、不重复点击（已有 `isGenerating`）。
 
 ---
@@ -332,11 +381,11 @@ Vite 会把这些 JSON 当静态资产发出。抽屉里「打开: 示例」才 
 
 | 症状（假设） | 文件 | 符号 |
 | --- | --- | --- |
-| 编辑卡顿 / 存储配额 | `App.vue`, `storage.js` | `data_change`, `saveMindMapData` |
-| 模式切换整图闪烁 | `utils.js`, `App.vue` | `switchTextNoteMode`, `toggleMindMapMode` |
-| 首屏 JS 大 | `utils.js`, `App.vue`, `main.js` | `MindMap.usePlugin`, 具名 antd 导入 |
-| AI 完成瞬间卡 | `libai.js`, `App.vue` | `extractIdeas`, `showLoading`, `aiGenerate` |
-| 卡片打开慢 | `App.vue`, `card.html`, `utils.js` | `showCardModal`, `renderNodes` |
+| 编辑卡顿 / 存储配额 | `App.vue`, `storage.js` | `data_change`, `scheduleMindMapSave` |
+| 模式切换整图闪烁 | `utils.js`, `App.vue` | `switchTextNoteMode`, `combineText`, `toggleMindMapMode` |
+| 首屏 JS 大 | `utils.js`, `App.vue`, `main.js` | `ensureExportPlugins`, 具名 antd 导入 |
+| AI 完成瞬间卡 | `libai.js`, `App.vue` | `extractIdeas`, `showLoading`, `debugLog` |
+| 卡片打开慢 | `App.vue`, `card.html`, `utils.js` | `showCardModal`, `buildCardHtml` |
 | PDF 上传慢 | `parser.js` | `extractTextFromPDF`, `clampLength` |
-| 移动端滚动/下拉异常 | `TouchEvent.js` | `bindEvent`, `onTouchmove` |
-| 构建含全部示例 | `const.js` | `thinkingModels[].example[].content` |
+| 移动端滚动/下拉异常 | `TouchEvent.js` | `bindEvent`（`mindMap.el`） |
+| 构建含全部示例 | `const.js` | `loadExampleTemplate`, `import.meta.glob` |

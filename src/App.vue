@@ -52,6 +52,7 @@
         v-model:open="drawerOpen"
         @close="onClose"
     >
+        <template v-if="drawerOpen">
         <div
             v-for="item in thinkingModels"
             :key="item.value"
@@ -78,6 +79,7 @@
                 </div>
             </a-card>
         </div>
+        </template>
     </a-drawer>
 
     <div
@@ -330,14 +332,15 @@ import {
     AppstoreOutlined,
     LoadingOutlined,
 } from '@ant-design/icons-vue'
-import cardTemplate from './templates/card.html?raw'
 import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList } from './utils.js'
+import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList, buildCardHtml, debugLog } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions, expandPrompt } from './libai.js'
-import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList, DEFAULT_MODEL, modelOptions } from './const.js'
+import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, scheduleMindMapSave, flushMindMapSave } from './storage.js'
+import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList, DEFAULT_MODEL, modelOptions, loadExampleTemplate } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
+
+const THEME_CONFIG_DEBOUNCE_MS = 120
 
 // -----------------------------------------------------------------------------
 // 1. 状态定义 (State Definitions)
@@ -400,9 +403,20 @@ const getNodeText = (node) => node?.data?.text || (node?.getData?.()?.text) || '
 const getNodeSystemPrompt = (node) => node?.data?.nextSystemPrompt || (node?.getData?.()?.nextSystemPrompt) || ''
 
 // 深拷贝节点数据 (去除uid)
+const clonePlain = (value) => {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value)
+        } catch {
+            // DOM-ish values fall back to JSON
+        }
+    }
+    return JSON.parse(JSON.stringify(value))
+}
+
 const cloneNodeData = (node) => {
     const raw = node?.getData ? node.getData() : { data: node?.data || {}, children: node?.children || [] }
-    const copy = JSON.parse(JSON.stringify(raw))
+    const copy = clonePlain(raw)
     const stripUid = (n) => {
         if (n?.data) delete n.data.uid
         if (Array.isArray(n?.children)) n.children.forEach(stripUid)
@@ -419,11 +433,7 @@ const showCardModal = async () => {
     isCardLoading.value = true
     try {
         const data = mindMapRef.value.getData(true)
-        const jsonStr = JSON.stringify(data?.root || {}, null, 2)
-        const content = cardTemplate.replace(
-            /\/\/ {{REPLACE:cardData BEGIN}}[\s\S]*?\/\/ {{REPLACE:cardData END}}/,
-            `// {{REPLACE:cardData BEGIN}}\n${jsonStr};\n// {{REPLACE:cardData END}}`
-        )
+        const content = buildCardHtml(data?.root || {})
         const blob = new Blob([content], { type: 'text/html' })
         cardHtmlUrl.value = URL.createObjectURL(blob)
         cardModalOpen.value = true
@@ -476,7 +486,7 @@ const loadSettings = () => {
 const saveSettings = () => {
     try {
         saveSettingsToStorage(settings.value)
-        console.log('设置已保存到 sessionStorage')
+        debugLog('设置已保存到 sessionStorage')
     } catch (e) {
         console.error('保存设置失败：', e)
     }
@@ -484,6 +494,8 @@ const saveSettings = () => {
 }
 
 // 监听主题变化
+let themeConfigTimer = null
+
 watch(
     () => [
         settings.value.backgroundColor,
@@ -496,11 +508,14 @@ watch(
     ([bgColor, lineColor, lineWidth, lineStyle, fontFamily, theme], 
     [oldBg, oldLine, oldWidth, oldStyle, oldFont, oldTheme]) => {
         if (mindMapRef.value) {
-            // 主题切换逻辑
             if (theme !== oldTheme) {
+                if (themeConfigTimer != null) {
+                    clearTimeout(themeConfigTimer)
+                    themeConfigTimer = null
+                }
                 mindMapRef.value.setTheme(theme)
                 const targetTheme = themeList.find(item => item.value === theme)
-                console.log('targetTheme', targetTheme.theme)
+                debugLog('targetTheme', targetTheme?.theme)
                 if (targetTheme && targetTheme.theme) {
                     settings.value.backgroundColor = targetTheme.theme.backgroundColor
                     settings.value.lineColor = targetTheme.theme.lineColor
@@ -511,15 +526,21 @@ watch(
                     return
                 }
             }
-            // 自定义样式应用
-            const themeConfig = {
-                backgroundColor: bgColor,
-                lineColor: lineColor,
-                lineWidth: lineWidth,
-                lineStyle: lineStyle,
-                fontFamily: fontFamily
+            const applyThemeConfig = () => {
+                if (!mindMapRef.value) return
+                mindMapRef.value.setThemeConfig({
+                    backgroundColor: bgColor,
+                    lineColor: lineColor,
+                    lineWidth: lineWidth,
+                    lineStyle: lineStyle,
+                    fontFamily: fontFamily
+                })
             }
-            mindMapRef.value.setThemeConfig(themeConfig)
+            if (themeConfigTimer != null) clearTimeout(themeConfigTimer)
+            themeConfigTimer = setTimeout(() => {
+                themeConfigTimer = null
+                applyThemeConfig()
+            }, THEME_CONFIG_DEBOUNCE_MS)
         }
     }
 )
@@ -706,10 +727,15 @@ const newMap = async (tpl) => {
             if (s.startsWith('{') || s.startsWith('[')) {
                 data = JSON.parse(s)
             } else {
-                const res = await fetch(s)
-                if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
-                const text = await res.text()
-                data = JSON.parse(text)
+                const loaded = await loadExampleTemplate(s)
+                if (loaded) {
+                    data = loaded
+                } else {
+                    const res = await fetch(s)
+                    if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
+                    const text = await res.text()
+                    data = JSON.parse(text)
+                }
             }
         } else if (tpl && typeof tpl === 'object') {
             data = (tpl && tpl.data) || { data: { text: '主题' }, children: [] }
@@ -780,7 +806,8 @@ const aiGenerate = async () => {
         settings.value
     )
 
-    showLoading(t('aiGenerating') + new Date().toLocaleString() + '）', `🧠 Prompt: \n${prompt}`)
+    showLoading(t('aiGenerating') + new Date().toLocaleString() + '）', t('pleaseWait'))
+    debugLog('AI Prompt:', prompt)
     try {
         const { data } = await requestCompletions({
             api: settings.value.api,
@@ -791,7 +818,7 @@ const aiGenerate = async () => {
         })
 
         const ideas = libExtractIdeas(data, count)
-        console.log('解析到子节点：', JSON.stringify(ideas), `共${ideas.length}个`)
+        debugLog('解析到子节点：', ideas?.length)
         hideLoading()
         if (ideas.length) {
             mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
@@ -864,20 +891,42 @@ onMounted(() => {
         currentNode.value = node
     })
 
-    // 数据变更时持久化到 sessionStorage
+    const flushPendingMindMap = () => {
+        try {
+            flushMindMapSave()
+        } catch (e) {
+            console.warn('写入 sessionStorage 失败：', e)
+        }
+    }
+
+    const onVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') flushPendingMindMap()
+    }
+
+    // 数据变更时防抖写入 sessionStorage，隐藏标签页时立即 flush
     mindMap.on('data_change', (data) => {
         try {
-            saveMindMapData(data)
+            scheduleMindMapSave(data)
         } catch (e) {
             console.warn('写入 sessionStorage 失败：', e)
         }
     })
 
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', flushPendingMindMap)
+
     // 点击其他位置关闭右键菜单
     document.addEventListener('click', hideContextMenu)
-})
 
-onUnmounted(() => {
-    document.removeEventListener('click', hideContextMenu)
+    onUnmounted(() => {
+        if (themeConfigTimer != null) {
+            clearTimeout(themeConfigTimer)
+            themeConfigTimer = null
+        }
+        flushPendingMindMap()
+        document.removeEventListener('visibilitychange', onVisibilityChange)
+        window.removeEventListener('pagehide', flushPendingMindMap)
+        document.removeEventListener('click', hideContextMenu)
+    })
 })
 </script>

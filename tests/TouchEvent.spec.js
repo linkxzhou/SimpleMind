@@ -59,18 +59,24 @@ describe('TouchEvent', () => {
     globalThis.MouseEvent = OriginalMouseEvent
   })
 
-  it('binds and unbinds window listeners with passive: false', () => {
-    const add = vi.spyOn(window, 'addEventListener')
-    const remove = vi.spyOn(window, 'removeEventListener')
+  it('binds and unbinds listeners on mindMap.el with passive: true', () => {
+    const add = vi.spyOn(el, 'addEventListener')
+    const remove = vi.spyOn(el, 'removeEventListener')
     const p = new TouchEvent({ mindMap })
-    expect(add).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: false })
-    expect(add).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: false })
-    expect(add).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: false })
-    expect(add).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: false })
+    expect(add).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: true })
+    expect(add).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: true })
+    expect(add).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: true })
+    expect(add).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: true })
     p.beforePluginRemove()
     p.beforePluginDestroy()
     expect(remove).toHaveBeenCalledWith('touchstart', expect.any(Function))
     expect(remove).toHaveBeenCalledWith('touchend', expect.any(Function))
+    p.unBindEvent()
+  })
+
+  it('skips bind/unbind when el is missing', () => {
+    const p = new TouchEvent({ mindMap: { el: null } })
+    expect(() => p.unBindEvent()).not.toThrow()
     p.unBindEvent()
   })
 
