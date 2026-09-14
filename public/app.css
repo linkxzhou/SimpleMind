@@ -327,6 +327,10 @@ body {
     display: inline-block;
 }
 
+.ai-prompt-modal-wrap .ant-modal .ant-modal-content .ant-modal-header {
+    background: transparent;
+}
+
 .ai-prompt-modal-wrap .ant-modal-body {
     padding: var(--space-3) var(--space-4);
 }
@@ -347,14 +351,16 @@ body {
     padding-bottom: 24px;
 }
 
-.card-modal-wrap .ant-modal-content {
+.card-modal-wrap .ant-modal .ant-modal-content {
     background: var(--card-page-bg);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: var(--chrome-shadow);
 }
 
-.card-modal-wrap .ant-modal-header {
+/* Beat Ant Design CSS-in-JS headerBg (colorBgElevated / #fff). */
+.card-modal-wrap .ant-modal .ant-modal-content .ant-modal-header {
+    background: var(--card-page-bg);
     border-bottom: 1px solid var(--chrome-border);
     margin-bottom: 0;
     padding: var(--space-3) var(--space-4);
@@ -369,7 +375,7 @@ body {
     color: var(--chrome-text);
 }
 
-.card-modal-wrap .ant-modal-body {
+.card-modal-wrap .ant-modal .ant-modal-content .ant-modal-body {
     background: var(--card-page-bg);
     padding: 0;
 }
