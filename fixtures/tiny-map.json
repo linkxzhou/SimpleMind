@@ -1,0 +1,9 @@
+{
+  "data": { "text": "主题" },
+  "children": [
+    {
+      "data": { "text": "子节点", "note": "说明" },
+      "children": []
+    }
+  ]
+}
