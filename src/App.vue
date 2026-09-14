@@ -3,50 +3,69 @@
     :theme="{
       token: {
         colorPrimary: settings.themeRootFillColor || '#00c0b8',
+        borderRadius: 8,
       },
     }"
   >
+    <div
+      class="app-shell"
+      :style="{ '--color-primary': settings.themeRootFillColor || '#00c0b8' }"
+    >
     <div class="toolbar">
         <div class="toolbar-inner">
-            <div class="zoom-control">
+            <div class="toolbar-group zoom-control mobile-hide">
                 <a-button class="mobile-hide" size="small" shape="circle" :icon="h(MinusOutlined)" @click="zoomOut" />
                 <span class="zoom-percent mobile-hide">{{ Math.round(zoom * 100) }}%</span>
                 <a-button class="mobile-hide" size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
             </div>
 
-            <a-button :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
-            <a-button :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
-            <a-button :icon="h(FileAddOutlined)" @click="newMap" :title="t('new')"></a-button>
-            <a-button :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
-            <a-button :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
-            <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')+t('import')"></a-button>
-            <a-button
-                :icon="h(SisternodeOutlined)"
-                @click="toggleMindMapMode"
-                :title="t('toggleMode')"
-                :type="isDetailMode ? 'primary' : 'default'"
-            ></a-button>
-            <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
-            <a-button :icon="h(AppstoreOutlined)" @click="showCardModal" :title="t('cardView')"></a-button>
-            <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
-            <a-button
-                :icon="h(BulbOutlined)"
-                type="primary"
-                :style="{ padding: '4px 10px' }"
-                @click="aiGenerate"
-                :title="t('aiGenerate')"
-                :disabled="isGenerating"
-                :loading="isGenerating"
-            >
-                <span class="mobile-hide-text">{{ isGenerating ? t('generating') : t('aiGenerate') }}</span>
-            </a-button>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
+                <a-button size="small" :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(FileAddOutlined)" @click="newMap" :title="t('new')"></a-button>
+                <a-button size="small" :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
+                <a-button size="small" :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')+t('import')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button
+                    size="small"
+                    :icon="h(SisternodeOutlined)"
+                    @click="toggleMindMapMode"
+                    :title="t('toggleMode')"
+                    :type="isDetailMode ? 'primary' : 'default'"
+                ></a-button>
+                <a-button size="small" :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
+                <a-button size="small" :icon="h(AppstoreOutlined)" @click="showCardModal" :title="t('cardView')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button
+                    class="toolbar-ai-btn"
+                    size="small"
+                    :icon="h(BulbOutlined)"
+                    type="primary"
+                    @click="aiGenerate"
+                    :title="t('aiGenerate')"
+                    :disabled="isGenerating"
+                    :loading="isGenerating"
+                >
+                    <span class="mobile-hide-text">{{ isGenerating ? t('generating') : t('aiGenerate') }}</span>
+                </a-button>
+            </div>
         </div>
     </div>
     
     <div id="mindMapContainer"></div>
 
     <a-drawer
-        :width="400"
+        width="min(400px, calc(100vw - 32px))"
         :title="t('thinkingMethod')"
         placement="right"
         v-model:open="drawerOpen"
@@ -56,7 +75,7 @@
         <div
             v-for="item in thinkingModels"
             :key="item.value"
-            style="margin-bottom: 14px;"
+            class="thinking-item"
         >
             <a-card :bordered="false">
                 <a-radio
@@ -64,18 +83,20 @@
                     :checked="item.value === settings.thinkingModel"
                     @click="settings.thinkingModel = item.value"
                 >
-                    <span style="font-weight: 600">{{ item.label }}</span>
+                    <span class="thinking-item-title">{{ item.label }}</span>
                 </a-radio>
-                <div v-if="item.example && item.example.length" style="margin-top: 8px;">
+                <div v-if="item.example && item.example.length" class="thinking-item-body">
                     <span>{{ t('principleLabel') }}: {{ item.description }}</span>
-                    <p
-                        v-for="ex in item.example"
-                        :key="ex.name"
-                    >
-                        <a-button size="small" @click="newMap(ex.content)" style="margin-left: 8px;">
+                    <div class="thinking-item-examples">
+                        <a-button
+                            v-for="ex in item.example"
+                            :key="ex.name"
+                            size="small"
+                            @click="newMap(ex.content)"
+                        >
                             {{ t('open') }}: {{ ex.name }}
                         </a-button>
-                    </p>
+                    </div>
                 </div>
             </a-card>
         </div>
@@ -105,94 +126,104 @@
 
     <a-modal
         v-model:open="settingsOpen"
-        width="800px"
+        width="min(800px, calc(100vw - 32px))"
+        wrap-class-name="settings-modal-wrap"
         :title="null"
         :footer="null"
         @cancel="saveSettings"
     >
         <a-tabs v-model:activeKey="activeKey" centered type="line">
             <a-tab-pane :key="'settings'" :tab="t('settings')">
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('language') }}：</span>
-                    <a-select 
-                        v-model:value="settings.language" 
-                        :options="languageOptions" 
-                        style="flex: 0 0 auto; min-width: 120px;" />
-                </label>
+                <div class="settings-section">
+                    <label class="field-row">
+                        <span class="field-label">{{ t('language') }}：</span>
+                        <a-select
+                            class="field-control-narrow"
+                            v-model:value="settings.language"
+                            :options="languageOptions"
+                        />
+                    </label>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('api') }}：</span>
-                    <a-input name="api" v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
-                </label>
+                    <label class="field-row">
+                        <span class="field-label">{{ t('api') }}：</span>
+                        <a-input class="field-control" name="api" v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
+                    </label>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('secret') }}：</span>
-                    <a-input name="secret" v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" style="flex: 1; min-width: 0;" />
-                </label>
+                    <label class="field-row">
+                        <span class="field-label">{{ t('secret') }}：</span>
+                        <a-input class="field-control" name="secret" v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" />
+                    </label>
 
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('model') }}：</span>
-                    <a-select
-                        v-model:value="settings.model"
-                        :options="modelOptions"
-                        :placeholder="t('modelPlaceholder')"
-                        style="flex: 1; min-width: 0;"
-                        show-search
-                    />
+                    <div class="field-row">
+                        <span class="field-label">{{ t('model') }}：</span>
+                        <a-select
+                            class="field-control"
+                            v-model:value="settings.model"
+                            :options="modelOptions"
+                            :placeholder="t('modelPlaceholder')"
+                            show-search
+                        />
+                    </div>
+
+                    <label class="field-row">
+                        <span class="field-label">{{ t('childCountRange') }}：</span>
+                        <a-input-number class="field-control-narrow" name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" />
+                    </label>
                 </div>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
-                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" style="flex: 0 0 auto; width: 120px;" />
-                </label>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('theme') }}：</span>
-                    <a-select v-model:value="settings.theme" style="width: 150px;">
-                        <a-select-option 
-                            v-for="item in themeList" 
-                            :key="item.value" 
-                            :value="item.value"
-                            :style="{ 
-                                backgroundColor: item.theme?.backgroundColor || '#ffffff',
-                                color: item.dark ? '#ffffff' : 'inherit'
-                            }"
-                        >
-                            {{ item.name }}
-                        </a-select-option>
-                    </a-select>
-                </div>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('fontFamily') }}：</span>
-                    <a-select v-model:value="settings.fontFamily" style="width: 150px;">
-                        <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
-                            {{ font.label }}
-                        </a-select-option>
-                    </a-select>
-                </div>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
-                    <a-select v-model:value="settings.lineStyle" style="width: 150px;">
-                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
-                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
-                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
-                    </a-select>
-                </div>
-
-                <label class="field">
-                    <span>{{ t('layout') }}：</span>
-                        <div class="chart-list">
-                            <a-button v-for="l in layouts" :key="l.key" size="small" :type="settings?.layout === l.key ? 'primary' : 'default'"
-                                @click="applyLayout(l.key)"
-                                style="display: inline-flex; align-items: center;"
+                <div class="settings-section">
+                    <div class="field-row">
+                        <span class="field-label">{{ t('theme') }}：</span>
+                        <a-select class="field-control" v-model:value="settings.theme">
+                            <a-select-option
+                                v-for="item in themeList"
+                                :key="item.value"
+                                :value="item.value"
+                                :style="{
+                                    backgroundColor: item.theme?.backgroundColor || DEFAULT_CANVAS_BACKGROUND,
+                                    color: item.dark ? '#ffffff' : 'inherit'
+                                }"
                             >
-                                <span v-html="l.icon" style="display: inline-flex; margin-right: 4px;"></span>
+                                {{ item.name }}
+                            </a-select-option>
+                        </a-select>
+                    </div>
+
+                    <div class="field-row">
+                        <span class="field-label">{{ t('fontFamily') }}：</span>
+                        <a-select class="field-control" v-model:value="settings.fontFamily">
+                            <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
+                                {{ font.label }}
+                            </a-select-option>
+                        </a-select>
+                    </div>
+
+                    <div class="field-row">
+                        <span class="field-label">{{ t('lineStyle') }}：</span>
+                        <a-select class="field-control" v-model:value="settings.lineStyle">
+                            <a-select-option value="curve">{{ t('curve') }}</a-select-option>
+                            <a-select-option value="straight">{{ t('straight') }}</a-select-option>
+                            <a-select-option value="direct">{{ t('direct') }}</a-select-option>
+                        </a-select>
+                    </div>
+
+                    <label class="field">
+                        <span class="field-label">{{ t('layout') }}：</span>
+                        <div class="chart-list">
+                            <a-button
+                                v-for="l in layouts"
+                                :key="l.key"
+                                class="layout-btn"
+                                size="small"
+                                :type="settings?.layout === l.key ? 'primary' : 'default'"
+                                @click="applyLayout(l.key)"
+                            >
+                                <span class="layout-btn-icon" v-html="l.icon"></span>
                                 {{ l.name }}
                             </a-button>
                         </div>
-                </label>
+                    </label>
+                </div>
             </a-tab-pane>
 
             <a-tab-pane :key="'prompt'" :tab="t('systemPrompt')">
@@ -203,7 +234,7 @@
                         :placeholder="t('systemPromptPlaceholder')"
                         :auto-size="{ minRows: 8, maxRows: 20 }"
                     />
-                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                    <div class="prompt-actions">
                         <a-upload
                             :show-upload-list="false"
                             :before-upload="handleParsePromptUpload"
@@ -212,9 +243,9 @@
                         >
                             <a-button size="small" type="primary">{{ t('uploadHint') }}</a-button>
                         </a-upload>
-                        <a-button 
-                            size="small" 
-                            :loading="isExpanding" 
+                        <a-button
+                            size="small"
+                            :loading="isExpanding"
                             @click="expandSystemPrompt"
                         >
                             {{ t('aiExpand') }}
@@ -254,22 +285,22 @@
             </a-tab-pane>
 
             <a-tab-pane :key="'moreSettings'" :tab="t('moreSettings')">
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('backgroundColor') }}：</span>
-                    <input type="color" v-model="settings.backgroundColor" style="cursor: pointer; height: 30px; width: 80px; padding: 0; border: 1px solid #d9d9d9;" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = '#ffffff'" :title="t('reset')"></a-button>
+                <div class="field-row">
+                    <span class="field-label">{{ t('backgroundColor') }}：</span>
+                    <input type="color" class="color-input" v-model="settings.backgroundColor" />
+                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = DEFAULT_CANVAS_BACKGROUND" :title="t('reset')"></a-button>
                 </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineColor') }}：</span>
-                    <input type="color" v-model="settings.lineColor" style="cursor: pointer; height: 30px; width: 80px; padding: 0; border: 1px solid #d9d9d9;" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = '#549688'" :title="t('reset')"></a-button>
+                <div class="field-row">
+                    <span class="field-label">{{ t('lineColor') }}：</span>
+                    <input type="color" class="color-input" v-model="settings.lineColor" />
+                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = DEFAULT_LINE_COLOR" :title="t('reset')"></a-button>
                 </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineWidth') }}：</span>
-                    <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" style="width: 80px;" />
+                <div class="field-row">
+                    <span class="field-label">{{ t('lineWidth') }}：</span>
+                    <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" class="field-control-narrow" />
                     <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
                 </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
+                <div class="field-row">
                     <span>
                         {{ t('githubFollow') }} <a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
                     </span>
@@ -281,21 +312,23 @@
     <a-modal
         v-model:open="cardModalOpen"
         :title="t('cardView')"
-        :width="1000"
+        width="min(1000px, calc(100vw - 32px))"
+        wrap-class-name="card-modal-wrap"
         :footer="null"
         :body-style="{ padding: '0px' }"
     >
-        <div v-if="isCardLoading" style="text-align: center; padding: 8px;">
+        <div v-if="isCardLoading" class="card-loading">
             <LoadingOutlined spin style="font-size: 24px;" />
-            <p style="margin-top: 10px;">{{ t('loading') }}</p>
+            <p class="card-loading-text">{{ t('loading') }}</p>
         </div>
         <iframe
             v-else-if="cardHtmlUrl"
+            class="card-view-frame"
             :src="cardHtmlUrl"
-            style="width: 100%; height: 600px; border: none;"
             title="card-view"
         ></iframe>
     </a-modal>
+    </div>
   </a-config-provider>
 </template>
 
@@ -341,6 +374,8 @@ import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fo
 import { parseFileAsPrompt } from './parser.js'
 
 const THEME_CONFIG_DEBOUNCE_MS = 120
+const DEFAULT_CANVAS_BACKGROUND = '#f5f5f5'
+const DEFAULT_LINE_COLOR = '#549688'
 
 // -----------------------------------------------------------------------------
 // 1. 状态定义 (State Definitions)
@@ -382,8 +417,8 @@ const settings = ref({
     thinkingModel: 'default',
     language: 'zh-CN',
     layout: 'mindMap',
-    backgroundColor: '#ffffff',
-    lineColor: '#43a047',
+    backgroundColor: DEFAULT_CANVAS_BACKGROUND,
+    lineColor: DEFAULT_LINE_COLOR,
     lineWidth: 2,
     lineStyle: 'curve',
     fontFamily: '微软雅黑, Microsoft YaHei',
