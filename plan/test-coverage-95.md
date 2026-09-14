@@ -1,11 +1,28 @@
 # 将测试覆盖率提升到 95%
 
-> **范围声明：先不写代码 / plan only。**  
-> 本文只规划后续如何加测试、配覆盖率与拆模块；本 PR 不新增 `*.spec.js` / `*.test.js`、不改 `package.json` scripts、不改 `vite.config.js`、不改应用源码。
+## 状态（对照 `main`，2026-09-14 审计）
+
+对照：https://github.com/linkxzhou/SimpleMind **`main` @ `1e5cd4c`**（含已合并的 README / 模型选项 / 本计划文档）。
+
+**结论：未开始。覆盖率 = 0%。计划中的 Vitest 脚手架、测试文件、CI 均不在 `main`。**
+
+| 计划项 | `main` 上的状态 | 证据 |
+| --- | --- | --- |
+| Vitest / Jest / 其它 runner | **缺失** | `package.json` 仅有 `dev` / `build` / `preview`；`dependencies`/`devDependencies` 无 `vitest`、`jest`、`@vue/test-utils`、`@vitest/coverage-v8`、Playwright、Cypress |
+| lockfile 测试依赖 | **缺失** | `yarn.lock` 无上述包名 |
+| 覆盖率配置 / 95% 门槛 | **缺失** | 无 `vitest.config.js` / `vite.config.js` 中的 `test` 块；无 `coverage` 脚本 |
+| 测试文件 | **缺失** | 全仓库无 `*.spec.*` / `*.test.*`，无 `tests/` 目录 |
+| CI 跑覆盖率 | **缺失** | 无 `.github/` |
+| 覆盖率报告 | **不可测 / 0%** | 无测试执行任何 `src/**`；`.gitignore` 虽忽略 `coverage` 并注释了 Vitest/Cypress，仅为预留 |
+| 模块拆分（`App.vue` 抽出纯函数） | **缺失** | 逻辑仍集中在 `src/App.vue`（约 885 行） |
+
+下文第 1 节调查结论在 `1e5cd4c` **复测仍然成立**（原调查点 `7bdb14f` 之后 `main` 只合入了 README、模型选项与 `plan/`，没有测试实现）。
+
+---
 
 ## 1. 调查结论（当前状态，已实测）
 
-仓库是 Vue 3 + Vite 的单页思维导图应用（`simple-mind` / SimpleMind）。调查时间点：当前 `main`（`7bdb14f feat: 更新模型`）。
+仓库是 Vue 3 + Vite 的单页思维导图应用（`simple-mind` / SimpleMind）。调查时间点：当前 `main`（`1e5cd4c`；此前基线 `7bdb14f feat: 更新模型`）。
 
 ### 1.1 测试与覆盖率：实测为 0%
 
@@ -426,7 +443,7 @@ fixtures/
 
 ## 10. 非目标（再次强调）
 
-- **先不写代码 / plan only**：本文件落地不等于开始写测试。
-- 不在本阶段改 README、Vite 配置、依赖或应用行为。
+- **实现状态见文首「状态」。** `main` 上仍无测试；更新本文件只记录审计，不等于开始写测试。
+- 不在本阶段改 README 应用说明、Vite 配置、依赖或应用行为。
 - 不为 `public/math*.html`、`public/amc801.html` 追求 JS 覆盖率。
 - 不把 `simple-mind-map` 官方源码纳入 95%。

@@ -1,7 +1,14 @@
 # 规划文档索引
 
-> **范围声明：先不写代码 / plan only。**  
-> 本目录只放规划文档，不改应用源码、测试实现、测试运行配置或 README（除本索引外）。
+## 状态（对照 `main`，2026-09-14 审计）
+
+对照仓库：https://github.com/linkxzhou/SimpleMind ，分支 **`main` @ `1e5cd4c`**。  
+本目录仍是规划文档；**实现尚未合入 `main`**。
+
+| 文件 | 相对 `main` 的落地情况 |
+| --- | --- |
+| [test-coverage-95.md](./test-coverage-95.md) | **未开始。** 无测试 runner、无测试文件；覆盖率 **0%**（无法跑 `vitest --coverage`）。 |
+| [performance-analysis.md](./performance-analysis.md) | **几乎未开始。** P0 四项均未做；P1 仅 TouchEvent「画布外忽略」已存在（仍绑 `window`）；其余 P1/P2 未做。 |
 
 | 文件 | 主题 |
 | --- | --- |

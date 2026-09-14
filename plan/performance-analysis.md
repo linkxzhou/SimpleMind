@@ -1,7 +1,27 @@
 # 应用性能问题分析
 
-> **范围声明：先不写代码 / plan only。**  
-> 本文只根据现有源码做瓶颈假设、测量方法和优化优先级；本 PR 不改运行时代码、不改构建配置、不加 benchmark 文件。
+## 状态（对照 `main`，2026-09-14 审计）
+
+对照：https://github.com/linkxzhou/SimpleMind **`main` @ `1e5cd4c`**。  
+**结论：优化项几乎未开始。** 无 Lighthouse / bundle 基线记录。下列为读源码核对，不是猜测。
+
+| 计划项 | 优先级 | `main` 状态 | 证据 |
+| --- | --- | --- | --- |
+| `data_change` → sessionStorage 防抖 | P0 | **未开始** | `src/App.vue` 约 868–870 行：`mindMap.on('data_change', (data) => { saveMindMapData(data) })`，同步写入；`src/storage.js` 无 debounce |
+| 简/详模式避免整树深拷贝 + `view.reset` | P0 | **未开始** | `src/utils.js` `switchTextNoteMode`：`JSON.parse(JSON.stringify(input))` 后 `setData` + `view.reset()` |
+| Export / PDF / XMind 插件懒加载 | P0 | **未开始** | `src/utils.js` 顶部静态 `import` + `MindMap.usePlugin(Export)` / `ExportPDF` / `ExportXMind`；markdown/xmind 同为模块顶层加载 |
+| `console.log` 仅 DEV；Loading 不塞整段 prompt | P0 | **未开始** | `src/libai.js`：`console.log('AI返回:', cleaned)`、`console.log('AI请求', …)`，`max_tokens: 32000`；`App.vue` `showLoading(..., 完整 prompt)`，并 `console.log` 整份 `ideas` JSON |
+| 卡片紧凑 JSON + 精简 `card.html` | P1 | **未开始** | `JSON.stringify(..., null, 2)` 仍用于卡片；`src/templates/card.html` 实测 **38286** 字节，仍内嵌示例 JSON |
+| PDF 解析提前 break + 本地 worker | P1 | **未开始**（动态 import pdfjs **已有**） | `src/parser.js`：CDN `pdf.worker.min.js`；循环全部 `getPage` 后再 `clampLength`，无 20k 提前退出。`pdfjs-dist` 已是 `await import()`，不是静态顶层 |
+| TouchEvent 绑到画布 `el` | P1 | **部分完成** | 仍 `window.addEventListener(..., { passive: false })`（`src/plugins/TouchEvent.js`）；**已有** `mindMap.el.contains(e.target)` 早退（画布外不拦截，属既有移动端修复，不是计划里的「改绑 el」） |
+| 主题 `watch` 防抖 | P1 | **未开始** | `App.vue` `watch(theme, …)` 仍同步切主题，并 `console.log('targetTheme', targetTheme.theme)`（主题缺失时可能抛错） |
+| 模板按需加载；删除 `bayesian-thinking1..json` | P2 | **未开始** | `src/const.js` 约 31 个 `new URL('./templates/...')`；`src/templates/bayesian-thinking1..json` 仍在仓库 |
+| 测量：Lighthouse / rollup-plugin-visualizer / 体积门槛 | 方法 | **未开始** | 无 visualizer 依赖、无记录的 Lighthouse 数字、无 CI 体积检查 |
+
+已在 `main`、且与性能相关但**不属于本计划交付**的既有点：
+
+- `pdfjs-dist` 动态 import（解析 PDF 时才加载）。
+- TouchEvent 忽略画布外触摸（`el.contains`）。
 
 配套文档：[test-coverage-95.md](./test-coverage-95.md)（先有测试再改热路径，避免无回归网）。
 
@@ -320,7 +340,7 @@ Vite 会把这些 JSON 当静态资产发出。抽屉里「打开: 示例」才 
 
 ## 7. 风险与非目标
 
-- **先不写代码 / plan only。** 未测量就改 debounce/动态 import 可能引入：设置未保存、第一次导出失败、iOS 触摸回退。
+- **实现状态见文首「状态」。** 未测量就改 debounce/动态 import 可能引入：设置未保存、第一次导出失败、iOS 触摸回退。
 - 性能优化与 95% 覆盖率争抢同一批文件（`App.vue`、`utils.js`、`libai.js`）。建议：**先 P0 单测，再动对应热路径**。
 - `sessionStorage` 在部分 WebView 配额更小，大图失败是功能+性能双重问题。
 - 依赖 CDN worker 有隐私/可用性风险，不单是速度。
