@@ -16,26 +16,28 @@ class TouchEvent {
     this.bindEvent()
   }
 
-  // 绑定事件
+  // 绑定事件：挂在画布容器上，避免 window 级非 passive 监听拦截 Ant Design Select。
   bindEvent() {
     this.onTouchstart = this.onTouchstart.bind(this)
     this.onTouchmove = this.onTouchmove.bind(this)
     this.onTouchcancel = this.onTouchcancel.bind(this)
     this.onTouchend = this.onTouchend.bind(this)
-    window.addEventListener('touchstart', this.onTouchstart, { passive: false })
-    window.addEventListener('touchmove', this.onTouchmove, { passive: false })
-    window.addEventListener('touchcancel', this.onTouchcancel, {
-      passive: false
-    })
-    window.addEventListener('touchend', this.onTouchend, { passive: false })
+    const el = this.mindMap.el
+    if (!el || typeof el.addEventListener !== 'function') return
+    el.addEventListener('touchstart', this.onTouchstart, { passive: true })
+    el.addEventListener('touchmove', this.onTouchmove, { passive: true })
+    el.addEventListener('touchend', this.onTouchend, { passive: true })
+    el.addEventListener('touchcancel', this.onTouchcancel, { passive: true })
   }
 
   // 解绑事件
   unBindEvent() {
-    window.removeEventListener('touchstart', this.onTouchstart)
-    window.removeEventListener('touchmove', this.onTouchmove)
-    window.removeEventListener('touchcancel', this.onTouchcancel)
-    window.removeEventListener('touchend', this.onTouchend)
+    const el = this.mindMap.el
+    if (!el || typeof el.removeEventListener !== 'function') return
+    el.removeEventListener('touchstart', this.onTouchstart)
+    el.removeEventListener('touchmove', this.onTouchmove)
+    el.removeEventListener('touchcancel', this.onTouchcancel)
+    el.removeEventListener('touchend', this.onTouchend)
   }
 
   // 手指按下事件

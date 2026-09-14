@@ -88,7 +88,7 @@ export function extractIdeas(raw) {
 
     // 3) 校验并解析 JSON，不是 JSON 就抛错
     let parsed = null;
-    console.log('AI返回:', cleaned)
+    if (import.meta.env?.DEV) console.log('AI返回:', cleaned)
     try {
         parsed = JSON.parse(cleaned)
     } catch (err) {
@@ -149,7 +149,7 @@ export async function requestCompletions({
     prompt,
 }) {
     const endpoint = resolveEndpoint(api)
-    console.log('AI请求', endpoint)
+    if (import.meta.env?.DEV) console.log('AI请求', endpoint)
 
     const headers = { 'Content-Type': 'application/json' }
     const authSecret = normalizeSecret(secret)

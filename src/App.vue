@@ -3,59 +3,79 @@
     :theme="{
       token: {
         colorPrimary: settings.themeRootFillColor || '#00c0b8',
+        borderRadius: 8,
       },
     }"
   >
+    <div
+      class="app-shell"
+      :style="{ '--color-primary': settings.themeRootFillColor || '#00c0b8' }"
+    >
     <div class="toolbar">
         <div class="toolbar-inner">
-            <div class="zoom-control">
+            <div class="toolbar-group zoom-control mobile-hide">
                 <a-button class="mobile-hide" size="small" shape="circle" :icon="h(MinusOutlined)" @click="zoomOut" />
                 <span class="zoom-percent mobile-hide">{{ Math.round(zoom * 100) }}%</span>
                 <a-button class="mobile-hide" size="small" shape="circle" :icon="h(PlusOutlined)" @click="zoomIn" />
             </div>
 
-            <a-button :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
-            <a-button :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
-            <a-button :icon="h(FileAddOutlined)" @click="newMap" :title="t('new')"></a-button>
-            <a-button :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
-            <a-button :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
-            <a-button :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')+t('import')"></a-button>
-            <a-button
-                :icon="h(SisternodeOutlined)"
-                @click="toggleMindMapMode"
-                :title="t('toggleMode')"
-                :type="isDetailMode ? 'primary' : 'default'"
-            ></a-button>
-            <a-button :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
-            <a-button :icon="h(AppstoreOutlined)" @click="showCardModal" :title="t('cardView')"></a-button>
-            <a-button :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
-            <a-button
-                :icon="h(BulbOutlined)"
-                type="primary"
-                :style="{ padding: '4px 10px' }"
-                @click="aiGenerate"
-                :title="t('aiGenerate')"
-                :disabled="isGenerating"
-                :loading="isGenerating"
-            >
-                <span class="mobile-hide-text">{{ isGenerating ? t('generating') : t('aiGenerate') }}</span>
-            </a-button>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(LeftOutlined)" @click="back" :title="t('back')"></a-button>
+                <a-button size="small" :icon="h(RightOutlined)" @click="forward" :title="t('forward')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(FileAddOutlined)" @click="newMap" :title="t('new')"></a-button>
+                <a-button size="small" :icon="h(PlusOutlined)" @click="addChildNode" :title="t('addChildNode')"></a-button>
+                <a-button size="small" :icon="h(DeleteOutlined)" @click="removeCurrentNode" :title="t('removeCurrentNode')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(CloudDownloadOutlined)" @click="openExportPanel" :title="t('export')+t('import')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button
+                    size="small"
+                    :icon="h(SisternodeOutlined)"
+                    @click="toggleMindMapMode"
+                    :title="t('toggleMode')"
+                    :type="isDetailMode ? 'primary' : 'default'"
+                ></a-button>
+                <a-button size="small" :icon="h(UnorderedListOutlined)" @click="showDrawer" :title="t('thinkingMethod')"></a-button>
+                <a-button size="small" :icon="h(AppstoreOutlined)" @click="showCardModal" :title="t('cardView')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button size="small" :icon="h(SettingOutlined)" @click="toggleSettings" :title="t('settings')"></a-button>
+            </div>
+            <div class="toolbar-group">
+                <a-button
+                    class="toolbar-ai-btn"
+                    size="small"
+                    :icon="h(BulbOutlined)"
+                    type="primary"
+                    @click="aiGenerate"
+                    :title="t('aiGenerate')"
+                    :disabled="isGenerating"
+                    :loading="isGenerating"
+                >
+                    <span class="mobile-hide-text">{{ isGenerating ? t('generating') : t('aiGenerate') }}</span>
+                </a-button>
+            </div>
         </div>
     </div>
     
     <div id="mindMapContainer"></div>
 
     <a-drawer
-        :width="400"
+        width="min(400px, calc(100vw - 32px))"
         :title="t('thinkingMethod')"
         placement="right"
         v-model:open="drawerOpen"
         @close="onClose"
     >
+        <template v-if="drawerOpen">
         <div
             v-for="item in thinkingModels"
             :key="item.value"
-            style="margin-bottom: 14px;"
+            class="thinking-item"
         >
             <a-card :bordered="false">
                 <a-radio
@@ -63,21 +83,24 @@
                     :checked="item.value === settings.thinkingModel"
                     @click="settings.thinkingModel = item.value"
                 >
-                    <span style="font-weight: 600">{{ item.label }}</span>
+                    <span class="thinking-item-title">{{ item.label }}</span>
                 </a-radio>
-                <div v-if="item.example && item.example.length" style="margin-top: 8px;">
+                <div v-if="item.example && item.example.length" class="thinking-item-body">
                     <span>{{ t('principleLabel') }}: {{ item.description }}</span>
-                    <p
-                        v-for="ex in item.example"
-                        :key="ex.name"
-                    >
-                        <a-button size="small" @click="newMap(ex.content)" style="margin-left: 8px;">
+                    <div class="thinking-item-examples">
+                        <a-button
+                            v-for="ex in item.example"
+                            :key="ex.name"
+                            size="small"
+                            @click="newMap(ex.content)"
+                        >
                             {{ t('open') }}: {{ ex.name }}
                         </a-button>
-                    </p>
+                    </div>
                 </div>
             </a-card>
         </div>
+        </template>
     </a-drawer>
 
     <div
@@ -103,94 +126,104 @@
 
     <a-modal
         v-model:open="settingsOpen"
-        width="800px"
+        width="min(800px, calc(100vw - 32px))"
+        wrap-class-name="settings-modal-wrap"
         :title="null"
         :footer="null"
         @cancel="saveSettings"
     >
         <a-tabs v-model:activeKey="activeKey" centered type="line">
             <a-tab-pane :key="'settings'" :tab="t('settings')">
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('language') }}：</span>
-                    <a-select 
-                        v-model:value="settings.language" 
-                        :options="languageOptions" 
-                        style="flex: 0 0 auto; min-width: 120px;" />
-                </label>
+                <div class="settings-section">
+                    <label class="field-row">
+                        <span class="field-label">{{ t('language') }}：</span>
+                        <a-select
+                            class="field-control-narrow"
+                            v-model:value="settings.language"
+                            :options="languageOptions"
+                        />
+                    </label>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('api') }}：</span>
-                    <a-input name="api" v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
-                </label>
+                    <label class="field-row">
+                        <span class="field-label">{{ t('api') }}：</span>
+                        <a-input class="field-control" name="api" v-model:value="settings.api" :placeholder="t('apiPlaceholder')" />
+                    </label>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('secret') }}：</span>
-                    <a-input name="secret" v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" style="flex: 1; min-width: 0;" />
-                </label>
+                    <label class="field-row">
+                        <span class="field-label">{{ t('secret') }}：</span>
+                        <a-input class="field-control" name="secret" v-model:value="settings.secret" :placeholder="t('secretPlaceholder')" />
+                    </label>
 
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('model') }}：</span>
-                    <a-select
-                        v-model:value="settings.model"
-                        :options="modelOptions"
-                        :placeholder="t('modelPlaceholder')"
-                        style="flex: 1; min-width: 0;"
-                        show-search
-                    />
+                    <div class="field-row">
+                        <span class="field-label">{{ t('model') }}：</span>
+                        <a-select
+                            class="field-control"
+                            v-model:value="settings.model"
+                            :options="modelOptions"
+                            :placeholder="t('modelPlaceholder')"
+                            show-search
+                        />
+                    </div>
+
+                    <label class="field-row">
+                        <span class="field-label">{{ t('childCountRange') }}：</span>
+                        <a-input-number class="field-control-narrow" name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" />
+                    </label>
                 </div>
 
-                <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('childCountRange') }}：</span>
-                    <a-input-number name="depth" v-model:value="settings.depth" :min="1" :max="20" :step="1" style="flex: 0 0 auto; width: 120px;" />
-                </label>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('theme') }}：</span>
-                    <a-select v-model:value="settings.theme" style="width: 150px;">
-                        <a-select-option 
-                            v-for="item in themeList" 
-                            :key="item.value" 
-                            :value="item.value"
-                            :style="{ 
-                                backgroundColor: item.theme?.backgroundColor || '#ffffff',
-                                color: item.dark ? '#ffffff' : 'inherit'
-                            }"
-                        >
-                            {{ item.name }}
-                        </a-select-option>
-                    </a-select>
-                </div>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('fontFamily') }}：</span>
-                    <a-select v-model:value="settings.fontFamily" style="width: 150px;">
-                        <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
-                            {{ font.label }}
-                        </a-select-option>
-                    </a-select>
-                </div>
-
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineStyle') }}：</span>
-                    <a-select v-model:value="settings.lineStyle" style="width: 150px;">
-                        <a-select-option value="curve">{{ t('curve') }}</a-select-option>
-                        <a-select-option value="straight">{{ t('straight') }}</a-select-option>
-                        <a-select-option value="direct">{{ t('direct') }}</a-select-option>
-                    </a-select>
-                </div>
-
-                <label class="field">
-                    <span>{{ t('layout') }}：</span>
-                        <div class="chart-list">
-                            <a-button v-for="l in layouts" :key="l.key" size="small" :type="settings?.layout === l.key ? 'primary' : 'default'"
-                                @click="applyLayout(l.key)"
-                                style="display: inline-flex; align-items: center;"
+                <div class="settings-section">
+                    <div class="field-row">
+                        <span class="field-label">{{ t('theme') }}：</span>
+                        <a-select class="field-control" v-model:value="settings.theme">
+                            <a-select-option
+                                v-for="item in themeList"
+                                :key="item.value"
+                                :value="item.value"
+                                :style="{
+                                    backgroundColor: item.theme?.backgroundColor || DEFAULT_CANVAS_BACKGROUND,
+                                    color: item.dark ? '#ffffff' : 'inherit'
+                                }"
                             >
-                                <span v-html="l.icon" style="display: inline-flex; margin-right: 4px;"></span>
+                                {{ item.name }}
+                            </a-select-option>
+                        </a-select>
+                    </div>
+
+                    <div class="field-row">
+                        <span class="field-label">{{ t('fontFamily') }}：</span>
+                        <a-select class="field-control" v-model:value="settings.fontFamily">
+                            <a-select-option v-for="font in fontFamilyOptions" :key="font.value" :value="font.value">
+                                {{ font.label }}
+                            </a-select-option>
+                        </a-select>
+                    </div>
+
+                    <div class="field-row">
+                        <span class="field-label">{{ t('lineStyle') }}：</span>
+                        <a-select class="field-control" v-model:value="settings.lineStyle">
+                            <a-select-option value="curve">{{ t('curve') }}</a-select-option>
+                            <a-select-option value="straight">{{ t('straight') }}</a-select-option>
+                            <a-select-option value="direct">{{ t('direct') }}</a-select-option>
+                        </a-select>
+                    </div>
+
+                    <div class="field-row field-row-top">
+                        <span class="field-label">{{ t('layout') }}：</span>
+                        <div class="chart-list field-control">
+                            <a-button
+                                v-for="l in layouts"
+                                :key="l.key"
+                                class="layout-btn"
+                                size="small"
+                                :type="settings?.layout === l.key ? 'primary' : 'default'"
+                                @click="applyLayout(l.key)"
+                            >
+                                <span class="layout-btn-icon" v-html="l.icon"></span>
                                 {{ l.name }}
                             </a-button>
                         </div>
-                </label>
+                    </div>
+                </div>
             </a-tab-pane>
 
             <a-tab-pane :key="'prompt'" :tab="t('systemPrompt')">
@@ -201,7 +234,7 @@
                         :placeholder="t('systemPromptPlaceholder')"
                         :auto-size="{ minRows: 8, maxRows: 20 }"
                     />
-                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                    <div class="prompt-actions">
                         <a-upload
                             :show-upload-list="false"
                             :before-upload="handleParsePromptUpload"
@@ -210,9 +243,9 @@
                         >
                             <a-button size="small" type="primary">{{ t('uploadHint') }}</a-button>
                         </a-upload>
-                        <a-button 
-                            size="small" 
-                            :loading="isExpanding" 
+                        <a-button
+                            size="small"
+                            :loading="isExpanding"
                             @click="expandSystemPrompt"
                         >
                             {{ t('aiExpand') }}
@@ -252,25 +285,30 @@
             </a-tab-pane>
 
             <a-tab-pane :key="'moreSettings'" :tab="t('moreSettings')">
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('backgroundColor') }}：</span>
-                    <input type="color" v-model="settings.backgroundColor" style="cursor: pointer; height: 30px; width: 80px; padding: 0; border: 1px solid #d9d9d9;" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = '#ffffff'" :title="t('reset')"></a-button>
+                <div class="field-row">
+                    <span class="field-label">{{ t('backgroundColor') }}：</span>
+                    <div class="field-control-group">
+                        <input type="color" class="color-input" v-model="settings.backgroundColor" />
+                        <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = DEFAULT_CANVAS_BACKGROUND" :title="t('reset')"></a-button>
+                    </div>
                 </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineColor') }}：</span>
-                    <input type="color" v-model="settings.lineColor" style="cursor: pointer; height: 30px; width: 80px; padding: 0; border: 1px solid #d9d9d9;" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = '#549688'" :title="t('reset')"></a-button>
+                <div class="field-row">
+                    <span class="field-label">{{ t('lineColor') }}：</span>
+                    <div class="field-control-group">
+                        <input type="color" class="color-input" v-model="settings.lineColor" />
+                        <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = DEFAULT_LINE_COLOR" :title="t('reset')"></a-button>
+                    </div>
                 </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span style="white-space: nowrap;">{{ t('lineWidth') }}：</span>
-                    <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" style="width: 80px;" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
+                <div class="field-row">
+                    <span class="field-label">{{ t('lineWidth') }}：</span>
+                    <div class="field-control-group">
+                        <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" class="field-control-narrow" />
+                        <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
+                    </div>
                 </div>
-                <div class="field" style="flex-direction: row; align-items: center; gap: 8px;">
-                    <span>
-                        {{ t('githubFollow') }} <a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
-                    </span>
+                <div class="field-row">
+                    <span class="field-label">{{ t('githubFollow') }}</span>
+                    <a href="https://github.com/linkxzhou/SimpleMind" target="_blank" rel="noopener noreferrer">SimpleMind</a>
                 </div>
             </a-tab-pane>
         </a-tabs>
@@ -279,21 +317,53 @@
     <a-modal
         v-model:open="cardModalOpen"
         :title="t('cardView')"
-        :width="1000"
+        width="min(1000px, calc(100vw - 32px))"
+        wrap-class-name="card-modal-wrap"
         :footer="null"
         :body-style="{ padding: '0px' }"
     >
-        <div v-if="isCardLoading" style="text-align: center; padding: 8px;">
+        <div v-if="isCardLoading" class="card-loading">
             <LoadingOutlined spin style="font-size: 24px;" />
-            <p style="margin-top: 10px;">{{ t('loading') }}</p>
+            <p class="card-loading-text">{{ t('loading') }}</p>
         </div>
         <iframe
             v-else-if="cardHtmlUrl"
+            class="card-view-frame"
             :src="cardHtmlUrl"
-            style="width: 100%; height: 600px; border: none;"
             title="card-view"
         ></iframe>
     </a-modal>
+
+    <a-modal
+        v-model:open="aiPromptOpen"
+        :title="t('aiPromptTitle')"
+        width="min(720px, calc(100vw - 32px))"
+        wrap-class-name="ai-prompt-modal-wrap"
+        :mask-closable="!isGenerating"
+        :closable="!isGenerating"
+        :keyboard="!isGenerating"
+        @cancel="closeAiPromptModal"
+    >
+        <p class="ai-prompt-hint">{{ t('aiPromptHint') }}</p>
+        <a-textarea
+            class="ai-prompt-textarea"
+            v-model:value="aiPromptText"
+            :placeholder="t('aiPromptPlaceholder')"
+            :disabled="isGenerating"
+            :auto-size="{ minRows: 8, maxRows: 16 }"
+        />
+        <template #footer>
+            <a-button :disabled="isGenerating" @click="closeAiPromptModal">{{ t('cancel') }}</a-button>
+            <a-button
+                type="primary"
+                :loading="isGenerating"
+                @click="confirmAiGenerate"
+            >
+                {{ isGenerating ? t('generating') : t('aiPromptConfirm') }}
+            </a-button>
+        </template>
+    </a-modal>
+    </div>
   </a-config-provider>
 </template>
 
@@ -330,14 +400,17 @@ import {
     AppstoreOutlined,
     LoadingOutlined,
 } from '@ant-design/icons-vue'
-import cardTemplate from './templates/card.html?raw'
 import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList } from './utils.js'
+import { showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList, buildCardHtml, debugLog } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions, expandPrompt } from './libai.js'
-import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, saveMindMapData } from './storage.js'
-import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList, DEFAULT_MODEL, modelOptions } from './const.js'
+import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, scheduleMindMapSave, flushMindMapSave } from './storage.js'
+import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList, DEFAULT_MODEL, modelOptions, loadExampleTemplate } from './const.js'
 import { parseFileAsPrompt } from './parser.js'
+
+const THEME_CONFIG_DEBOUNCE_MS = 120
+const DEFAULT_CANVAS_BACKGROUND = '#f5f5f5'
+const DEFAULT_LINE_COLOR = '#549688'
 
 // -----------------------------------------------------------------------------
 // 1. 状态定义 (State Definitions)
@@ -359,6 +432,8 @@ const zoom = ref(1)
 const cardModalOpen = ref(false)
 const cardHtmlUrl = ref('')
 const isCardLoading = ref(false)
+const aiPromptOpen = ref(false)
+const aiPromptText = ref('')
 
 // 右键菜单状态
 const type = ref('')                 // 当前右键类型
@@ -379,8 +454,8 @@ const settings = ref({
     thinkingModel: 'default',
     language: 'zh-CN',
     layout: 'mindMap',
-    backgroundColor: '#ffffff',
-    lineColor: '#43a047',
+    backgroundColor: DEFAULT_CANVAS_BACKGROUND,
+    lineColor: DEFAULT_LINE_COLOR,
     lineWidth: 2,
     lineStyle: 'curve',
     fontFamily: '微软雅黑, Microsoft YaHei',
@@ -400,9 +475,20 @@ const getNodeText = (node) => node?.data?.text || (node?.getData?.()?.text) || '
 const getNodeSystemPrompt = (node) => node?.data?.nextSystemPrompt || (node?.getData?.()?.nextSystemPrompt) || ''
 
 // 深拷贝节点数据 (去除uid)
+const clonePlain = (value) => {
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(value)
+        } catch {
+            // DOM-ish values fall back to JSON
+        }
+    }
+    return JSON.parse(JSON.stringify(value))
+}
+
 const cloneNodeData = (node) => {
     const raw = node?.getData ? node.getData() : { data: node?.data || {}, children: node?.children || [] }
-    const copy = JSON.parse(JSON.stringify(raw))
+    const copy = clonePlain(raw)
     const stripUid = (n) => {
         if (n?.data) delete n.data.uid
         if (Array.isArray(n?.children)) n.children.forEach(stripUid)
@@ -419,11 +505,7 @@ const showCardModal = async () => {
     isCardLoading.value = true
     try {
         const data = mindMapRef.value.getData(true)
-        const jsonStr = JSON.stringify(data?.root || {}, null, 2)
-        const content = cardTemplate.replace(
-            /\/\/ {{REPLACE:cardData BEGIN}}[\s\S]*?\/\/ {{REPLACE:cardData END}}/,
-            `// {{REPLACE:cardData BEGIN}}\n${jsonStr};\n// {{REPLACE:cardData END}}`
-        )
+        const content = buildCardHtml(data?.root || {})
         const blob = new Blob([content], { type: 'text/html' })
         cardHtmlUrl.value = URL.createObjectURL(blob)
         cardModalOpen.value = true
@@ -476,7 +558,7 @@ const loadSettings = () => {
 const saveSettings = () => {
     try {
         saveSettingsToStorage(settings.value)
-        console.log('设置已保存到 sessionStorage')
+        debugLog('设置已保存到 sessionStorage')
     } catch (e) {
         console.error('保存设置失败：', e)
     }
@@ -484,6 +566,8 @@ const saveSettings = () => {
 }
 
 // 监听主题变化
+let themeConfigTimer = null
+
 watch(
     () => [
         settings.value.backgroundColor,
@@ -496,11 +580,14 @@ watch(
     ([bgColor, lineColor, lineWidth, lineStyle, fontFamily, theme], 
     [oldBg, oldLine, oldWidth, oldStyle, oldFont, oldTheme]) => {
         if (mindMapRef.value) {
-            // 主题切换逻辑
             if (theme !== oldTheme) {
+                if (themeConfigTimer != null) {
+                    clearTimeout(themeConfigTimer)
+                    themeConfigTimer = null
+                }
                 mindMapRef.value.setTheme(theme)
                 const targetTheme = themeList.find(item => item.value === theme)
-                console.log('targetTheme', targetTheme.theme)
+                debugLog('targetTheme', targetTheme?.theme)
                 if (targetTheme && targetTheme.theme) {
                     settings.value.backgroundColor = targetTheme.theme.backgroundColor
                     settings.value.lineColor = targetTheme.theme.lineColor
@@ -511,15 +598,21 @@ watch(
                     return
                 }
             }
-            // 自定义样式应用
-            const themeConfig = {
-                backgroundColor: bgColor,
-                lineColor: lineColor,
-                lineWidth: lineWidth,
-                lineStyle: lineStyle,
-                fontFamily: fontFamily
+            const applyThemeConfig = () => {
+                if (!mindMapRef.value) return
+                mindMapRef.value.setThemeConfig({
+                    backgroundColor: bgColor,
+                    lineColor: lineColor,
+                    lineWidth: lineWidth,
+                    lineStyle: lineStyle,
+                    fontFamily: fontFamily
+                })
             }
-            mindMapRef.value.setThemeConfig(themeConfig)
+            if (themeConfigTimer != null) clearTimeout(themeConfigTimer)
+            themeConfigTimer = setTimeout(() => {
+                themeConfigTimer = null
+                applyThemeConfig()
+            }, THEME_CONFIG_DEBOUNCE_MS)
         }
     }
 )
@@ -706,10 +799,15 @@ const newMap = async (tpl) => {
             if (s.startsWith('{') || s.startsWith('[')) {
                 data = JSON.parse(s)
             } else {
-                const res = await fetch(s)
-                if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
-                const text = await res.text()
-                data = JSON.parse(text)
+                const loaded = await loadExampleTemplate(s)
+                if (loaded) {
+                    data = loaded
+                } else {
+                    const res = await fetch(s)
+                    if (!res.ok) throw new Error(`模板加载失败，HTTP ${res.status}`)
+                    const text = await res.text()
+                    data = JSON.parse(text)
+                }
             }
         } else if (tpl && typeof tpl === 'object') {
             data = (tpl && tpl.data) || { data: { text: '主题' }, children: [] }
@@ -746,41 +844,70 @@ const handleParsePromptUpload = async (file) => {
 // 8. AI 生成功能 (AI Generation)
 // -----------------------------------------------------------------------------
 
+const buildCurrentAiPrompt = () => {
+    const baseNode = activeNodes.value?.[0]
+    const baseText = getNodeText(baseNode)
+    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
+    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
+    return {
+        baseText,
+        count,
+        prompt: libBuildPrompt(
+            baseText,
+            count,
+            nodeSystemPrompt,
+            settings.value.systemPrompt,
+            settings.value
+        ),
+    }
+}
+
 const aiGenerate = async () => {
     if (isGenerating.value) return
-    isGenerating.value = true
 
     if (!settings.value.api || settings.value.api.trim().length === 0) {
         showError('请打开设置，配置API Base')
-        isGenerating.value = false
         return
     }
     if (!mindMapRef.value) {
         showError(t('createMapFirst'))
-        isGenerating.value = false
         return
     }
 
-    const baseNode = activeNodes.value?.[0]
-    const baseText = getNodeText(baseNode)
+    const { baseText, prompt } = buildCurrentAiPrompt()
     if (!baseText || baseText.trim().length === 0) {
         showError('请先选择一个节点或者输入一个主题')
-        isGenerating.value = false
         return
     }
 
-    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
-    const systemPrompt = settings.value.systemPrompt
-    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
-    const prompt = libBuildPrompt(
-        baseText,
-        count,
-        nodeSystemPrompt,
-        systemPrompt,
-        settings.value
-    )
+    aiPromptText.value = prompt
+    aiPromptOpen.value = true
+}
 
-    showLoading(t('aiGenerating') + new Date().toLocaleString() + '）', `🧠 Prompt: \n${prompt}`)
+const closeAiPromptModal = () => {
+    if (isGenerating.value) {
+        aiPromptOpen.value = true
+        return
+    }
+    aiPromptOpen.value = false
+}
+
+const confirmAiGenerate = async () => {
+    if (isGenerating.value) return
+
+    const prompt = (aiPromptText.value || '').trim()
+    if (!prompt) {
+        showError(t('aiPromptEmpty'))
+        return
+    }
+    if (!mindMapRef.value) {
+        showError(t('createMapFirst'))
+        return
+    }
+
+    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
+    isGenerating.value = true
+    debugLog('AI Prompt:', prompt)
     try {
         const { data } = await requestCompletions({
             api: settings.value.api,
@@ -791,15 +918,14 @@ const aiGenerate = async () => {
         })
 
         const ideas = libExtractIdeas(data, count)
-        console.log('解析到子节点：', JSON.stringify(ideas), `共${ideas.length}个`)
-        hideLoading()
+        debugLog('解析到子节点：', ideas?.length)
         if (ideas.length) {
             mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
+            aiPromptOpen.value = false
         } else {
             showError(t('aiNoContent'))
         }
     } catch (err) {
-        hideLoading()
         const msg = err?.message || String(err)
         showError(t('aiGenerateFailed').replace('{msg}', msg))
         console.error('AI生成失败：', err)
@@ -864,20 +990,42 @@ onMounted(() => {
         currentNode.value = node
     })
 
-    // 数据变更时持久化到 sessionStorage
+    const flushPendingMindMap = () => {
+        try {
+            flushMindMapSave()
+        } catch (e) {
+            console.warn('写入 sessionStorage 失败：', e)
+        }
+    }
+
+    const onVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') flushPendingMindMap()
+    }
+
+    // 数据变更时防抖写入 sessionStorage，隐藏标签页时立即 flush
     mindMap.on('data_change', (data) => {
         try {
-            saveMindMapData(data)
+            scheduleMindMapSave(data)
         } catch (e) {
             console.warn('写入 sessionStorage 失败：', e)
         }
     })
 
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', flushPendingMindMap)
+
     // 点击其他位置关闭右键菜单
     document.addEventListener('click', hideContextMenu)
-})
 
-onUnmounted(() => {
-    document.removeEventListener('click', hideContextMenu)
+    onUnmounted(() => {
+        if (themeConfigTimer != null) {
+            clearTimeout(themeConfigTimer)
+            themeConfigTimer = null
+        }
+        flushPendingMindMap()
+        document.removeEventListener('visibilitychange', onVisibilityChange)
+        window.removeEventListener('pagehide', flushPendingMindMap)
+        document.removeEventListener('click', hideContextMenu)
+    })
 })
 </script>

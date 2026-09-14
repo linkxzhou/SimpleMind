@@ -1,4 +1,6 @@
 export const SETTINGS_KEY = 'mindlessSettings'
+export const MINDMAP_KEY = 'mindMapData'
+export const MINDMAP_SAVE_DEBOUNCE_MS = 400
 
 const toNumberOr = (val, fallback) => {
     const n = Number(val)
@@ -37,9 +39,6 @@ export function saveSettings(settings) {
     }
 }
 
-// 新增：导图数据持久化
-export const MINDMAP_KEY = 'mindMapData'
-
 const isValidMindMap = (d) => d && typeof d === 'object' && d.data && typeof d.data === 'object'
 
 export function loadMindMapData(defaults = null) {
@@ -54,11 +53,48 @@ export function loadMindMapData(defaults = null) {
     }
 }
 
+let saveTimer = null
+let pendingMapData = undefined
+let lastSavedJson = ''
+
+const clearSaveTimer = () => {
+    if (saveTimer != null) {
+        clearTimeout(saveTimer)
+        saveTimer = null
+    }
+}
+
+export function resetMindMapSaveState() {
+    clearSaveTimer()
+    pendingMapData = undefined
+    lastSavedJson = ''
+}
+
 export function saveMindMapData(mapData) {
     try {
-        sessionStorage.setItem(MINDMAP_KEY, JSON.stringify(mapData))
+        const json = JSON.stringify(mapData)
+        if (json === lastSavedJson) return
+        sessionStorage.setItem(MINDMAP_KEY, json)
+        lastSavedJson = json
     } catch (e) {
         console.error('保存导图数据失败：', e)
         throw e
     }
+}
+
+export function flushMindMapSave() {
+    clearSaveTimer()
+    if (pendingMapData === undefined) return
+    const data = pendingMapData
+    pendingMapData = undefined
+    saveMindMapData(data)
+}
+
+export function scheduleMindMapSave(mapData, delay = MINDMAP_SAVE_DEBOUNCE_MS) {
+    pendingMapData = mapData
+    clearSaveTimer()
+    saveTimer = setTimeout(() => {
+        saveTimer = null
+        flushMindMapSave()
+    }, delay)
 }

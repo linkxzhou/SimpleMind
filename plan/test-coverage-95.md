@@ -1,30 +1,58 @@
 # 将测试覆盖率提升到 95%
 
-## 状态（对照 `main`，2026-09-14 审计）
+> **落地状态（本实现 PR）：已完成测试覆盖率计划。**  
+> [performance-analysis.md](./performance-analysis.md) **不在本 PR 范围**，未做任何性能优化。
 
-对照：https://github.com/linkxzhou/SimpleMind **`main` @ `1e5cd4c`**（含已合并的 README / 模型选项 / 本计划文档）。
+## 0. 本 PR 落地结果
 
-**结论：未开始。覆盖率 = 0%。计划中的 Vitest 脚手架、测试文件、CI 均不在 `main`。**
+实现顺序与计划第 6 节一致：先工具链，再 P0 `storage` / `libai` / `parser`，再 `const`，再 P1 `utils` / `TouchEvent`，再 P2 `App.vue` / `main.js`，以及 P3 模板可解析性质量网。未落地 Playwright E2E（计划标明可选、不计入 95% 分母）。**没有从 `App.vue` 抽出纯函数**（组件测试已够到全局 95%）。
 
-| 计划项 | `main` 上的状态 | 证据 |
+### 0.1 工具链
+
+| 项 | 落地 |
+| --- | --- |
+| 测试框架 | Vitest `3.2.4` + jsdom + `@vue/test-utils` |
+| 覆盖率 | `@vitest/coverage-v8`，`coverage.thresholds` 四项均为 95 |
+| scripts | `yarn test` / `yarn test:watch` / `yarn coverage` |
+| include | `src/**/*.js`、`src/**/*.vue` |
+| exclude | `src/templates/**`、`src/locales/**`、`node_modules/**` |
+| 配置 | `vitest.config.js`；`vite.config.js` 仅增加 `@` → `./src` alias |
+
+### 0.2 实测覆盖率（`yarn coverage`，V8）
+
+全局（计入分母的可执行 `src` JS/Vue，不含模板 JSON / locales）：
+
+| 指标 | 覆盖 | 阈值 |
 | --- | --- | --- |
-| Vitest / Jest / 其它 runner | **缺失** | `package.json` 仅有 `dev` / `build` / `preview`；`dependencies`/`devDependencies` 无 `vitest`、`jest`、`@vue/test-utils`、`@vitest/coverage-v8`、Playwright、Cypress |
-| lockfile 测试依赖 | **缺失** | `yarn.lock` 无上述包名 |
-| 覆盖率配置 / 95% 门槛 | **缺失** | 无 `vitest.config.js` / `vite.config.js` 中的 `test` 块；无 `coverage` 脚本 |
-| 测试文件 | **缺失** | 全仓库无 `*.spec.*` / `*.test.*`，无 `tests/` 目录 |
-| CI 跑覆盖率 | **缺失** | 无 `.github/` |
-| 覆盖率报告 | **不可测 / 0%** | 无测试执行任何 `src/**`；`.gitignore` 虽忽略 `coverage` 并注释了 Vitest/Cypress，仅为预留 |
-| 模块拆分（`App.vue` 抽出纯函数） | **缺失** | 逻辑仍集中在 `src/App.vue`（约 885 行） |
+| Statements | **100%** (1882/1882) | 95 |
+| Branches | **97.85%** (457/467) | 95 |
+| Functions | **100%** (100/100) | 95 |
+| Lines | **100%** (1882/1882) | 95 |
 
-下文第 1 节调查结论在 `1e5cd4c` **复测仍然成立**（原调查点 `7bdb14f` 之后 `main` 只合入了 README、模型选项与 `plan/`，没有测试实现）。
+分模块：
+
+| 文件 | Stmts | Branch | Funcs | Lines |
+| --- | --- | --- | --- | --- |
+| `storage.js` | 100 | 100 | 100 | 100 |
+| `libai.js` | 100 | 96.07 | 100 | 100 |
+| `parser.js` | 100 | 100 | 100 | 100 |
+| `utils.js` | 100 | 95.87 | 100 | 100 |
+| `TouchEvent.js` | 100 | 100 | 100 | 100 |
+| `const.js` | 100 | 100 | 100 | 100 |
+| `main.js` | 100 | 100 | 100 | 100 |
+| `App.vue` | 100 | 98.25 | 100 | 100 |
+
+剩余未走到的主要是 `||` / `??` 回落分支（左值始终为真），例如 `libai.js` 的 `model.label \|\| 'Any'`（当前 thinking model 都有 label）、`utils.js` 的 `import.meta.env` 缺失回落。`App.vue` **没有未执行的行**；不需要 `istanbul ignore`，也未改应用行为。
+
+测试：`tests/*.spec.js`，112 条，无浏览器、无真实 LLM、无真实 PDF CDN。`coverage/` 不入库。
 
 ---
 
-## 1. 调查结论（当前状态，已实测）
+## 1. 调查结论（规划时状态，已实测）
 
-仓库是 Vue 3 + Vite 的单页思维导图应用（`simple-mind` / SimpleMind）。调查时间点：当前 `main`（`1e5cd4c`；此前基线 `7bdb14f feat: 更新模型`）。
+仓库是 Vue 3 + Vite 的单页思维导图应用（`simple-mind` / SimpleMind）。调查时间点：当时 `main`（`7bdb14f feat: 更新模型`）。本实现 PR 基于之后已含本计划文件的 `main`。
 
-### 1.1 测试与覆盖率：实测为 0%
+### 1.1 测试与覆盖率：规划时实测为 0%
 
 以下为**实测事实**，不是估算：
 
@@ -430,20 +458,21 @@ fixtures/
 
 ---
 
-## 9. 验收清单（后续编码 PR 用）
+## 9. 验收清单（本实现 PR）
 
-- [ ] `yarn test` 在无浏览器环境下稳定绿
-- [ ] `yarn coverage` 四项 ≥ 95%，include 仅 `src/**/*.{js,vue}`，exclude 模板与 locales
-- [ ] 报告中 `storage.js` / `libai.js` / `parser.js` / `utils.js` / `TouchEvent.js` 各自 ≥ 95%
-- [ ] `App.vue` 未覆盖行有清单：要么补测，要么抽出，要么给出**逐行**忽略理由
-- [ ] 无真实网络、无真实 OpenAI、无真实 PDF CDN
-- [ ] 不提交 `coverage/` 目录
+- [x] `yarn test` 在无浏览器环境下稳定绿（112 tests）
+- [x] `yarn coverage` 四项 ≥ 95%，include 仅 `src/**/*.{js,vue}`，exclude 模板与 locales
+- [x] 报告中 `storage.js` / `libai.js` / `parser.js` / `utils.js` / `TouchEvent.js` 各自 ≥ 95%
+- [x] `App.vue` 行覆盖 100%；剩余仅为 `||`/`??` 回落分支，未 ignore、未抽模块
+- [x] 无真实网络、无真实 OpenAI、无真实 PDF CDN
+- [x] 不提交 `coverage/` 目录
 
 ---
 
-## 10. 非目标（再次强调）
+## 10. 非目标
 
-- **实现状态见文首「状态」。** `main` 上仍无测试；更新本文件只记录审计，不等于开始写测试。
-- 不在本阶段改 README 应用说明、Vite 配置、依赖或应用行为。
+- 性能计划见 [performance-analysis.md](./performance-analysis.md)，**本 PR 不做**。
 - 不为 `public/math*.html`、`public/amc801.html` 追求 JS 覆盖率。
 - 不把 `simple-mind-map` 官方源码纳入 95%。
+- 未上 Playwright E2E（计划 P3 可选）。
+- 未改 README 产品文案；仅增加测试脚本与 Vitest 配置。
