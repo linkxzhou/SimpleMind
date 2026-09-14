@@ -589,6 +589,23 @@ describe('settings / prompt / export / import', () => {
     expect(state.settings.lineWidth).toBe(2)
     wrapper.unmount()
   })
+
+  it('aligns the GitHub follow label with the field-label column', async () => {
+    const { wrapper, state } = await mountApp()
+    state.settingsOpen = true
+    state.activeKey = 'moreSettings'
+    await flushPromises()
+    await nextTick()
+    const label = [...document.body.querySelectorAll('.field-label')].find((el) =>
+      (el.textContent || '').includes('关注开源项目'),
+    )
+    expect(label).toBeTruthy()
+    expect(label.classList.contains('field-label')).toBe(true)
+    expect(label.parentElement.classList.contains('field-row')).toBe(true)
+    expect(label.nextElementSibling?.tagName).toBe('A')
+    expect(label.nextElementSibling?.textContent).toBe('SimpleMind')
+    wrapper.unmount()
+  })
 })
 
 describe('theme watch', () => {
@@ -656,37 +673,48 @@ describe('card modal', () => {
 })
 
 describe('aiGenerate', () => {
+  const readyForPrompt = (state) => {
+    state.settings.api = 'https://api.test'
+    state.activeNodes = [
+      {
+        data: { text: '主题', nextSystemPrompt: 'next' },
+      },
+    ]
+  }
+
   it('returns immediately while generating and validates inputs', async () => {
     const { wrapper, state } = await mountApp()
     state.isGenerating = true
     await state.aiGenerate()
     expect(libaiMocks.requestCompletions).not.toHaveBeenCalled()
+    expect(state.aiPromptOpen).toBe(false)
 
     state.isGenerating = false
     state.settings.api = '  '
     await state.aiGenerate()
     expect(utilsMocks.showError).toHaveBeenCalledWith('请打开设置，配置API Base')
+    expect(state.aiPromptOpen).toBe(false)
 
     state.settings.api = 'https://api.test'
     state.mindMapRef = null
     await state.aiGenerate()
     expect(utilsMocks.showError).toHaveBeenCalledWith('请先创建一个思维导图')
+    expect(state.aiPromptOpen).toBe(false)
     wrapper.unmount()
   })
 
-  it('requires node text, inserts ideas, and handles empty/error paths', async () => {
+  it('opens an editable prompt modal and does not generate until confirm', async () => {
     const { wrapper, state, mm } = await mountApp()
     state.settings.api = 'https://api.test'
     state.settings.depth = 99
     state.activeNodes = [{ data: { text: '   ' } }]
     await state.aiGenerate()
     expect(utilsMocks.showError).toHaveBeenCalledWith('请先选择一个节点或者输入一个主题')
+    expect(state.aiPromptOpen).toBe(false)
+    expect(libaiMocks.requestCompletions).not.toHaveBeenCalled()
 
-    state.activeNodes = [
-      {
-        data: { text: '主题', nextSystemPrompt: 'next' },
-      },
-    ]
+    readyForPrompt(state)
+    state.settings.depth = 99
     await state.aiGenerate()
     expect(libaiMocks.buildPrompt).toHaveBeenCalledWith(
       '主题',
@@ -695,21 +723,84 @@ describe('aiGenerate', () => {
       expect.anything(),
       expect.anything(),
     )
-    expect(mm.execCommand).toHaveBeenCalledWith('INSERT_MULTI_CHILD_NODE', [], expect.any(Array))
-    expect(utilsMocks.showLoading).toHaveBeenCalled()
-    expect(String(utilsMocks.showLoading.mock.calls.at(-1)?.[1] || '')).not.toContain('PROMPT')
-    expect(utilsMocks.hideLoading).toHaveBeenCalled()
+    expect(state.aiPromptOpen).toBe(true)
+    expect(state.aiPromptText).toBe('PROMPT')
+    expect(libaiMocks.requestCompletions).not.toHaveBeenCalled()
+    expect(mm.execCommand).not.toHaveBeenCalledWith(
+      'INSERT_MULTI_CHILD_NODE',
+      [],
+      expect.any(Array),
+    )
+    expect(utilsMocks.showLoading).not.toHaveBeenCalled()
 
-    libaiMocks.extractIdeas.mockReturnValueOnce([])
+    await nextTick()
+    expect(document.body.textContent).toContain('确认生成提示词')
+    expect(document.body.textContent).toContain('确认生成')
+
+    state.closeAiPromptModal()
+    expect(state.aiPromptOpen).toBe(false)
+    expect(libaiMocks.requestCompletions).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('confirms the edited prompt, shows confirm loading, and handles empty/error paths', async () => {
+    const { wrapper, state, mm } = await mountApp()
+    readyForPrompt(state)
     await state.aiGenerate()
+    expect(state.aiPromptOpen).toBe(true)
+
+    state.aiPromptText = 'EDITED-PROMPT'
+    let resolvePending
+    const pending = new Promise((resolve) => {
+      resolvePending = resolve
+    })
+    libaiMocks.requestCompletions.mockReturnValueOnce(pending)
+    const inFlight = state.confirmAiGenerate()
+    await nextTick()
+    expect(state.isGenerating).toBe(true)
+    expect(state.aiPromptOpen).toBe(true)
+    await nextTick()
+    expect(document.body.textContent).toContain('生成中')
+
+    state.closeAiPromptModal()
+    expect(state.aiPromptOpen).toBe(true)
+    await state.confirmAiGenerate()
+
+    resolvePending({ data: { ok: true } })
+    await inFlight
+    expect(libaiMocks.requestCompletions).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: 'EDITED-PROMPT' }),
+    )
+    expect(mm.execCommand).toHaveBeenCalledWith('INSERT_MULTI_CHILD_NODE', [], expect.any(Array))
+    expect(state.aiPromptOpen).toBe(false)
+    expect(state.isGenerating).toBe(false)
+    expect(utilsMocks.showLoading).not.toHaveBeenCalled()
+    expect(utilsMocks.hideLoading).not.toHaveBeenCalled()
+
+    readyForPrompt(state)
+    await state.aiGenerate()
+    libaiMocks.extractIdeas.mockReturnValueOnce([])
+    await state.confirmAiGenerate()
     expect(utilsMocks.showError).toHaveBeenCalledWith(
       'AI返回内容为空或未解析到子节点，请重新生成',
     )
+    expect(state.aiPromptOpen).toBe(true)
 
     libaiMocks.requestCompletions.mockRejectedValueOnce(new Error('llm down'))
-    await state.aiGenerate()
+    await state.confirmAiGenerate()
     expect(utilsMocks.showError.mock.calls.at(-1)[0]).toContain('llm down')
+    expect(state.aiPromptOpen).toBe(true)
 
+    state.aiPromptText = '   '
+    await state.confirmAiGenerate()
+    expect(utilsMocks.showError).toHaveBeenCalledWith('请先编辑或确认提示词')
+
+    state.aiPromptText = 'again'
+    state.mindMapRef = null
+    await state.confirmAiGenerate()
+    expect(utilsMocks.showError).toHaveBeenCalledWith('请先创建一个思维导图')
+
+    state.mindMapRef = mm
     state.activeNodes = [
       {
         getData: () => ({ text: 'via-get', nextSystemPrompt: 'g' }),
@@ -718,6 +809,20 @@ describe('aiGenerate', () => {
     state.settings.depth = -2
     await state.aiGenerate()
     expect(libaiMocks.buildPrompt.mock.calls.at(-1)[1]).toBe(1)
+    wrapper.unmount()
+  })
+
+  it('toolbar AI button opens the prompt modal instead of generating', async () => {
+    const { wrapper, state } = await mountApp()
+    readyForPrompt(state)
+    const aiBtn = [...document.querySelectorAll('.toolbar-inner button')].find(
+      (button) => button.getAttribute('title') === 'AI生成',
+    )
+    expect(aiBtn).toBeTruthy()
+    await aiBtn.click()
+    await flushPromises()
+    expect(state.aiPromptOpen).toBe(true)
+    expect(libaiMocks.requestCompletions).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 })
@@ -821,8 +926,9 @@ describe('coverage edge branches', () => {
     await state.aiGenerate()
 
     state.activeNodes = [{ data: { text: 'ok' } }]
-    libaiMocks.requestCompletions.mockRejectedValueOnce('bare-string')
     await state.aiGenerate()
+    libaiMocks.requestCompletions.mockRejectedValueOnce('bare-string')
+    await state.confirmAiGenerate()
 
     state.settings.language = 'zh-CN'
     state.show = true

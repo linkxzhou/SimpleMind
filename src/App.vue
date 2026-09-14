@@ -207,9 +207,9 @@
                         </a-select>
                     </div>
 
-                    <label class="field">
+                    <div class="field-row field-row-top">
                         <span class="field-label">{{ t('layout') }}：</span>
-                        <div class="chart-list">
+                        <div class="chart-list field-control">
                             <a-button
                                 v-for="l in layouts"
                                 :key="l.key"
@@ -222,7 +222,7 @@
                                 {{ l.name }}
                             </a-button>
                         </div>
-                    </label>
+                    </div>
                 </div>
             </a-tab-pane>
 
@@ -287,23 +287,28 @@
             <a-tab-pane :key="'moreSettings'" :tab="t('moreSettings')">
                 <div class="field-row">
                     <span class="field-label">{{ t('backgroundColor') }}：</span>
-                    <input type="color" class="color-input" v-model="settings.backgroundColor" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = DEFAULT_CANVAS_BACKGROUND" :title="t('reset')"></a-button>
+                    <div class="field-control-group">
+                        <input type="color" class="color-input" v-model="settings.backgroundColor" />
+                        <a-button size="small" :icon="h(UndoOutlined)" @click="settings.backgroundColor = DEFAULT_CANVAS_BACKGROUND" :title="t('reset')"></a-button>
+                    </div>
                 </div>
                 <div class="field-row">
                     <span class="field-label">{{ t('lineColor') }}：</span>
-                    <input type="color" class="color-input" v-model="settings.lineColor" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = DEFAULT_LINE_COLOR" :title="t('reset')"></a-button>
+                    <div class="field-control-group">
+                        <input type="color" class="color-input" v-model="settings.lineColor" />
+                        <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineColor = DEFAULT_LINE_COLOR" :title="t('reset')"></a-button>
+                    </div>
                 </div>
                 <div class="field-row">
                     <span class="field-label">{{ t('lineWidth') }}：</span>
-                    <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" class="field-control-narrow" />
-                    <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
+                    <div class="field-control-group">
+                        <a-input-number v-model:value="settings.lineWidth" :min="1" :max="10" class="field-control-narrow" />
+                        <a-button size="small" :icon="h(UndoOutlined)" @click="settings.lineWidth = 2" :title="t('reset')"></a-button>
+                    </div>
                 </div>
                 <div class="field-row">
-                    <span>
-                        {{ t('githubFollow') }} <a href="https://github.com/linkxzhou/SimpleMind" target="_blank">SimpleMind</a>
-                    </span>
+                    <span class="field-label">{{ t('githubFollow') }}</span>
+                    <a href="https://github.com/linkxzhou/SimpleMind" target="_blank" rel="noopener noreferrer">SimpleMind</a>
                 </div>
             </a-tab-pane>
         </a-tabs>
@@ -327,6 +332,36 @@
             :src="cardHtmlUrl"
             title="card-view"
         ></iframe>
+    </a-modal>
+
+    <a-modal
+        v-model:open="aiPromptOpen"
+        :title="t('aiPromptTitle')"
+        width="min(720px, calc(100vw - 32px))"
+        wrap-class-name="ai-prompt-modal-wrap"
+        :mask-closable="!isGenerating"
+        :closable="!isGenerating"
+        :keyboard="!isGenerating"
+        @cancel="closeAiPromptModal"
+    >
+        <p class="ai-prompt-hint">{{ t('aiPromptHint') }}</p>
+        <a-textarea
+            class="ai-prompt-textarea"
+            v-model:value="aiPromptText"
+            :placeholder="t('aiPromptPlaceholder')"
+            :disabled="isGenerating"
+            :auto-size="{ minRows: 8, maxRows: 16 }"
+        />
+        <template #footer>
+            <a-button :disabled="isGenerating" @click="closeAiPromptModal">{{ t('cancel') }}</a-button>
+            <a-button
+                type="primary"
+                :loading="isGenerating"
+                @click="confirmAiGenerate"
+            >
+                {{ isGenerating ? t('generating') : t('aiPromptConfirm') }}
+            </a-button>
+        </template>
     </a-modal>
     </div>
   </a-config-provider>
@@ -367,7 +402,7 @@ import {
 } from '@ant-design/icons-vue'
 import { ref, shallowRef, onMounted, onUnmounted, h, watch } from 'vue' // Added watch here
 import MindMap from "simple-mind-map"
-import { showLoading, hideLoading, showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList, buildCardHtml, debugLog } from './utils.js'
+import { showError, exportMindMap, importFileToMindMap, ENV_API, ENV_SECRET, ENV_MODEL, switchTextNoteMode, getThemeList, buildCardHtml, debugLog } from './utils.js'
 import { buildPrompt as libBuildPrompt, extractIdeas as libExtractIdeas, requestCompletions, expandPrompt } from './libai.js'
 import { loadSettings as loadSettingsFromStorage, saveSettings as saveSettingsToStorage, loadMindMapData, scheduleMindMapSave, flushMindMapSave } from './storage.js'
 import { thinkingModels, layouts as layoutOptions, languageOptions, messages, fontFamilyOptions, iconList, DEFAULT_MODEL, modelOptions, loadExampleTemplate } from './const.js'
@@ -397,6 +432,8 @@ const zoom = ref(1)
 const cardModalOpen = ref(false)
 const cardHtmlUrl = ref('')
 const isCardLoading = ref(false)
+const aiPromptOpen = ref(false)
+const aiPromptText = ref('')
 
 // 右键菜单状态
 const type = ref('')                 // 当前右键类型
@@ -807,41 +844,69 @@ const handleParsePromptUpload = async (file) => {
 // 8. AI 生成功能 (AI Generation)
 // -----------------------------------------------------------------------------
 
+const buildCurrentAiPrompt = () => {
+    const baseNode = activeNodes.value?.[0]
+    const baseText = getNodeText(baseNode)
+    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
+    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
+    return {
+        baseText,
+        count,
+        prompt: libBuildPrompt(
+            baseText,
+            count,
+            nodeSystemPrompt,
+            settings.value.systemPrompt,
+            settings.value
+        ),
+    }
+}
+
 const aiGenerate = async () => {
     if (isGenerating.value) return
-    isGenerating.value = true
 
     if (!settings.value.api || settings.value.api.trim().length === 0) {
         showError('请打开设置，配置API Base')
-        isGenerating.value = false
         return
     }
     if (!mindMapRef.value) {
         showError(t('createMapFirst'))
-        isGenerating.value = false
         return
     }
 
-    const baseNode = activeNodes.value?.[0]
-    const baseText = getNodeText(baseNode)
+    const { baseText, prompt } = buildCurrentAiPrompt()
     if (!baseText || baseText.trim().length === 0) {
         showError('请先选择一个节点或者输入一个主题')
-        isGenerating.value = false
         return
     }
 
-    const nodeSystemPrompt = getNodeSystemPrompt(baseNode)
-    const systemPrompt = settings.value.systemPrompt
-    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
-    const prompt = libBuildPrompt(
-        baseText,
-        count,
-        nodeSystemPrompt,
-        systemPrompt,
-        settings.value
-    )
+    aiPromptText.value = prompt
+    aiPromptOpen.value = true
+}
 
-    showLoading(t('aiGenerating') + new Date().toLocaleString() + '）', t('pleaseWait'))
+const closeAiPromptModal = () => {
+    if (isGenerating.value) {
+        aiPromptOpen.value = true
+        return
+    }
+    aiPromptOpen.value = false
+}
+
+const confirmAiGenerate = async () => {
+    if (isGenerating.value) return
+
+    const prompt = (aiPromptText.value || '').trim()
+    if (!prompt) {
+        showError(t('aiPromptEmpty'))
+        return
+    }
+    if (!mindMapRef.value) {
+        showError(t('createMapFirst'))
+        return
+    }
+
+    const count = Math.max(1, Math.min(20, Number(settings.value.depth) || 5))
+    isGenerating.value = true
     debugLog('AI Prompt:', prompt)
     try {
         const { data } = await requestCompletions({
@@ -854,14 +919,13 @@ const aiGenerate = async () => {
 
         const ideas = libExtractIdeas(data, count)
         debugLog('解析到子节点：', ideas?.length)
-        hideLoading()
         if (ideas.length) {
             mindMapRef.value.execCommand('INSERT_MULTI_CHILD_NODE', [], ideas)
+            aiPromptOpen.value = false
         } else {
             showError(t('aiNoContent'))
         }
     } catch (err) {
-        hideLoading()
         const msg = err?.message || String(err)
         showError(t('aiGenerateFailed').replace('{msg}', msg))
         console.error('AI生成失败：', err)
