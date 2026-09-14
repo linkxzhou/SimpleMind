@@ -9,6 +9,48 @@
 
 ---
 
+## 0. 硬约束：工具栏控件顺序冻结
+
+后续任何实现 PR **必须**遵守。违反即视为做错，与间距美化无关。
+
+**顺序必须保持与当前 `App.vue` `.toolbar-inner` 完全一致**（用户给定的产品序列）：
+
+```
+[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]
+```
+
+对应现有控件（不得对调、不得删除、不得把某一项挪到条内其它位置或条外）：
+
+| 序列位 | 现状 | 绑定 |
+| --- | --- | --- |
+| `[- 100% +]` | `.zoom-control`（`MinusOutlined`、百分比、`PlusOutlined`） | `zoomOut` / `zoomIn` |
+| `[<]` | `LeftOutlined` | `back` |
+| `[>]` | `RightOutlined` | `forward` |
+| `[+]` | `FileAddOutlined` 然后 `PlusOutlined`（新建、增子节点；二者相对顺序也不变） | `newMap` / `addChildNode` |
+| `[🗑]` | `DeleteOutlined` | `removeCurrentNode` |
+| `[↓]` | `CloudDownloadOutlined` | `openExportPanel` |
+| `[⇅]` | `SisternodeOutlined` | `toggleMindMapMode` |
+| `[☰]` | `UnorderedListOutlined` | `showDrawer` |
+| `[▦]` | `AppstoreOutlined` | `showCardModal` |
+| `[⚙]` | `SettingOutlined` | `toggleSettings` |
+| `[AI生成]` | `BulbOutlined` + 文案 | `aiGenerate` |
+
+允许：
+
+- 调整这些控件**之间的** `gap` / padding / 视觉分隔（分隔线只能插在相邻两项之间，不改变阅读顺序）
+- 统一 `size`、颜色、圆角、半透明背景
+- 继续使用已有 `mobile-hide` / `mobile-hide-text`（只隐藏缩放簇与 AI 文案，不删节点、不改剩余项顺序）
+
+禁止：
+
+- 重排、删除、合并进 overflow / 汉堡菜单、把部分按钮搬到另一条栏
+- 把整条工具栏从桌面「顶中」或移动端「左上竖排」改到其它锚点（例如底栏、右侧、顶通栏 `header`）
+- 为「分组」而打乱 DOM 顺序；若加 `.toolbar-group` wrapper，各组拼接后必须仍是上表顺序
+
+下文 ASCII 与 P0–P3 均按此约束书写。
+
+---
+
 ## 1. 当前 UI 画像（调查所得）
 
 SimpleMind 是单页 SPA，**没有**独立 `header` / `footer` / 常驻 `sidebar`。整页由四层叠在一起：
@@ -41,7 +83,7 @@ SimpleMind 是单页 SPA，**没有**独立 `header` / `footer` / 常驻 `sideba
 | `SettingOutlined` | 设置 Modal | 默认 |
 | `BulbOutlined` + 文案 | `aiGenerate` | `type="primary"`，inline `padding: 4px 10px`；文案 class `mobile-hide-text` |
 
-没有分组容器、没有分隔线。`.toolbar-inner` 的 `gap` 只有 **4px**，与默认 32px 高的 `a-button` 挤在一起（截图上按钮几乎贴边）。缩放簇内部 `gap: 2px`。
+没有分组容器、没有分隔线。`.toolbar-inner` 的 `gap` 只有 **4px**，与默认 32px 高的 `a-button` 挤在一起（截图上按钮几乎贴边）。缩放簇内部 `gap: 2px`。美化只加大这些间隙，**不**改上表顺序。
 
 ### 1.2 画布
 
@@ -141,15 +183,13 @@ SimpleMind 是单页 SPA，**没有**独立 `header` / `footer` / 常驻 `sideba
 - 「恢复默认」与 `getThemeList()` 默认项：`'#549688'`
 - 画布背景恢复默认 `'#ffffff'`，而默认主题项背景是 `'#f5f5f5'`
 
-### 2.3 布局：悬浮条可用，但分组与移动端占画布是主痛点
+### 2.3 布局：悬浮条位置与顺序冻结；可调的是疏密与浮层宽度
 
-桌面：水平居中 overlay 符合「画布优先」，方向正确；缺的是**分组呼吸感**和与画布主色的轻微呼应（半透明/描边），不是再做一条占高度的顶栏。
+桌面：水平居中 overlay 符合「画布优先」，**保持顶中、保持 §0 顺序**。缺的是控件之间的呼吸感，以及与画布主色的轻微呼应（半透明/描边），不是再做一条占高度的顶栏，也不是重排按钮。
 
-移动端（`max-width: 600px`，`ScreenShot3.png`）：工具栏改到左上、**纵向堆叠**。`zoom-*` 被 `mobile-hide` 掉（捏合缩放仍由 `TouchEvent` 负责）。按钮 `width: 100%`，但父级shrink-wrap，实际是一列图标轨。问题：
+移动端（`max-width: 600px`，`ScreenShot3.png`）：工具栏在左上、**纵向堆叠（顺序与桌面相同）**。这是现有锚点，**不要搬到底部或其它边**。`zoom-*` 被 `mobile-hide` 掉（捏合缩放仍由 `TouchEvent` 负责）。按钮 `width: 100%`，但父级 shrink-wrap，实际是一列图标轨。可做的只是加大竖向 `gap`、收 padding；不能靠挪走工具栏来「让出」画布。
 
-- 左缘被工具栏挡住，导图中心视觉不对称
-- 纵向轨很长（10 个图标 + 主色 AI 钮），小屏仍挡内容
-- 设置 `800px` / 抽屉 `400px` / 卡片 `1000px` **没有**随断点改宽，手机上会溢出或几乎全屏却仍按桌面 padding
+浮层问题仍在（与工具栏顺序无关）：设置 `800px` / 抽屉 `400px` / 卡片 `1000px` **没有**随断点改宽，手机上会溢出或几乎全屏却仍按桌面 padding。
 
 ---
 
@@ -172,12 +212,12 @@ Ant Design Vue 4 可同步：
 - `token.marginXS = 8`、`paddingContentHorizontal = 16` 等（实现时对照官方 token 表，不要盲改）
 - 或根上 `componentSize: 'small'`，让工具栏与设置控件同一密度
 
-**目标密度（桌面工具栏）：**
+**目标密度（桌面工具栏，顺序见 §0，不可改）：**
 
-- 组内 `gap: 8px`
-- 组间 `12px` + 1px 分隔
+- 相邻控件 `gap: 8px`（可把部分相邻对做成 12px，形成「视觉分组」，但中间不得插入其它按钮）
+- 可选：在**现有相邻对**之间加 1px 竖线，不改变 DOM 次序
 - `.toolbar-inner` padding `8px 12px`
-- 全部工具栏按钮统一 `size="small"`（含历史/节点/视图；缩放保持 `circle`）
+- 全部工具栏按钮统一 `size="small"`（缩放保持 `circle`）
 - AI 主按钮与其它 small 同高，去掉 `padding: 4px 10px`，用 class
 
 **目标密度（设置表单）：**
@@ -225,7 +265,7 @@ Ant Design Vue 4 可同步：
 
 ## 5. 布局结构与线框
 
-原则：**继续画布全屏 + chrome 悬浮**；只给现有按钮分组、给移动端换位置，不增加新面板。
+原则：**继续画布全屏 + chrome 悬浮**；工具栏**锚点与控件顺序冻结**（§0）。只加大间隙、可选视觉分隔；不增加新面板，不把工具栏搬到其它边。
 
 ### 5.1 桌面 — 当前
 
@@ -249,15 +289,16 @@ Ant Design Vue 4 可同步：
   .context-menu        节点右键
 ```
 
-### 5.2 桌面 — 建议（同一套控件，只分组）
+### 5.2 桌面 — 建议（同一顺序，只加 gap）
+
+顺序与当前完全相同；竖线仅为可选 CSS 分隔，可省略。禁止把 `[AI生成]` 提前、禁止抽走 `[⚙]` 等。
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 |                                                                          |
-|     ┌──────────────── .toolbar-inner  padding 8×12 ─────────────────┐    |
-|     │ zoom │ hist │ nodes │ io │ view │ set │  AI                    │    |
-|     │ - % +│ <  > │ +new +node del │ ↓ │ ⇅ ☰ ▦ │ ⚙ │ [AI生成]     │    |
-|     │ 8px  │ 12px 分隔                                               │    |
+|     ┌──────────── .toolbar-inner  仍 top-center overlay ────────────┐    |
+|     │ [- 100% +]  [<] [>]  [+] [🗑]  [↓]  [⇅] [☰] [▦]  [⚙]  [AI生成] │    |
+|     │  ^ 顺序冻结；仅 gap 4px→8px（部分相邻可用 12px 做视觉分组）      │    |
 |     └───────────────────────────────────────────────────────────────┘    |
 |                                                                          |
 |                    #mindMapContainer  仍 100vh，不被顶栏挤压              |
@@ -265,53 +306,59 @@ Ant Design Vue 4 可同步：
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-分组对应**现有按钮**（实现时用 `.toolbar-group` wrap，或 `a-space` + `Divider type="vertical"`，不要新入口）：
+若用 `.toolbar-group` / `a-space` / `Divider type="vertical"`，只允许包住**连续的现有按钮**，拼接后仍是：
 
-1. **zoom**：已有 `.zoom-control`
-2. **hist**：后退 / 前进
-3. **nodes**：新建 / 增节点 / 删节点
-4. **io**：导入导出
-5. **view**：模式 / 思考模版 / 卡片
-6. **set**：设置
-7. **ai**：AI 生成（继续 `type="primary"`，作为条内唯一强调色）
+`[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]`
 
-不要改成占满宽度的 `a-layout-header`：会吃掉画布，且与当前 overlay 产品形态不一致。
+不要改成占满宽度的 `a-layout-header`：会吃掉画布，且等于把工具栏搬离当前 overlay 锚点。
 
 ### 5.3 移动端 — 当前（`max-width: 600px`）
+
+左上竖排，自上而下顺序与桌面相同（缩放因 `mobile-hide` 不显示，剩余项相对顺序不变）：
 
 ```
 ┌─────────────────────────────┐
 | ┌──┐                        |
 | │< │                        |
-| │> │   #mindMapContainer    |
-| │+ │   画布被左轨遮挡        |
-| │… │                        |
+| │> │                        |
+| │+ │   #mindMapContainer    |
+| │🗑│   左上竖轨（现锚点）    |
+| │↓ │                        |
+| │⇅ │                        |
+| │☰ │                        |
+| │▦ │                        |
 | │⚙ │                        |
 | │AI│  （无文字，mobile-hide-text）
-| └──┘  zoom 已 mobile-hide   |
+| └──┘  [- 100% +] 已 mobile-hide
 |                             |
 └─────────────────────────────┘
 ```
 
-抽屉 400px、设置 800px 在窄屏不适应。
+抽屉 400px、设置 800px 在窄屏不适应（改浮层宽度，不改工具栏位置）。
 
-### 5.4 移动端 — 建议（仍是同一个 `.toolbar`）
+### 5.4 移动端 — 建议（锚点与顺序不变）
 
-把现有 `.toolbar` 从左上竖条改为 **底部横向可滚动图标条**（thumb zone，少挡中心主题）。缩放继续隐藏，捏合仍走 `TouchEvent`。
+**不要**改成底栏或其它边。仍是左上 `.toolbar`，同一 DOM 顺序；只把竖向 `gap` 从 4px 提到 8px，并略增 padding。
 
 ```
 ┌─────────────────────────────┐
+| ┌──┐                        |
+| │< │  gap 8px               |
+| │> │                        |
+| │+ │   #mindMapContainer    |
+| │🗑│   仍左上竖排            |
+| │↓ │   顺序与 §0 相同        |
+| │⇅ │                        |
+| │☰ │                        |
+| │▦ │                        |
+| │⚙ │                        |
+| │AI│                        |
+| └──┘                        |
 |                             |
-|     #mindMapContainer       |
-|     主题节点居中可见         |
-|                             |
-| ┌─────────────────────────┐ |
-| │ < > +new + del ↓ ⇅ ☰ ▦ ⚙ AI │  横向 scroll，gap 8px
-| └─────────────────────────┘ |
 └─────────────────────────────┘
 ```
 
-浮层宽度建议（CSS / 现有组件 props，不是新页面）：
+浮层宽度建议（CSS / 现有组件 props，不是新页面，也不是工具栏搬家）：
 
 | 组件 | 建议 |
 | --- | --- |
@@ -367,39 +414,44 @@ API Base           [                    ]
 
 建议补的行为（仍属现有 chrome）：
 
-| 宽度 | 工具栏 | 浮层 |
+| 宽度 | 工具栏（顺序冻结，见 §0） | 浮层 |
 | --- | --- | --- |
-| \> 600px | 顶中、水平、分组 | 抽屉 400；设置 800；卡片 1000 |
-| ≤ 600px | 底栏横向 scroll；继续 `mobile-hide` 缩放与 AI 文案 | 抽屉/Modal 不超过 `100vw - 32px` |
+| \> 600px | 仍顶中、水平；只加大 gap | 抽屉 400；设置 800；卡片 1000 |
+| ≤ 600px | 仍左上竖排；继续 `mobile-hide` 缩放与 AI 文案；只加大竖向 gap | 抽屉/Modal 不超过 `100vw - 32px` |
 
-中间宽度（601–900px）：顶栏按钮多，可能换行或溢出视口。P1 检查：若 `toolbar-inner` 宽于 `100vw - 32px`，允许 `max-width: 100vw` + `overflow-x: auto`，不要改成两行（两行会挡更多画布）。
+中间宽度（601–900px）：顶栏按钮多，可能溢出视口。P1 检查：若 `toolbar-inner` 宽于 `100vw - 32px`，允许 `max-width: 100vw` + `overflow-x: auto`（**仍是同一条、同一顺序**），不要改成两行、不要拆到两侧。
 
-`TouchEvent` 已绑在 `mindMap.el` 且容器外放行：底部工具栏必须留在 `#mindMapContainer` **外面**（现状已是如此），否则会抢触摸。
+`TouchEvent` 已绑在 `mindMap.el` 且容器外放行：工具栏必须留在 `#mindMapContainer` **外面**（现状：兄弟节点）。不要把按钮搬进画布容器。
 
 ---
 
 ## 7. 优先落地步骤（后续实现 PR，本仓库本 PR 不执行）
 
-只动 `public/app.css` + `App.vue` 模板 class / 少量 `a-config-provider` token；能 CSS 解决的不改 JS 逻辑。
+只动 `public/app.css` + `App.vue` 模板 class / 少量 `a-config-provider` token；能 CSS 解决的不改 JS 逻辑。  
+**每一步都不得改工具栏控件顺序或锚点**（§0）：
+
+```
+[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]
+```
 
 ### P0 — 间距与工具栏密度（对用户目标 1 最直接）
 
-1. 在 `public/app.css` 建 `:root` 间距变量；`.toolbar-inner` `gap` 4→组内 8 / 组间 12；padding 改为 `8px 12px`。
-2. 用 class 包已有按钮为 `.toolbar-group`（或等价），加垂直分隔；**不增删按钮、不改 `@click`**。
-3. 工具栏 `a-button` 统一 `size="small"`；删除 AI 按钮 inline padding。
-4. `.chart-list` gap 4→8；`.field` 抽 `.field-row`，消灭重复 inline flex。
+1. 在 `public/app.css` 建 `:root` 间距变量；`.toolbar-inner` 的 `gap` 从 4px 调到 8px（部分相邻间隙可用 12px）；padding 改为 `8px 12px`。**只改数字，不改 flex 子项顺序。**
+2. 可选：用 class 包**连续**已有按钮为 `.toolbar-group`，或在相邻项之间加竖线。拼接顺序必须仍是 §0；**不增删按钮、不改 `@click`、不重排。**
+3. 工具栏 `a-button` 统一 `size="small"`；删除 AI 按钮 inline padding。按钮仍停在原序列位。
+4. `.chart-list` gap 4→8；`.field` 抽 `.field-row`，消灭重复 inline flex。（设置面板，与工具栏顺序无关。）
 5. 抽屉卡片间距 14→12，inline 改 class。
 
-验收：对照 `ScreenShot1.png`，按钮不再贴在一起；桌面导图操作路径不变。
+验收：对照 `ScreenShot1.png`，从左到右仍是 `[- 100% +] [<] [>] [+] [🗑] [↓] [⇅] [☰] [▦] [⚙] [AI生成]`，仅间距更大；桌面操作路径不变。
 
-### P1 — 布局与窄屏（用户目标 2 的布局部分）
+### P1 — 浮层宽度与窄屏密度（用户目标 2 的布局部分）
 
-1. ≤600px：工具栏改为底部横向 scroll（改现有 `.toolbar` 定位，不是新组件）。
-2. 抽屉 / 两个 Modal 的宽度与卡片 iframe 高度随视口限制。
+1. ≤600px：**保持左上竖排与同一顺序**；只加大竖向 gap。禁止改成底栏、右侧轨或顶通栏。继续 `mobile-hide` 缩放与 AI 文案。
+2. 抽屉 / 两个 Modal 的宽度与卡片 iframe 高度随视口限制（改浮层，不改工具栏）。
 3. 设置表单标签列对齐；tab 内容 `padding` 用 `--space-4`。
-4. 工具栏半透明 + 可选 blur，让彩色画布透出来一点。
+4. 工具栏半透明 + 可选 blur，让彩色画布透出来一点（仍 overlay 在原位置）。
 
-验收：对照 `ScreenShot3.png` 场景，中心节点不再被左轨挡住；设置在窄屏可完整操作。
+验收：对照 `ScreenShot3.png`，左轨控件顺序不变；设置/抽屉在窄屏可完整操作。
 
 ### P2 — 颜色 token 与轻量主题对齐（用户目标 2 的颜色部分）
 
@@ -422,13 +474,15 @@ API Base           [                    ]
 
 | 风险 | 说明 | 缓解 |
 | --- | --- | --- |
-| 工具栏变宽溢出 | 分组+gap 后桌面条更长 | `max-width: calc(100vw - 32px)` + 横向 scroll；分组 gap 不要超过 12px |
-| 统一 `small` 点热区变小 | 移动端底栏尤其敏感 | 底栏按钮保持 ≥32px 点击高（padding 补），不必用 Ant `middle` |
+| 误重排工具栏 | 加 `.toolbar-group` / `a-space` 时把 DOM 子项挪了 | 实现前对照 §0 序列；code review 禁止改 `.toolbar-inner` 子项次序；验收用从左到右（移动端从上到下）读一遍 |
+| 误搬家工具栏 | 把条改到底部/顶通栏/右侧 | P1 明确禁止；只改 `gap`/`padding`/颜色 |
+| 工具栏变宽溢出 | gap 加大后桌面条更长 | `max-width: calc(100vw - 32px)` + **同一条**横向 scroll；不要拆成两行或两列 |
+| 统一 `small` 点热区变小 | 移动端左轨尤其敏感 | 左轨按钮保持 ≥32px 点击高（padding 补），不必用 Ant `middle` |
 | `backdrop-filter` | 旧 WebView 无效果或掉帧 | 纯增强；无 blur 时仍有实心 `--chrome-bg` |
 | 暗色 algorithm | 与始终白的工具栏、卡片 iframe、原生 color input 分裂 | P2 可选；默认不做 |
 | `#mindMapContainer *` 重置 | 以后若把 Ant 放进画布会错 | 美化阶段不要往容器里塞 chrome |
-| TouchEvent | 底栏若误放进画布会吞手势 | 保持 toolbar 为 `#app` 下、容器外的兄弟节点（现状） |
-| 测试选择器 | `.chart-list`、toolbar 行为单测 | 保留这些 class；分组只加 wrapper |
+| TouchEvent | 若把按钮放进画布会吞手势 | 保持 toolbar 为 `#app` 下、容器外的兄弟节点（现状） |
+| 测试选择器 | `.chart-list`、toolbar 行为单测 | 保留这些 class；分组只加 wrapper，不改顺序 |
 | 性能文档已改 `100vh` / 抽屉 `v-if` | 美化误改回 `min-height: 1000px` 或去掉懒渲染 | 明确禁止回退 |
 | inline → class | 模板 diff 大，但逻辑不变 | 一次抽 `.field-row`，避免改绑定 |
 
@@ -438,6 +492,7 @@ API Base           [                    ]
 
 本规划与后续美化 PR **都不做**：
 
+- **重排、删除或挪动工具栏控件**（§0 序列冻结）；包括改成底栏、汉堡折叠、把 AI/设置拆到别处
 - 新功能：快捷键面板（locale 有 `shortcuts` 但模板未用）、展开/收起全部子节点、属性检查器、小地图、新侧栏
 - 改 `thinkingModels` / `layouts` / 模型列表 / AI prompt
 - 重画 `simple-mind-map` 节点、连线算法、主题包内容
@@ -451,8 +506,8 @@ API Base           [                    ]
 
 ## 10. 建议的后续 PR 切分
 
-1. **polish-spacing**：P0（css 变量 + 工具栏分组 + field/chart-list/drawer 间距）
-2. **polish-responsive**：P1（底栏 + 浮层宽度）
+1. **polish-spacing**：P0（css 变量 + 工具栏 **仅 gap** + field/chart-list/drawer 间距；顺序不变）
+2. **polish-responsive**：P1（浮层宽度 + 窄屏竖轨 gap；**不搬家工具栏**）
 3. **polish-tokens**（可选）：P2 颜色变量与默认色对齐；暗色 chrome 再视情况拆第 4 个 PR
 
-切分理由：间距可单独目视验收；移动端定位改动容易回归触摸；颜色/暗色独立回滚。
+切分理由：间距可单独目视验收；浮层宽度与工具栏顺序解耦；颜色/暗色独立回滚。
