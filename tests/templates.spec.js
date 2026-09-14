@@ -45,5 +45,7 @@ describe('template JSON quality net', () => {
     expect(html).not.toContain('#ffff00')
     expect(html).not.toContain('#00e676')
     expect(html).not.toContain('#448aff')
+    expect(html).not.toMatch(/\.card\s*\{[^}]*border-left/)
+    expect(html).not.toContain('--card-accent')
   })
 })
