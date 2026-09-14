@@ -8,6 +8,7 @@ import {
   fontFamilyOptions,
   iconList,
   DEFAULT_MODEL,
+  loadExampleTemplate,
 } from '../src/const.js'
 import zhCN from '../src/locales/zh-CN.json'
 import enUS from '../src/locales/en-US.json'
@@ -49,5 +50,25 @@ describe('const.js', () => {
     expect(modelOptions.length).toBeGreaterThan(0)
     expect(fontFamilyOptions.length).toBeGreaterThan(0)
     expect(iconList[0].list[0].name).toBe('mark')
+  })
+
+  it('loads example templates on demand and rejects unknown names', async () => {
+    const loaded = await loadExampleTemplate('default1.json')
+    expect(loaded.data?.text || loaded.root?.data?.text).toBeTruthy()
+    expect(await loadExampleTemplate('https://example.test/missing.json')).toBeNull()
+    expect(await loadExampleTemplate('not-a-template')).toBeNull()
+    expect(await loadExampleTemplate('')).toBeNull()
+    expect(await loadExampleTemplate(null)).toBeNull()
+    const obj = { data: { text: 'inline' } }
+    expect(await loadExampleTemplate(obj)).toBe(obj)
+  })
+
+  it('can lazy-load every thinkingModels example via glob', async () => {
+    for (const model of thinkingModels) {
+      for (const example of model.example) {
+        const loaded = await loadExampleTemplate(example.content)
+        expect(loaded.data?.text || loaded.root?.data?.text).toBeTruthy()
+      }
+    }
   })
 })

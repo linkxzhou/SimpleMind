@@ -71,31 +71,31 @@ export const thinkingModels = [
                 name: "高效学习方法",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/default1.json', import.meta.url).href,
+                content: 'default1.json',
             },
             {
                 name: "深度学习总结",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/default2.json', import.meta.url).href,
+                content: 'default2.json',
             },
             {
                 name: "如何使用p5.js实现游戏",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/default3.json', import.meta.url).href,
+                content: 'default3.json',
             },
             {
                 name: "机器学习经典算法",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/default4.json', import.meta.url).href,
+                content: 'default4.json',
             },
             {
                 name: "实现游戏引擎需要哪些知识储备？",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/default5.json', import.meta.url).href,
+                content: 'default5.json',
             }
         ]
     },
@@ -112,25 +112,25 @@ export const thinkingModels = [
                 name: "《麦肯锡高效工作法》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/note-taking1.json', import.meta.url).href,
+                content: 'note-taking1.json',
             },
             {
                 name: "《终身成长》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/note-taking2.json', import.meta.url).href,
+                content: 'note-taking2.json',
             },
             {
                 name: "《关键跨越》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/note-taking3.json', import.meta.url).href,
+                content: 'note-taking3.json',
             },
             {
                 name: "《冰鉴》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/note-taking4.json', import.meta.url).href,
+                content: 'note-taking4.json',
             }
         ]
     },
@@ -147,73 +147,73 @@ export const thinkingModels = [
                 name: "《小学数学一年级上册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning1.json', import.meta.url).href,
+                content: 'course-learning1.json',
             },
             {
                 name: "《小学数学一年级下册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning2.json', import.meta.url).href,
+                content: 'course-learning2.json',
             },
             {
                 name: "《小学数学二年级上册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning3.json', import.meta.url).href,
+                content: 'course-learning3.json',
             },
             {
                 name: "《小学数学二年级下册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning4.json', import.meta.url).href,
+                content: 'course-learning4.json',
             },
             {
                 name: "《小学数学三年级上册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning5.json', import.meta.url).href,
+                content: 'course-learning5.json',
             },
             {
                 name: "《小学数学三年级下册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning6.json', import.meta.url).href,
+                content: 'course-learning6.json',
             },
             {
                 name: "《小学数学四年级上册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning7.json', import.meta.url).href,
+                content: 'course-learning7.json',
             },
             {
                 name: "《小学数学四年级下册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning8.json', import.meta.url).href,
+                content: 'course-learning8.json',
             },
             {
                 name: "《小学数学五年级上册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning9.json', import.meta.url).href,
+                content: 'course-learning9.json',
             },
             {
                 name: "《小学数学五年级下册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning10.json', import.meta.url).href,
+                content: 'course-learning10.json',
             },
             {
                 name: "《小学数学六年级上册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning11.json', import.meta.url).href,
+                content: 'course-learning11.json',
             },
             {
                 name: "《小学数学六年级下册》",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/course-learning12.json', import.meta.url).href,
+                content: 'course-learning12.json',
             },
         ]
     },
@@ -227,13 +227,13 @@ export const thinkingModels = [
                 name: "制造火箭的关键步骤",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/first-principles1.json', import.meta.url).href,
+                content: 'first-principles1.json',
             },
             {
                 name: "如何建造太空战舰？",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/first-principles2.json', import.meta.url).href,
+                content: 'first-principles2.json',
             }
         ]
     },
@@ -250,13 +250,13 @@ export const thinkingModels = [
                 name: "向八岁的小朋友介绍什么是量子？",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/fermats-law1.json', import.meta.url).href,
+                content: 'fermats-law1.json',
             },
             {
                 name: "量子计算机的工作原理",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/fermats-law2.json', import.meta.url).href,
+                content: 'fermats-law2.json',
             }
         ]
     },
@@ -273,13 +273,13 @@ export const thinkingModels = [
                 name: "分析世界历史的人口变化",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/bayesian-thinking1.json', import.meta.url).href,
+                content: 'bayesian-thinking1.json',
             },
             {
                 name: "加密货币的价值",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/bayesian-thinking2.json', import.meta.url).href,
+                content: 'bayesian-thinking2.json',
             },
         ]
     },
@@ -296,13 +296,13 @@ export const thinkingModels = [
                 name: "资本主义的终局",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/critical-thinking1.json', import.meta.url).href,
+                content: 'critical-thinking1.json',
             },
             {
                 name: "分析凯恩斯主义对社会影响",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/critical-thinking2.json', import.meta.url).href,
+                content: 'critical-thinking2.json',
             },
         ]
     },
@@ -320,13 +320,13 @@ export const thinkingModels = [
                 name: "简洁版本浏览器开发",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/code-generation1.json', import.meta.url).href,
+                content: 'code-generation1.json',
             },
             {
                 name: "简洁版本 Nginx 实现",
                 description: "",
                 layout: 'mindMap',
-                content: new URL('./templates/code-generation2.json', import.meta.url).href,
+                content: 'code-generation2.json',
             }
         ]
     },
@@ -356,3 +356,16 @@ export const iconList = [
         ],
     }
 ] 
+
+const exampleTemplateLoaders = import.meta.glob('./templates/*.json')
+
+export async function loadExampleTemplate(content) {
+    if (content && typeof content === 'object') return content
+    const fileName = String(content || '').split(/[/\\]/).pop().split('?')[0]
+    if (!fileName || !fileName.endsWith('.json')) return null
+    const key = `./templates/${fileName}`
+    const loader = exampleTemplateLoaders[key]
+    if (!loader) return null
+    const mod = await loader()
+    return mod?.default ?? mod
+}

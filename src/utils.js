@@ -11,11 +11,6 @@ import TouchEvent from './plugins/TouchEvent.js'
 // import TouchEvent from 'simple-mind-map/src/plugins/TouchEvent.js'
 
 import Drag from 'simple-mind-map/src/plugins/Drag.js'
-import Export from 'simple-mind-map/src/plugins/Export.js'
-import ExportPDF from 'simple-mind-map/src/plugins/ExportPDF.js'
-import ExportXMind from 'simple-mind-map/src/plugins/ExportXMind.js'
-import markdown from 'simple-mind-map/src/parse/markdown.js'
-import xmind from 'simple-mind-map/src/parse/xmind.js'
 import MindMapLayoutPro from 'simple-mind-map/src/plugins/MindMapLayoutPro.js'
 import Themes from 'simple-mind-map-plugin-themes'
 import cardTemplate from './templates/card.html?raw'
@@ -23,17 +18,21 @@ import themeList from 'simple-mind-map-plugin-themes/themeList'
 import { messages } from './const.js'
 import { SETTINGS_KEY } from './storage.js'
 
-// 注册 SimpleMindMap 官方导出插件
+// 启动只注册交互所需插件；Export / PDF / XMind 在首次导出或 XMind 导入时再加载。
 try {
-    MindMap.usePlugin(Export)
-    MindMap.usePlugin(ExportPDF)
-    MindMap.usePlugin(ExportXMind)
     MindMap.usePlugin(TouchEvent)
     MindMap.usePlugin(Drag)
     MindMap.usePlugin(MindMapLayoutPro)
     Themes.init(MindMap)
 } catch (e) {
     console.warn('SimpleMindMap 插件注册失败：', e)
+}
+
+const env = (import.meta && import.meta.env) ? import.meta.env : {}
+export const IS_DEV = !!env.DEV
+
+export function debugLog(...args) {
+    if (IS_DEV) console.log(...args)
 }
 
 // 简易翻译函数，直接读取 sessionStorage
@@ -49,13 +48,20 @@ const t = (key) => {
     return messages[lang]?.[key] ?? key
 }
 
-// 从环境变量读取默认值（Vite 约定使用 VITE_ 前缀）
-const env = (import.meta && import.meta.env) ? import.meta.env : {}
 export const ENV_API = (env.VITE_API ?? '').trim()
 export const ENV_SECRET = (env.VITE_SECRET ?? '').trim()
 export const ENV_MODEL = (env.VITE_MODEL ?? '').trim()
 
-// showLoading 修改片段
+const CARD_DATA_RE = /\/\/ \{\{REPLACE:cardData BEGIN\}\}[\s\S]*?\/\/ \{\{REPLACE:cardData END\}\}/
+
+export function buildCardHtml(root, template = cardTemplate) {
+    const jsonStr = JSON.stringify(root || {})
+    return template.replace(
+        CARD_DATA_RE,
+        `// {{REPLACE:cardData BEGIN}}\n${jsonStr};\n// {{REPLACE:cardData END}}`
+    )
+}
+
 export function showLoading(title, content) {
     Modal.info({
         title: title || t('loading'),
@@ -64,7 +70,7 @@ export function showLoading(title, content) {
         okButtonProps: { style: { display: 'none' } },
         maskClosable: false,
         closable: true,
-        width: 1000,
+        width: 480,
     })
 }
 
@@ -72,7 +78,6 @@ export function hideLoading() {
     Modal.destroyAll()
 }
 
-// showError 修改片段
 export function showError(title, content = '') {
     Modal.error({
         title: title || t('error'),
@@ -81,7 +86,6 @@ export function showError(title, content = '') {
     })
 }
 
-// showSuccess 修改片段
 export function showSuccess(title, content = '') {
     Modal.success({
         title: title || t('success'),
@@ -90,19 +94,64 @@ export function showSuccess(title, content = '') {
     })
 }
 
-// 新增：字符串内容到 VNode 的转换，支持 <br> 和 \n 换行
 function toModalContent(content) {
     if (content == null) return ''
     if (typeof content !== 'string') return content
-    // 如果包含 \n，使用 pre 保留换行和空白
     if (content.includes('\n')) {
         return h('pre', { style: 'white-space: pre-wrap; word-break: break-word; margin: 0;' }, content)
     }
-    // 普通短文本，直接返回字符串
     return content
 }
 
-export function exportMindMap(mindMap, type) {
+let exportPluginsPromise = null
+const exportPluginsOnInstance = typeof WeakSet === 'function' ? new WeakSet() : null
+
+export async function ensureExportPlugins(mindMap) {
+    if (!exportPluginsPromise) {
+        exportPluginsPromise = Promise.all([
+            import('simple-mind-map/src/plugins/Export.js'),
+            import('simple-mind-map/src/plugins/ExportPDF.js'),
+            import('simple-mind-map/src/plugins/ExportXMind.js'),
+        ]).then(([exportMod, pdfMod, xmindMod]) => ({
+            Export: exportMod.default,
+            ExportPDF: pdfMod.default,
+            ExportXMind: xmindMod.default,
+        }))
+    }
+    const plugins = await exportPluginsPromise
+    const already = mindMap && exportPluginsOnInstance && exportPluginsOnInstance.has(mindMap)
+    if (already) return plugins
+    try {
+        if (mindMap && typeof mindMap.addPlugin === 'function') {
+            mindMap.addPlugin(plugins.Export)
+            mindMap.addPlugin(plugins.ExportPDF)
+            mindMap.addPlugin(plugins.ExportXMind)
+        } else {
+            MindMap.usePlugin(plugins.Export)
+            MindMap.usePlugin(plugins.ExportPDF)
+            MindMap.usePlugin(plugins.ExportXMind)
+        }
+        if (mindMap && exportPluginsOnInstance) exportPluginsOnInstance.add(mindMap)
+    } catch (e) {
+        console.warn('SimpleMindMap 导出插件注册失败：', e)
+        throw e
+    }
+    return plugins
+}
+
+async function loadMarkdownParser() {
+    const mod = await import('simple-mind-map/src/parse/markdown.js')
+    return mod.default
+}
+
+async function loadXmindParser() {
+    const mod = await import('simple-mind-map/src/parse/xmind.js')
+    return mod.default
+}
+
+const EXPORT_PLUGIN_TYPES = new Set(['smm', 'json', 'png', 'pdf', 'xmind', 'svg'])
+
+export async function exportMindMap(mindMap, type) {
     if (!mindMap) {
         showError(t('createMapFirst'))
         return
@@ -112,28 +161,26 @@ export function exportMindMap(mindMap, type) {
     const pad = (n) => String(n).padStart(2, '0')
     const filename = `mindmap-${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}`
     try {
-        if (type === 'smm') {
-            mindMap.export('smm', true, filename, true)
-        } else if (type === 'json') {
-            mindMap.export('json', true, filename, false)
-        } else if (type === 'png') {
-            mindMap.export('png', true, filename)
-        } else if (type === 'pdf') {
-            mindMap.export('pdf', true, filename)
-        } else if (type === 'xmind') {
-            mindMap.export('xmind', true, filename)
-        } else if (type === 'svg') {
-            mindMap.export('svg', true, filename)
+        if (EXPORT_PLUGIN_TYPES.has(type)) {
+            await ensureExportPlugins(mindMap)
+            if (type === 'smm') {
+                mindMap.export('smm', true, filename, true)
+            } else if (type === 'json') {
+                mindMap.export('json', true, filename, false)
+            } else if (type === 'png') {
+                mindMap.export('png', true, filename)
+            } else if (type === 'pdf') {
+                mindMap.export('pdf', true, filename)
+            } else if (type === 'xmind') {
+                mindMap.export('xmind', true, filename)
+            } else if (type === 'svg') {
+                mindMap.export('svg', true, filename)
+            }
         } else if (type === 'md') {
+            const markdown = await loadMarkdownParser()
             const data = mindMap.getData(true)
             const content = markdown.transformToMarkdown(data)
-            const blob = new Blob([content], { type: 'text/markdown' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `${filename}.md`
-            a.click()
-            URL.revokeObjectURL(url)
+            downloadTextBlob(content, `${filename}.md`, 'text/markdown')
         } else if (type === 'txt') {
             const data = mindMap.getData(true)
             const walk = (node, depth = 0) => {
@@ -148,33 +195,27 @@ export function exportMindMap(mindMap, type) {
                 return str
             }
             const content = walk(data.root)
-            const blob = new Blob([content], { type: 'text/plain' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `${filename}.txt`
-            a.click()
-            URL.revokeObjectURL(url)
+            downloadTextBlob(content, `${filename}.txt`, 'text/plain')
         } else if (type === 'cardhtml') {
             const data = mindMap.getData(true)
-            const jsonStr = JSON.stringify(data?.root || {}, null, 2)
-            const content = cardTemplate.replace(
-                /\/\/ {{REPLACE:cardData BEGIN}}[\s\S]*?\/\/ {{REPLACE:cardData END}}/,
-                `// {{REPLACE:cardData BEGIN}}\n${jsonStr};\n// {{REPLACE:cardData END}}`
-            )
-            const blob = new Blob([content], { type: 'text/html' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `${filename}.html`
-            a.click()
-            URL.revokeObjectURL(url)
+            const content = buildCardHtml(data?.root || {})
+            downloadTextBlob(content, `${filename}.html`, 'text/html')
         } else {
             showError(t('unsupportedExportType'), t('selectSupportedExportType'))
         }
     } catch (e) {
         showError(t('exportFailed'), String(e?.message || e))
     }
+}
+
+function downloadTextBlob(content, filename, mime) {
+    const blob = new Blob([content], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
 }
 
 export async function importFileToMindMap(file, mindMap) {
@@ -205,6 +246,7 @@ export async function importFileToMindMap(file, mindMap) {
         }
         case 'xmind': {
             try {
+                const xmind = await loadXmindParser()
                 const data = await xmind.parseXmindFile(file)
                 mindMap.setData(data)
                 mindMap.view?.reset?.()
@@ -215,6 +257,7 @@ export async function importFileToMindMap(file, mindMap) {
         }
         case 'md': {
             try {
+                const markdown = await loadMarkdownParser()
                 const text = await file.text()
                 const data = await markdown.transformMarkdownTo(text)
                 mindMap.setData(data)
@@ -236,55 +279,53 @@ export async function importFileToMindMap(file, mindMap) {
     return false
 }
 
+export function combineText(d, mode = 'detail', lineBreak = '\n') {
+    const text = d?.text ?? ''
+    const note = d?.note ?? ''
+    if (mode === 'detail') {
+        if (!note) return String(text)
+        const base = String(text)
+        const suffix = lineBreak + String(note)
+        if (base.endsWith(suffix)) return base
+        return `${base}${suffix}`
+    }
+    const base = String(text)
+    const suffix = lineBreak + String(note)
+    if (note && base.endsWith(suffix)) {
+        return base.slice(0, -suffix.length)
+    }
+    return base
+}
+
 export function switchTextNoteMode(mindMap, mode = 'detail', options = {}) {
     const input = mindMap.getData()
     const lineBreak = options.lineBreak ?? ('\n' + t('detailDescription'))
-    const out = JSON.parse(JSON.stringify(input))
-
-    const combineText = (d) => {
-        const text = d?.text ?? ''
-        const note = d?.note ?? ''
-        if (mode === 'detail') {
-            if (!note) return String(text)
-            const base = String(text)
-            const suffix = lineBreak + String(note)
-            // 避免重复拼接
-            if (base.endsWith(suffix)) return base
-            return `${base}${suffix}`
-        } else {
-            // 简单模式：尽可能移除末尾的 note 拼接
-            const base = String(text)
-            const suffix = lineBreak + String(note)
-            if (note && base.endsWith(suffix)) {
-                return base.slice(0, -suffix.length)
-            }
-            return base
-        }
-    }
 
     const walk = (node) => {
         if (!node || typeof node !== 'object') return
         if (node.data) {
-            node.data.text = combineText(node.data)
+            node.data.text = combineText(node.data, mode, lineBreak)
         }
         if (Array.isArray(node.children)) {
             node.children.forEach(walk)
         }
     }
 
-    if (Array.isArray(out)) {
-        out.forEach(walk)
-    } else if (out && typeof out === 'object') {
-        if (out.root) {
-            walk(out.root)
+    if (Array.isArray(input)) {
+        input.forEach(walk)
+    } else if (input && typeof input === 'object') {
+        if (input.root) {
+            walk(input.root)
         } else {
-            walk(out)
+            walk(input)
         }
     }
 
-    // 更新思维导图数据
-    mindMap.setData(out)
-    mindMap.view?.reset?.()
+    if (typeof mindMap.updateData === 'function') {
+        mindMap.updateData(input)
+    } else {
+        mindMap.setData(input)
+    }
 }
 
 export function getThemeList() {

@@ -28,12 +28,13 @@ function normalizeText(str) {
     return s.trim()
 }
 
-function clampLength(str, max = 20000) {
+export const PDF_TEXT_MAX = 20000
+
+function clampLength(str, max = PDF_TEXT_MAX) {
     return (str && str.length > max) ? str.slice(0, max) : str
 }
 
 function parseCSVText(text) {
-    // 轻量 CSV 解析：逐行输出，保留逗号分隔，移除 BOM
     const rows = String(text || '').replace(/^\ufeff/, '').split(/\r?\n/)
     const cleaned = rows
         .map(r => r.trim())
@@ -41,15 +42,21 @@ function parseCSVText(text) {
     return cleaned.join('\n')
 }
 
+async function resolvePdfWorkerSrc() {
+    try {
+        const workerMod = await import('pdfjs-dist/legacy/build/pdf.worker.min.js?url')
+        if (workerMod?.default) return workerMod.default
+    } catch {
+        // fall through to a same-origin worker asset
+    }
+    return new URL('../node_modules/pdfjs-dist/legacy/build/pdf.worker.min.js', import.meta.url).href
+}
+
 export async function extractTextFromPDF(file) {
     let pdfjsLib
     try {
-        // 需要依赖 pdfjs-dist（建议安装）
-        // npm/yarn: pdfjs-dist@^3
         pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js')
-        // 使用 CDN worker，避免本地 worker 配置问题
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdn.jsdelivr.net/npm/pdfjs-dist/build/pdf.worker.min.js'
+        pdfjsLib.GlobalWorkerOptions.workerSrc = await resolvePdfWorkerSrc()
     } catch (e) {
         const err = new Error('PDF 解析库未安装或不可用，请安装 pdfjs-dist 后重试')
         err.cause = e
@@ -66,6 +73,7 @@ export async function extractTextFromPDF(file) {
         const content = await page.getTextContent()
         const pageText = content.items.map(it => it.str).join(' ')
         fullText += pageText + '\n'
+        if (fullText.length >= PDF_TEXT_MAX) break
     }
-    return normalizeText(fullText)
+    return clampLength(normalizeText(fullText), PDF_TEXT_MAX)
 }
