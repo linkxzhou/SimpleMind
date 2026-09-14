@@ -12,6 +12,8 @@
     --chrome-text: #374151;
     --chrome-hover: #f3f4f6;
     --chrome-divider: #f0f0f0;
+    --card-page-bg: #f4f6f8;
+    --card-page-text: #1f2937;
 }
 
 body {
@@ -345,13 +347,49 @@ body {
     padding-bottom: 24px;
 }
 
+.card-modal-wrap .ant-modal-content {
+    background: var(--card-page-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--chrome-shadow);
+}
+
+.card-modal-wrap .ant-modal-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--chrome-border);
+    margin-bottom: 0;
+    padding: var(--space-3) var(--space-4);
+}
+
+.card-modal-wrap .ant-modal-title {
+    color: var(--card-page-text);
+    font-weight: 600;
+}
+
+.card-modal-wrap .ant-modal-close {
+    color: var(--chrome-text);
+}
+
+.card-modal-wrap .ant-modal-body {
+    background: var(--card-page-bg);
+    padding: 0;
+}
+
 .card-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: min(320px, 40vh);
     text-align: center;
-    padding: var(--space-4);
+    padding: var(--space-5);
+    color: var(--chrome-text);
+    background: var(--card-page-bg);
 }
 
 .card-loading-text {
     margin-top: var(--space-2);
+    color: #6b7280;
 }
 
 .card-view-frame {
@@ -359,6 +397,7 @@ body {
     height: min(600px, 70vh);
     border: none;
     display: block;
+    background: var(--card-page-bg);
 }
 
 @media (max-width: 600px) {
